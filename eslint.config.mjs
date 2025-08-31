@@ -11,14 +11,22 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+    // Ignorar archivos generados
   {
     ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
+      "src/generated/**",
+      "src/types/next-auth.d.ts"
     ],
+  },
+
+  //Desactivar reglas específicas en caso de que no las ignore
+  {
+    files: ["src/generated/**", "src/types/next-auth.d.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+    },
   },
 ];
 
