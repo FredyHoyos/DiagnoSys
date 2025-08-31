@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <main className="p-6">
+    <main className="p-6 py-10">
       <h1 className="text-2xl font-bold text-pink-700">
         Prueba para validar la conexión a DB
       </h1>
