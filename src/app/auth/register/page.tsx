@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "./Register.module.css";
+import styles from "./register.module.css";
 
 const schema = z
     .object({
