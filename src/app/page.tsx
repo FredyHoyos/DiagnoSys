@@ -1,4 +1,4 @@
-import Login from '@/app/auth/login/page';
+// import Login from '@/app/auth/login/page';
 import Dashboard from '@/app/dashboard/page';
 
 export default function Home() {
