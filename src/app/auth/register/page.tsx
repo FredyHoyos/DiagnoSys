@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import styles from "./register.module.css";
 
 const schema = z
@@ -13,8 +12,10 @@ const schema = z
         email: z.string().email({ message: "Invalid email address" }),
         password: z
             .string()
-            .min(8, { message: "Password must be at least 8 characters" }),
-        confirmPassword: z.string(),
+            .min(8, "Password must be at least 8 characters")
+            .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+            .regex(/[0-9]/, "Must contain at least one number"),
+            confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
         path: ["confirmPassword"],
@@ -23,9 +24,8 @@ const schema = z
 
 type FormData = z.infer<typeof schema>;
 
-export default function RegisterPage() {
-    const router = useRouter();
-    const [serverError, setServerError] = useState<string | null>(null);
+export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
+    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [successPopup, setSuccessPopup] = useState(false);
 
@@ -33,17 +33,18 @@ export default function RegisterPage() {
         register,
         handleSubmit,
         formState: { errors },
+        reset,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
     });
 
-    async function onSubmit(data: FormData) {
 
-        setServerError(null);
+    async function onSubmit(data: FormData) {
+        setError("");
         setLoading(true);
 
         try {
-            const res = await fetch("/api/register", {
+            const res = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -57,19 +58,19 @@ export default function RegisterPage() {
             const body: RegisterResponse = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                setServerError(body.error || "Server error");
+                setError(body.error || "Server error");
                 return;
             }
 
-            // Mostrar pop-up de éxito
             setSuccessPopup(true);
 
-            // Redirigir al login después de 2 segundos
             setTimeout(() => {
-                router.push("/auth/login");
-            }, 4000);
+                setSuccessPopup(false);
+                reset(undefined, { keepErrors: false, keepDirty: false, keepTouched: false });  // Limpiar el formulario
+                onSwitch(); // Cambiar a la vista de login
+            }, 3000);
         } catch {
-            setServerError("Could not connect to the server");
+            setError("Could not connect to the server");
         } finally {
             setLoading(false);
         }
@@ -83,9 +84,11 @@ export default function RegisterPage() {
                 className={styles.form}
             >
                 <div className={styles.header}>
-                    <h2 className={styles.title}>Create Account</h2>
-                    <p className={styles.subtitle}>Sign up to get started</p>
+                    <h2 className={styles.title}>Get started</h2>
+                    <p className={styles.subtitle}>Create a new account</p>
                 </div>
+
+                {/* Name */}
                 <div className={styles.inputGroup}>
                     <input
                         id="name"
@@ -99,6 +102,7 @@ export default function RegisterPage() {
                     {errors.name && <p className={styles.error}>{errors.name.message}</p>}
                 </div>
 
+                {/* Email */}
                 <div className={styles.inputGroup}>
                     <input
                         id="email"
@@ -109,11 +113,10 @@ export default function RegisterPage() {
                     <label htmlFor="email" className={styles.label}>
                         Email
                     </label>
-                    {errors.email && (
-                        <p className={styles.error}>{errors.email.message}</p>
-                    )}
+                    {errors.email && <p className={styles.error}>{errors.email.message}</p>}
                 </div>
 
+                {/* Password */}
                 <div className={styles.inputGroup}>
                     <input
                         id="password"
@@ -125,11 +128,10 @@ export default function RegisterPage() {
                     <label htmlFor="password" className={styles.label}>
                         Password
                     </label>
-                    {errors.password && (
-                        <p className={styles.error}>{errors.password.message}</p>
-                    )}
+                    {errors.password && <p className={styles.error}>{errors.password.message}</p>}
                 </div>
 
+                {/* Confirm Password */}
                 <div className={styles.inputGroup}>
                     <input
                         id="confirmPassword"
@@ -146,11 +148,23 @@ export default function RegisterPage() {
                     )}
                 </div>
 
-                {serverError && <p className={styles.serverError}>{serverError}</p>}
+                {error && <p className={styles.serverError}>{error}</p>}
 
+                {/* Submit Button */}
                 <button type="submit" disabled={loading} className={styles.button}>
                     {loading ? "Creating account..." : "Create account"}
                 </button>
+
+                {/* Aquí agregamos la parte nueva */}
+                <p className={styles.footerText}>
+                    Have an account?{" "}
+                    <button type="button" onClick={() => {
+                        reset(undefined, { keepErrors: false });
+                        onSwitch();
+                    }} className={styles.link}>
+                        Sign In Now
+                    </button>
+                </p>
             </form>
 
             {successPopup && (
