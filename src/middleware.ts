@@ -1,9 +1,17 @@
 // src/middleware.ts
-export { default } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware";
+
+export default withAuth(
+    // Opciones de next-auth
+    {
+        pages: {
+            signIn: "/auth/card", // <- Aquí cambias la ruta de redirección
+        },
+    }
+);
 
 export const config = {
     matcher: [
-        // Protege TODO excepto rutas de login y auth
-        "/((?!auth|api/auth).*)",
+        "/((?!auth|api/auth).*)", // protege todo excepto /auth y /api/auth
     ],
 };
