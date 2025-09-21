@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -27,11 +27,15 @@ type ResetForm = z.infer<typeof resetSchema>;
 export default function ResetPasswordPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const token = searchParams.get("token");
-
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState(""); 
+    const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState("");
+
+    // Set token solo en cliente
+    useEffect(() => {
+        setToken(searchParams.get("token"));
+    }, [searchParams]);
 
     const {
         register,
@@ -43,7 +47,7 @@ export default function ResetPasswordPage() {
 
     async function onSubmit(data: ResetForm) {
         setError("");
-        setMessage(""); // limpiar ambos
+        setMessage("");
         setLoading(true);
 
         try {
@@ -67,10 +71,17 @@ export default function ResetPasswordPage() {
         }
     }
 
+    // Mientras aún no tenemos token (render del cliente)
+    if (token === null) {
+        return <p className={styles.error}>Loading...</p>;
+    }
+
+    // Token inválido o ausente
     if (!token) {
         return <p className={styles.error}>Invalid reset link</p>;
     }
 
+    // Token válido
     return (
         <div className={styles.container}>
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
@@ -113,7 +124,6 @@ export default function ResetPasswordPage() {
                     {loading ? "Resetting..." : "Reset Password"}
                 </button>
 
-                {/*Mensajes diferenciados */}
                 {error && <p className={styles.error}>{error}</p>}
                 {message && <p className={styles.success}>{message}</p>}
             </form>
