@@ -1,0 +1,78 @@
+.card {
+    width: 100%;
+    max-width: 400px;
+    height: 520px; /* Altura fija */
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s ease-in-out;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgb(51, 105, 30);
+}
+
+.card.flipped {
+    transform: rotateY(180deg);
+}
+
+.card.transitioning {
+    pointer-events: none;
+}
+
+.cardFace {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    overflow: hidden; /* IMPORTANTE: Esto evita que el contenido se desborde */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cardFront {
+    transform: rotateY(0deg);
+    z-index: 2;
+}
+
+.cardBack {
+    transform: rotateY(180deg);
+}
+
+/* Contenedores de contenido para transiciones suaves */
+.content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    overflow-y: auto; /* Permite scroll interno si es necesario */
+}
+
+.contentVisible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.contentHidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+}
+
+/* Responsivo móviles */
+@media (max-width: 480px) {
+    .card {
+        height: 500px;
+        max-width: 95%;
+    }
+}
+
+/* Responsivo tablets */
+@media (max-width: 768px) {
+    .card {
+        max-width: 85%;
+        height: 510px;
+    }
+}
