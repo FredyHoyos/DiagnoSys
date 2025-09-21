@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,16 +26,18 @@ type ResetForm = z.infer<typeof resetSchema>;
 
 export default function ResetPasswordPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
+    // ya no usamos useSearchParams
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
 
-    // Set token solo en cliente
+    // leer token desde window.location.search (solo en cliente)
     useEffect(() => {
-        setToken(searchParams.get("token"));
-    }, [searchParams]);
+        if (typeof window === "undefined") return;
+        const q = new URLSearchParams(window.location.search).get("token");
+        setToken(q);
+    }, []); // vacio: solo al montar en cliente
 
     const {
         register,
