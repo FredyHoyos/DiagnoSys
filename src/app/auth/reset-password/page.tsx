@@ -1,0 +1,122 @@
+"use client";
+
+import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import styles from "./reset-password.module.css";
+
+// Validación de nueva contraseña
+const resetSchema = z
+    .object({
+        password: z
+            .string()
+            .min(8, "Password must be at least 8 characters")
+            .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+            .regex(/[0-9]/, "Must contain at least one number"),
+        confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    });
+
+type ResetForm = z.infer<typeof resetSchema>;
+
+export default function ResetPasswordPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const token = searchParams.get("token");
+
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState(""); 
+    const [loading, setLoading] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<ResetForm>({
+        resolver: zodResolver(resetSchema),
+    });
+
+    async function onSubmit(data: ResetForm) {
+        setError("");
+        setMessage(""); // limpiar ambos
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/auth/reset-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, password: data.password }),
+            });
+
+            const response = await res.json();
+            if (res.ok) {
+                setMessage("Password reset successfully! Redirecting to login...");
+                setTimeout(() => router.push("/auth/card"), 3000);
+            } else {
+                setError(response.error || "Something went wrong");
+            }
+        } catch {
+            setError("Error resetting password. Try again.");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (!token) {
+        return <p className={styles.error}>Invalid reset link</p>;
+    }
+
+    return (
+        <div className={styles.container}>
+            <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+                <h2 className={styles.title}>Reset Password</h2>
+                <p className={styles.subtitle}>Enter your new password below</p>
+
+                <div className={styles.inputGroup}>
+                    <input
+                        id="password"
+                        type="password"
+                        placeholder=" "
+                        className={styles.input}
+                        {...register("password")}
+                    />
+                    <label htmlFor="password" className={styles.label}>
+                        New Password
+                    </label>
+                    {errors.password && (
+                        <p className={styles.error}>{errors.password.message}</p>
+                    )}
+                </div>
+
+                <div className={styles.inputGroup}>
+                    <input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder=" "
+                        className={styles.input}
+                        {...register("confirmPassword")}
+                    />
+                    <label htmlFor="confirmPassword" className={styles.label}>
+                        Confirm Password
+                    </label>
+                    {errors.confirmPassword && (
+                        <p className={styles.error}>{errors.confirmPassword.message}</p>
+                    )}
+                </div>
+
+                <button type="submit" className={styles.button} disabled={loading}>
+                    {loading ? "Resetting..." : "Reset Password"}
+                </button>
+
+                {/*Mensajes diferenciados */}
+                {error && <p className={styles.error}>{error}</p>}
+                {message && <p className={styles.success}>{message}</p>}
+            </form>
+        </div>
+    );
+}
