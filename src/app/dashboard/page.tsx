@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
+import styles from "./dashboard.module.css";
 
 type User = {
   id: number;
@@ -17,7 +19,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch("/api/users");
+        const res = await fetch("/api/auth/users");
         const data: User[] = await res.json();
         setUsers(data);
       } catch (error) {
@@ -31,36 +33,35 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <main className="p-6 py-10 flex flex-col items-center gap-6 w-full">
-      <h1 className="text-3xl font-bold text-pink-700 text-center">
-        Test: DB connection validation
-      </h1>
+    <main className={styles.container}>
+      {/* Header */}
+      <div className={styles.header}>
+        <h1 className={styles.title}>Test: DB connection validation</h1>
+        <button
+          onClick={() => signOut({ callbackUrl: "/auth/card" })}
+          className={styles.logoutButton}
+        >
+          Logout
+        </button>
+      </div>
 
-      <section className="w-full max-w-3xl">
-        <h2 className="text-xl font-semibold mb-6">Registered Users</h2>
+      <section className={styles.section}>
+        <h2>Registered Users</h2>
 
         {loading ? (
-          <ul className="space-y-4">
+          <ul className={styles.list}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <li
-                key={i}
-                className="p-4 border rounded shadow bg-white animate-pulse space-y-3"
-              >
-                <div className="h-4 w-1/4 bg-gray-300 rounded"></div>
-                <div className="h-4 w-2/3 bg-gray-300 rounded"></div>
-                <div className="h-4 w-1/3 bg-gray-300 rounded"></div>
-                <div className="h-4 w-1/3 bg-gray-300 rounded"></div>
-                <div className="h-4 w-1/3 bg-gray-300 rounded"></div>
+              <li key={i} className={styles.skeleton}>
+                <div style={{ width: "25%" }}></div>
+                <div style={{ width: "65%" }}></div>
+                <div style={{ width: "40%" }}></div>
               </li>
             ))}
           </ul>
         ) : (
-          <ul className="space-y-4">
+          <ul className={styles.list}>
             {users.map((u) => (
-              <li
-                key={u.id}
-                className="p-4 border rounded shadow bg-white hover:shadow-md transition"
-              >
+              <li key={u.id} className={styles.card}>
                 <p><strong>ID:</strong> {u.id}</p>
                 <p><strong>Name:</strong> {u.name}</p>
                 <p><strong>Email:</strong> {u.email}</p>
