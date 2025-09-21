@@ -1,10 +1,6 @@
-import CardPage from '@/app/auth/card/page'
-
+// src/app/page.tsx
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <div >
-      <CardPage />
-    </div>
-  );
+  redirect('/auth/card');
 }
