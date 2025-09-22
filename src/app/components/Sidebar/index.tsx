@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import UserCard from "@/app/components/organisms/userCard";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   HomeIcon,
   BarChartIcon,
@@ -16,13 +18,14 @@ import {
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname(); //Detecta la ruta actual
+  const { data: session } = useSession();
 
   const links = [
-    { href: "/dashboard", label: "Inicio", icon: <HomeIcon /> },
-    { href: "/dashboard/efficiency", label: "Informes", icon: <BarChartIcon /> },
-    { href: "/dashboard/users", label: "Empresas", icon: <PersonIcon /> },
-    { href: "/dashboard/references", label: "Consultores", icon: <Link2Icon /> },
-    { href: "/dashboard/settings", label: "Configuración", icon: <GearIcon /> },
+    { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
+    { href: "/dashboard/information", label: "Information", icon: <BarChartIcon /> },
+    { href: "/dashboard/users", label: "Users", icon: <PersonIcon /> },
+    { href: "/dashboard/companies", label: "Companies", icon: <Link2Icon /> },
+    { href: "/dashboard/configuration", label: "Configuration", icon: <GearIcon /> },
   ];
 
   return (
@@ -38,14 +41,15 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 max-h-full w-64 bg-white shadow-lg p-4 z-40 pt-16
+          fixed top-0 left-0 h-screen w-64 bg-white shadow-lg p-4 z-40 pt-16
           transform transition-transform duration-300
           ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-          md:translate-x-0 md:static md:block
+          md:translate-x-0 md:static flex flex-col
         `}
       >
-        <h2 className="text-2xl font-bold text-orange-500 mb-6">Herramientas</h2>
-        <nav className="flex flex-col gap-4">
+        <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
+
+        <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -61,7 +65,17 @@ export default function Sidebar() {
             </Link>
           ))}
         </nav>
+
+        {/* Card al final */}
+        <UserCard
+          name={session?.user?.name || "Invitado"}
+          role="Invitado"
+          avatar=""
+          onLogout={() => signOut()}
+        />
       </aside>
+
+
 
       {/* Fondo oscuro al abrir en móvil */}
       {isOpen && (

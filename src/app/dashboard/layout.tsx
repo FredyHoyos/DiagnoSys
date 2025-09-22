@@ -3,7 +3,6 @@
 import { SessionProvider } from "next-auth/react";
 import Sidebar from "@/app/components/Sidebar";
 
-
 export default function DashboardLayout({
   children,
 }: {
@@ -11,9 +10,12 @@ export default function DashboardLayout({
 }) {
   return (
     <SessionProvider>
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="flex h-screen bg-gray-100">
+        {/* Sidebar fijo */}
         <Sidebar />
-        <div className="flex flex-col flex-1">
+
+        {/* Contenido con scroll */}
+        <div className="flex flex-col flex-1 overflow-y-auto">
           <main className="p-6">{children}</main>
         </div>
       </div>
