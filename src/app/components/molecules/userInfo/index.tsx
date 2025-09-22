@@ -12,7 +12,7 @@ type UserInfoProps = {
 
 export default function UserInfo({ name, gmail, role, avatar }: UserInfoProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center justify-center gap-3 flex-wrap">
       <Avatar src={avatar} size={56} />
       <div className="flex flex-col">
         <TextLabel text={name} className="font-semibold text-lg" />
