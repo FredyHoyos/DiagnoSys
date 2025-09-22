@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import UserCard from "@/app/components/organisms/userCard";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   HomeIcon,
   BarChartIcon,
@@ -17,6 +18,7 @@ import {
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname(); //Detecta la ruta actual
+  const { data: session } = useSession();
 
   const links = [
     { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
@@ -66,10 +68,10 @@ export default function Sidebar() {
 
         {/* Card al final */}
         <UserCard
-          name="Fredy Cárdenas"
-          role="Administrador"
+          name={session?.user?.name || "Invitado"}
+          role="Invitado"
           avatar=""
-          onLogout={() => alert("Sesión cerrada")}
+          onLogout={() => signOut()}
         />
       </aside>
 
