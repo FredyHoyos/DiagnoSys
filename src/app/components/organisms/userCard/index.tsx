@@ -2,6 +2,7 @@
 
 import UserInfo from "@/app/components/molecules/userInfo";
 import Button from "@/app/components/atoms/button";
+import { signOut } from "next-auth/react";
 
 type UserCardProps = {
   name: string;
@@ -16,7 +17,7 @@ export default function UserCard({ name, role, avatar, onLogout }: UserCardProps
         <div className="w-full max-w-sm bg-white shadow-md rounded-2xl p-4 ">
            <UserInfo name={name} role={role} avatar={avatar} />
         </div>
-        <Button label="Logout" onClick={onLogout} />
+        <Button label="Logout" onClick={() => signOut({ callbackUrl: "/auth/card" })} />
     </div>
 
   );

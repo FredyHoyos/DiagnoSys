@@ -20,10 +20,10 @@ export default function Sidebar() {
 
   const links = [
     { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
-    { href: "/dashboard/efficiency", label: "Information", icon: <BarChartIcon /> },
+    { href: "/dashboard/information", label: "Information", icon: <BarChartIcon /> },
     { href: "/dashboard/users", label: "Users", icon: <PersonIcon /> },
-    { href: "/dashboard/references", label: "Companies", icon: <Link2Icon /> },
-    { href: "/dashboard/settings", label: "Configuration", icon: <GearIcon /> },
+    { href: "/dashboard/companies", label: "Companies", icon: <Link2Icon /> },
+    { href: "/dashboard/configuration", label: "Configuration", icon: <GearIcon /> },
   ];
 
   return (
@@ -39,15 +39,15 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 max-h-full w-64 bg-white shadow-lg p-4 z-40 pt-16
+          fixed top-0 left-0 h-screen w-64 bg-white shadow-lg p-4 z-40 pt-16
           transform transition-transform duration-300
           ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-          md:translate-x-0 md:static md:flex md:flex-col
+          md:translate-x-0 md:static flex flex-col
         `}
       >
         <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
 
-        <nav className="flex flex-col gap-4 flex-1">
+        <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -72,6 +72,7 @@ export default function Sidebar() {
           onLogout={() => alert("Sesión cerrada")}
         />
       </aside>
+
 
 
       {/* Fondo oscuro al abrir en móvil */}
