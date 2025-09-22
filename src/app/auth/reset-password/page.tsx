@@ -86,6 +86,11 @@ export default function ResetPasswordPage() {
     // Token válido
     return (
         <div className={styles.container}>
+            {/* Overlay que bloquea clicks durante redirección exitosa */}
+            {message && (
+                <div className={styles.overlay}></div>
+            )}
+            
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
                 <h2 className={styles.title}>Reset Password</h2>
                 <p className={styles.subtitle}>Enter your new password below</p>
@@ -97,6 +102,7 @@ export default function ResetPasswordPage() {
                         placeholder=" "
                         className={styles.input}
                         {...register("password")}
+                        disabled={loading || !!message} // Deshabilitar si hay mensaje de éxito
                     />
                     <label htmlFor="password" className={styles.label}>
                         New Password
@@ -113,6 +119,7 @@ export default function ResetPasswordPage() {
                         placeholder=" "
                         className={styles.input}
                         {...register("confirmPassword")}
+                        disabled={loading || !!message} // Deshabilitar si hay mensaje de éxito
                     />
                     <label htmlFor="confirmPassword" className={styles.label}>
                         Confirm Password
@@ -122,7 +129,11 @@ export default function ResetPasswordPage() {
                     )}
                 </div>
 
-                <button type="submit" className={styles.button} disabled={loading}>
+                <button 
+                    type="submit" 
+                    className={styles.button} 
+                    disabled={loading || !!message} // Deshabilitar si hay mensaje de éxito
+                >
                     {loading ? "Resetting..." : "Reset Password"}
                 </button>
 
