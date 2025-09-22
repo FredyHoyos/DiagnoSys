@@ -69,8 +69,13 @@ export default function Sidebar() {
         {/* Card al final */}
         <UserCard
           name={session?.user?.name || "Invitado"}
-          role="Invitado"
-          avatar=""
+          role={
+            typeof session?.user?.role === "string"
+              ? session.user.role
+              : session?.user?.role?.displayName || session?.user?.role?.name || "Invitado"
+          }
+          gmail={session?.user?.email || ""}
+          avatar=""     
         />
       </aside>
 
