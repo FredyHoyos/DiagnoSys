@@ -18,11 +18,11 @@ export default function Sidebar() {
   const pathname = usePathname(); //Detecta la ruta actual
 
   const links = [
-    { href: "/dashboard", label: "Inicio", icon: <HomeIcon /> },
-    { href: "/dashboard/efficiency", label: "Informes", icon: <BarChartIcon /> },
-    { href: "/dashboard/users", label: "Empresas", icon: <PersonIcon /> },
-    { href: "/dashboard/references", label: "Consultores", icon: <Link2Icon /> },
-    { href: "/dashboard/settings", label: "Configuración", icon: <GearIcon /> },
+    { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
+    { href: "/dashboard/efficiency", label: "Information", icon: <BarChartIcon /> },
+    { href: "/dashboard/users", label: "Users", icon: <PersonIcon /> },
+    { href: "/dashboard/references", label: "Companies", icon: <Link2Icon /> },
+    { href: "/dashboard/settings", label: "Configuration", icon: <GearIcon /> },
   ];
 
   return (
@@ -44,7 +44,7 @@ export default function Sidebar() {
           md:translate-x-0 md:static md:block
         `}
       >
-        <h2 className="text-2xl font-bold text-orange-500 mb-6">Herramientas</h2>
+        <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
         <nav className="flex flex-col gap-4">
           {links.map((link) => (
             <Link

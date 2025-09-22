@@ -3,4 +3,21 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --color-primary: #2E6347;
+  --color-primary-hover: #265239;
 }
+
+.bg-primary {
+  background-color: var(--color-primary);
+  color: var(--background);
+}
+
+.bg-primary:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--background);
+}
+
+.text-primary {
+  color: var(--color-primary);
+} 
