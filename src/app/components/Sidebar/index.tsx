@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import UserCard from "@/app/components/organisms/userCard";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
@@ -41,11 +42,12 @@ export default function Sidebar() {
           fixed top-0 left-0 max-h-full w-64 bg-white shadow-lg p-4 z-40 pt-16
           transform transition-transform duration-300
           ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-          md:translate-x-0 md:static md:block
+          md:translate-x-0 md:static md:flex md:flex-col
         `}
       >
         <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
-        <nav className="flex flex-col gap-4">
+
+        <nav className="flex flex-col gap-4 flex-1">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -61,7 +63,16 @@ export default function Sidebar() {
             </Link>
           ))}
         </nav>
+
+        {/* Card al final */}
+        <UserCard
+          name="Fredy Cárdenas"
+          role="Administrador"
+          avatar=""
+          onLogout={() => alert("Sesión cerrada")}
+        />
       </aside>
+
 
       {/* Fondo oscuro al abrir en móvil */}
       {isOpen && (
