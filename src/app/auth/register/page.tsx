@@ -16,9 +16,7 @@ const schema = z
             .regex(/[A-Z]/, "Must contain at least one uppercase letter")
             .regex(/[0-9]/, "Must contain at least one number"),
         confirmPassword: z.string(),
-        role: z.enum(["consultant", "organization"], {
-            message: "Please select your role",
-        }),
+        role: z.enum(["consultant", "organization"], { message: "Please select your role" }),
     })
     .refine((data) => data.password === data.confirmPassword, {
         path: ["confirmPassword"],
@@ -27,20 +25,18 @@ const schema = z
 
 type FormData = z.infer<typeof schema>;
 
-export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
+interface Props {
+    onSwitch: () => void;
+}
+
+export default function RegisterForm({ onSwitch }: Props) {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [successPopup, setSuccessPopup] = useState(false);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-        reset,
-    } = useForm<FormData>({
+    const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
         resolver: zodResolver(schema),
     });
-
 
     async function onSubmit(data: FormData) {
         setError("");
@@ -70,7 +66,7 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
 
             setTimeout(() => {
                 setSuccessPopup(false);
-                reset(undefined, { keepErrors: false, keepDirty: false, keepTouched: false });  // Limpiar el formulario
+                reset(undefined, { keepErrors: false, keepDirty: false, keepTouched: false });
                 onSwitch(); // Cambiar a la vista de login
             }, 3000);
         } catch {
@@ -82,11 +78,7 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
 
     return (
         <div className={styles.container}>
-            <form
-                onSubmit={handleSubmit(onSubmit)}
-                noValidate
-                className={styles.form}
-            >
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className={styles.form}>
                 <div className={styles.header}>
                     <h2 className={styles.title}>Get started</h2>
                     <p className={styles.subtitle}>Create a new account</p>
@@ -94,43 +86,24 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
 
                 {/* Name */}
                 <div className={styles.inputGroup}>
-                    <input
-                        id="name"
-                        {...register("name")}
-                        placeholder=" "
-                        className={styles.input}
-                    />
-                    <label htmlFor="name" className={styles.label}>
-                        Name
-                    </label>
+                    <input id="name" {...register("name")} placeholder=" " className={styles.input} />
+                    <label htmlFor="name" className={styles.label}>Name</label>
                     {errors.name && <p className={styles.error}>{errors.name.message}</p>}
                 </div>
 
                 {/* Email */}
                 <div className={styles.inputGroup}>
-                    <input
-                        id="email"
-                        {...register("email")}
-                        placeholder=" "
-                        className={styles.input}
-                    />
-                    <label htmlFor="email" className={styles.label}>
-                        Email
-                    </label>
+                    <input id="email" {...register("email")} placeholder=" " className={styles.input} />
+                    <label htmlFor="email" className={styles.label}>Email</label>
                     {errors.email && <p className={styles.error}>{errors.email.message}</p>}
                 </div>
 
-                {/* Role Selection */}
+                {/* Role */}
                 <div className={styles.roleSelection}>
                     <h3 className={styles.roleTitle}>What best describes you?</h3>
                     <div className={styles.roleOptions}>
                         <label className={styles.roleOption}>
-                            <input
-                                type="radio"
-                                value="organization"
-                                {...register("role")}
-                                className={styles.roleRadio}
-                            />
+                            <input type="radio" value="organization" {...register("role")} className={styles.roleRadio} />
                             <div className={styles.roleCard}>
                                 <div className={styles.roleIcon}>🏢</div>
                                 <div className={styles.roleInfo}>
@@ -139,14 +112,9 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
                                 </div>
                             </div>
                         </label>
-                        
+
                         <label className={styles.roleOption}>
-                            <input
-                                type="radio"
-                                value="consultant"
-                                {...register("role")}
-                                className={styles.roleRadio}
-                            />
+                            <input type="radio" value="consultant" {...register("role")} className={styles.roleRadio} />
                             <div className={styles.roleCard}>
                                 <div className={styles.roleIcon}>👨‍💼</div>
                                 <div className={styles.roleInfo}>
@@ -161,50 +129,27 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
 
                 {/* Password */}
                 <div className={styles.inputGroup}>
-                    <input
-                        id="password"
-                        type="password"
-                        {...register("password")}
-                        placeholder=" "
-                        className={styles.input}
-                    />
-                    <label htmlFor="password" className={styles.label}>
-                        Password
-                    </label>
+                    <input id="password" type="password" {...register("password")} placeholder=" " className={styles.input} />
+                    <label htmlFor="password" className={styles.label}>Password</label>
                     {errors.password && <p className={styles.error}>{errors.password.message}</p>}
                 </div>
 
                 {/* Confirm Password */}
                 <div className={styles.inputGroup}>
-                    <input
-                        id="confirmPassword"
-                        type="password"
-                        {...register("confirmPassword")}
-                        placeholder=" "
-                        className={styles.input}
-                    />
-                    <label htmlFor="confirmPassword" className={styles.label}>
-                        Confirm Password
-                    </label>
-                    {errors.confirmPassword && (
-                        <p className={styles.error}>{errors.confirmPassword.message}</p>
-                    )}
+                    <input id="confirmPassword" type="password" {...register("confirmPassword")} placeholder=" " className={styles.input} />
+                    <label htmlFor="confirmPassword" className={styles.label}>Confirm Password</label>
+                    {errors.confirmPassword && <p className={styles.error}>{errors.confirmPassword.message}</p>}
                 </div>
 
                 {error && <p className={styles.serverError}>{error}</p>}
 
-                {/* Submit Button */}
                 <button type="submit" disabled={loading} className={styles.button}>
                     {loading ? "Creating account..." : "Create account"}
                 </button>
 
-                {/* Aquí agregamos la parte nueva */}
                 <p className={styles.footerText}>
                     Have an account?{" "}
-                    <button type="button" onClick={() => {
-                        reset(undefined, { keepErrors: false });
-                        onSwitch();
-                    }} className={styles.link}>
+                    <button type="button" onClick={() => { reset(undefined, { keepErrors: false }); onSwitch(); }} className={styles.link}>
                         Sign In Now
                     </button>
                 </p>
