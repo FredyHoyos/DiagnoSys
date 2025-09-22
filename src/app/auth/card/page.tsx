@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import styles from "./card.module.css";
-import LoginForm from "@/app/auth/login/page";
-import RegisterForm from "@/app/auth/register/page";
-import ForgotPasswordForm from "@/app/auth/forgot-password/page";
+import LoginForm from "@/app/auth/login/login";
+import RegisterForm from "@/app/auth/register/register";
+import ForgotPasswordForm from "@/app/auth/forgot-password/forgot-password";
 
 type Mode = "login" | "register" | "forgot";
 

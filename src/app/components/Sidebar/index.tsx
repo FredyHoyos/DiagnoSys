@@ -71,7 +71,6 @@ export default function Sidebar() {
           name={session?.user?.name || "Invitado"}
           role="Invitado"
           avatar=""
-          onLogout={() => signOut()}
         />
       </aside>
 
