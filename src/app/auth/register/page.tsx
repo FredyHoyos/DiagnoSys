@@ -15,7 +15,10 @@ const schema = z
             .min(8, "Password must be at least 8 characters")
             .regex(/[A-Z]/, "Must contain at least one uppercase letter")
             .regex(/[0-9]/, "Must contain at least one number"),
-            confirmPassword: z.string(),
+        confirmPassword: z.string(),
+        role: z.enum(["consultant", "organization"], {
+            message: "Please select your role",
+        }),
     })
     .refine((data) => data.password === data.confirmPassword, {
         path: ["confirmPassword"],
@@ -51,6 +54,7 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
                     name: data.name,
                     email: data.email,
                     password: data.password,
+                    role: data.role,
                 }),
             });
 
@@ -114,6 +118,45 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
                         Email
                     </label>
                     {errors.email && <p className={styles.error}>{errors.email.message}</p>}
+                </div>
+
+                {/* Role Selection */}
+                <div className={styles.roleSelection}>
+                    <h3 className={styles.roleTitle}>What best describes you?</h3>
+                    <div className={styles.roleOptions}>
+                        <label className={styles.roleOption}>
+                            <input
+                                type="radio"
+                                value="organization"
+                                {...register("role")}
+                                className={styles.roleRadio}
+                            />
+                            <div className={styles.roleCard}>
+                                <div className={styles.roleIcon}>🏢</div>
+                                <div className={styles.roleInfo}>
+                                    <h4>Organization</h4>
+                                    <p>I represent a company or institution</p>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label className={styles.roleOption}>
+                            <input
+                                type="radio"
+                                value="consultant"
+                                {...register("role")}
+                                className={styles.roleRadio}
+                            />
+                            <div className={styles.roleCard}>
+                                <div className={styles.roleIcon}>👨‍💼</div>
+                                <div className={styles.roleInfo}>
+                                    <h4>Consultant</h4>
+                                    <p>I provide independent consulting services</p>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    {errors.role && <p className={styles.error}>{errors.role.message}</p>}
                 </div>
 
                 {/* Password */}

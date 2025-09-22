@@ -86,11 +86,6 @@ export default function ResetPasswordPage() {
     // Token válido
     return (
         <div className={styles.container}>
-            {/* Overlay que bloquea clicks durante redirección exitosa */}
-            {message && (
-                <div className={styles.overlay}></div>
-            )}
-            
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
                 <h2 className={styles.title}>Reset Password</h2>
                 <p className={styles.subtitle}>Enter your new password below</p>

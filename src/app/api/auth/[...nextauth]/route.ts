@@ -7,6 +7,10 @@ import bcrypt from "bcryptjs";
 declare module "next-auth" {
     interface User extends DefaultUser {
         rememberMe?: boolean;
+        role?: {
+            name: string;
+            displayName: string;
+        };
     }
 
     interface Session extends DefaultSession {
@@ -15,6 +19,10 @@ declare module "next-auth" {
             email?: string | null;
             name?: string | null;
             rememberMe?: boolean;
+            role?: {
+                name: string;
+                displayName: string;
+            };
         };
         expires: string;
     }
@@ -24,6 +32,10 @@ declare module "next-auth/jwt" {
     interface JWT {
         rememberMe?: boolean;
         exp?: number;
+        role?: {
+            name: string;
+            displayName: string;
+        };
     }
 }
 // ----------------------------------------
@@ -46,6 +58,14 @@ const handler = NextAuth({
 
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email },
+                    include: {
+                        role: {
+                            select: {
+                                name: true,
+                                displayName: true,
+                            },
+                        },
+                    },
                 });
 
                 if (!user) {
@@ -61,12 +81,13 @@ const handler = NextAuth({
                     throw new Error("Invalid password");
                 }
 
-                // Retornamos el usuario + rememberMe
+                // Retornamos el usuario + rememberMe + role
                 return {
                     id: user.id.toString(),
                     name: user.name,
                     email: user.email,
                     rememberMe: credentials.rememberMe === "on",
+                    role: user.role,
                 };
             },
         }),
@@ -79,21 +100,29 @@ const handler = NextAuth({
     },
     callbacks: {
         async jwt({ token, user }) {
-            if (user?.rememberMe) {
-                token.rememberMe = true;
-                token.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 días
-            } else if (user) {
-                token.rememberMe = false;
-                token.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 8; // 8 horas
+            // Al hacer login, agregar información del usuario al token
+            if (user) {
+                token.role = user.role;
+                if (user.rememberMe) {
+                    token.rememberMe = true;
+                    token.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 días
+                } else {
+                    token.rememberMe = false;
+                    token.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 8; // 8 horas
+                }
             }
             return token;
         },
         async session({ session, token }) {
+            // Pasar información del token a la sesión
             if (typeof token.exp === "number") {
                 session.expires = new Date(token.exp * 1000).toISOString();
             }
             if (typeof token.rememberMe === "boolean") {
                 session.user.rememberMe = token.rememberMe;
+            }
+            if (token.role) {
+                session.user.role = token.role;
             }
             return session;
         },

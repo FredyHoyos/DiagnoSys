@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import styles from "./dashboard.module.css";
 
 type User = {
@@ -10,9 +10,14 @@ type User = {
   email: string;
   createdAt: string;
   updatedAt: string;
+  role?: {
+    name: string;
+    displayName: string;
+  } | null;
 };
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,11 +37,30 @@ export default function DashboardPage() {
     fetchUsers();
   }, []);
 
+  if (status === "loading") {
+    return (
+      <main className={styles.container}>
+        <div className={styles.loading}>Cargando...</div>
+      </main>
+    );
+  }
+
   return (
     <main className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <h1 className={styles.title}>Test: DB connection validation</h1>
+        <div>
+          <h1 className={styles.title}>DiagnoSys Dashboard</h1>
+          {session?.user && (
+            <div className={styles.userInfo}>
+              <p><strong>Usuario:</strong> {session.user.name}</p>
+              <p><strong>Email:</strong> {session.user.email}</p>
+              {session.user.role && (
+                <p><strong>Rol:</strong> {session.user.role.displayName}</p>
+              )}
+            </div>
+          )}
+        </div>
         <button
           onClick={() => signOut({ callbackUrl: "/auth/card" })}
           className={styles.logoutButton}
@@ -46,7 +70,7 @@ export default function DashboardPage() {
       </div>
 
       <section className={styles.section}>
-        <h2>Registered Users</h2>
+        <h2>Usuarios Registrados</h2>
 
         {loading ? (
           <ul className={styles.list}>
@@ -63,10 +87,11 @@ export default function DashboardPage() {
             {users.map((u) => (
               <li key={u.id} className={styles.card}>
                 <p><strong>ID:</strong> {u.id}</p>
-                <p><strong>Name:</strong> {u.name}</p>
+                <p><strong>Nombre:</strong> {u.name}</p>
                 <p><strong>Email:</strong> {u.email}</p>
-                <p><strong>Created:</strong> {new Date(u.createdAt).toLocaleString()}</p>
-                <p><strong>Updated:</strong> {new Date(u.updatedAt).toLocaleString()}</p>
+                <p><strong>Rol:</strong> {u.role?.displayName || 'Sin rol'}</p>
+                <p><strong>Creado:</strong> {new Date(u.createdAt).toLocaleString()}</p>
+                <p><strong>Actualizado:</strong> {new Date(u.updatedAt).toLocaleString()}</p>
               </li>
             ))}
           </ul>

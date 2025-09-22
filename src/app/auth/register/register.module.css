@@ -118,12 +118,89 @@
     line-height: 1.3;
 }
 
+/* Role Selection Styles */
+.roleSelection {
+    margin: 1rem 0;
+}
+
+.roleTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #125333;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.roleOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.roleOption {
+    cursor: pointer;
+    position: relative;
+}
+
+.roleRadio {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.roleCard {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: white;
+    transition: all 0.2s ease;
+    gap: 1rem;
+}
+
+.roleCard:hover {
+    border-color: #125333;
+    background: #f8fffe;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(18, 83, 51, 0.1);
+}
+
+.roleRadio:checked + .roleCard {
+    border-color: #125333;
+    background: #f0f9ff;
+    box-shadow: 0 0 0 3px rgba(18, 83, 51, 0.1);
+}
+
+.roleIcon {
+    font-size: 2rem;
+    text-align: center;
+    min-width: 3rem;
+}
+
+.roleInfo h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #125333;
+    margin-bottom: 0.25rem;
+}
+
+.roleInfo p {
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.3;
+}
+
 .success {
-    color: #16a34a;
-    /* verde éxito */
+    color: #10b981;
     font-size: 0.9rem;
-    margin-top: 0.5rem;
-    text-align: left;
+    text-align: center;
+    padding: 0.75rem;
+    background: #ecfdf5;
+    border-radius: 0.5rem;
+    border: 1px solid #10b981;
+    margin-top: 1rem;
+    font-weight: 500;
 }
 
 .button {
@@ -233,4 +310,35 @@
         font-size: 0.9rem;
         padding: 0.8rem 0.7rem 0.3rem 0.7rem;
     }
+}
+
+/* Personalización del scrollbar */
+.container::-webkit-scrollbar,
+.form::-webkit-scrollbar {
+    width: 8px;
+}
+
+.container::-webkit-scrollbar-track,
+.form::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.container::-webkit-scrollbar-thumb,
+.form::-webkit-scrollbar-thumb {
+    background: #125333;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.container::-webkit-scrollbar-thumb:hover,
+.form::-webkit-scrollbar-thumb:hover {
+    background: #0f3f29;
+}
+
+/* Para Firefox */
+.container,
+.form {
+    scrollbar-width: thin;
+    scrollbar-color: #125333 #f1f5f9;
 }
