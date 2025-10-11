@@ -1,9 +1,16 @@
-import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
+import NextAuth, {
+    type NextAuthOptions,
+    type DefaultSession,
+    type DefaultUser,
+} from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import type { JWT } from "next-auth/jwt";
 
-// ---------- EXTENSIÓN DE TIPOS ----------
+const prisma = new PrismaClient();
+
+/* ---------------------- EXTENSIÓN DE TIPOS ---------------------- */
 declare module "next-auth" {
     interface User extends DefaultUser {
         rememberMe?: boolean;
@@ -38,18 +45,17 @@ declare module "next-auth/jwt" {
         };
     }
 }
-// ----------------------------------------
+/* ---------------------------------------------------------------- */
 
-const prisma = new PrismaClient();
-
-const handler = NextAuth({
+/* ------------------------ CONFIGURACIÓN -------------------------- */
+export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "text" },
                 password: { label: "Password", type: "password" },
-                rememberMe: { label: "Remember me", type: "checkbox" }, // campo extra
+                rememberMe: { label: "Remember me", type: "checkbox" },
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
@@ -68,20 +74,16 @@ const handler = NextAuth({
                     },
                 });
 
-                if (!user) {
-                    throw new Error("User not found");
-                }
+                if (!user) throw new Error("User not found");
 
                 const isPasswordValid = await bcrypt.compare(
                     credentials.password,
                     user.password
                 );
 
-                if (!isPasswordValid) {
-                    throw new Error("Invalid password");
-                }
+                if (!isPasswordValid) throw new Error("Invalid password");
 
-                // Retornamos el usuario + rememberMe + role
+                // Retornamos datos esenciales del usuario
                 return {
                     id: user.id.toString(),
                     name: user.name,
@@ -92,29 +94,34 @@ const handler = NextAuth({
             },
         }),
     ],
+
     pages: {
-        signIn: "/auth/card", //  página de login
+        signIn: "/auth/card",
     },
+
     session: {
         strategy: "jwt",
     },
+
     callbacks: {
-        async jwt({ token, user }) {
-            // Al hacer login, agregar información del usuario al token
+        async jwt({ token, user }: { token: JWT; user?: import("next-auth").User }) {
             if (user) {
                 token.role = user.role;
-                if (user.rememberMe) {
-                    token.rememberMe = true;
-                    token.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 días
-                } else {
-                    token.rememberMe = false;
-                    token.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 8; // 8 horas
-                }
+                token.rememberMe = !!user.rememberMe;
+                token.exp =
+                    Math.floor(Date.now() / 1000) +
+                    (user.rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 8); // 30 días o 8 horas
             }
             return token;
         },
-        async session({ session, token }) {
-            // Pasar información del token a la sesión
+
+        async session({
+            session,
+            token,
+        }: {
+            session: import("next-auth").Session;
+            token: JWT;
+        }) {
             if (typeof token.exp === "number") {
                 session.expires = new Date(token.exp * 1000).toISOString();
             }
@@ -127,7 +134,12 @@ const handler = NextAuth({
             return session;
         },
     },
-    secret: process.env.NEXTAUTH_SECRET,
-});
 
+    secret: process.env.NEXTAUTH_SECRET,
+};
+/* ---------------------------------------------------------------- */
+
+/* ------------------- EXPORTACIÓN DEL HANDLER -------------------- */
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+/* ---------------------------------------------------------------- */
