@@ -13,6 +13,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =============================
+// Roles & Users
+// =============================
 model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique // "admin", "consultant", "organization"
@@ -32,6 +35,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tokens    ResetToken[]
+  userForms   UserForm[]
+  userItems   UserItemScore[]
 }
 
 model ResetToken {
@@ -41,4 +46,84 @@ model ResetToken {
   createdAt DateTime @default(now())
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================
+// Dynamic Forms (templates)
+// =============================
+
+model Module {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  forms       Form[]
+}
+
+model Form {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String?
+  moduleId    Int
+  module      Module      @relation(fields: [moduleId], references: [id])
+  categories  Category[]
+  userForms   UserForm[]  // users that completed this form
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   
+  formId      Int
+  form        Form     @relation(fields: [formId], references: [id])
+  items       Item[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, formId]) // NAME UNIQUE within a form
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  name        String   
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  userScores  UserItemScore[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, categoryId]) // NAME UNIQUE within a category
+}
+
+// =============================
+// User Responses
+// =============================
+
+model UserForm {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  formId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, formId]) // one form response per user
+}
+
+model UserItemScore {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  itemId      Int
+  score       Int?     // initially null, filled when user assigns it
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId]) // one score per user per item
 }
