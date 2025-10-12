@@ -7,10 +7,10 @@ import { usePathname } from "next/navigation";
 import { useSession} from "next-auth/react";
 import {
   HomeIcon,
-  BarChartIcon,
-  PersonIcon,
-  GearIcon,
-  Link2Icon,
+  ZoomOutIcon,
+  LayoutIcon,
+  ListBulletIcon,
+  ZoomInIcon,
   HamburgerMenuIcon,
   Cross1Icon,
 } from "@radix-ui/react-icons";
@@ -22,10 +22,10 @@ export default function Sidebar() {
 
   const links = [
     { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
-    { href: "/dashboard/information", label: "Information", icon: <BarChartIcon /> },
-    { href: "/dashboard/users", label: "Users", icon: <PersonIcon /> },
-    { href: "/dashboard/companies", label: "Companies", icon: <Link2Icon /> },
-    { href: "/dashboard/configuration", label: "Configuration", icon: <GearIcon /> },
+    { href: "/dashboard/zoom-in", label: "Zoom-in", icon: <ZoomInIcon /> },
+    { href: "/dashboard/zoom-out", label: "Zoom-out", icon: <ZoomOutIcon /> },
+    { href: "/dashboard/categorization", label: "Categorization", icon: <LayoutIcon /> },
+    { href: "/dashboard/prioritization", label: "Prioritization", icon: <ListBulletIcon /> },
   ];
 
   return (
