@@ -2,6 +2,7 @@
 
 ## 📋 **RESUMEN COMPLETO DE ENDPOINTS IMPLEMENTADOS PARA EL MODULO ZOOM IN**
 
+
 ### 🔧 **ADMINISTRADORES** (`/api/admin/`)
 
 #### **Gestión de Formularios Base**
