@@ -15,7 +15,7 @@ export default function DashboardLayout({
         <Sidebar />
 
         {/* Contenido con scroll */}
-        <div className="flex flex-col flex-1 overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto md:pt-1 pt-8">
           <main className="p-6">{children}</main>
         </div>
       </div>
