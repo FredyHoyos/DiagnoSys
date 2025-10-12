@@ -79,7 +79,7 @@ export default function TargeticasPage() {
         itemsCount={totalItems}
       />
 
-      <h2 className="text-2xl font-semibold mb-4">Forms</h2>
+      <h2 className="text-2xl font-semibold mb-4 pt-20">Forms</h2>
 
       <div className="flex justify-center flex-wrap gap-8">
         {forms.length === 0 ? (

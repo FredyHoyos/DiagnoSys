@@ -6,12 +6,12 @@ import { signOut } from "next-auth/react";
 
 const index = ({title="Title", description="Description", publicF=false, categorieNumber=0, itemNumber=0}) => {
   return (
-            <div className='flex flex-row space-x-3 rounded-lg border border-gray-300 p-4 shadow-sm w-96 items-center'>
+            <div className='flex flex-row space-x-3 rounded-lg border border-gray-300 p-4 shadow-sm w-80 items-center'>
             <div className='flex-1'>
                 <div className='mb-2 flex flex-row justify-between items-center'>
-                    <h1 className='text-3xl font-bold'>{title}</h1>
+                    <h1 className='text-2xl font-bold'>{title}</h1>
                     <h2
-                    className={`text-lg rounded-md flex items-center justify-center p-1 h-7
+                    className={`text-xs rounded-md flex items-center justify-center p-1 h-7
                         ${publicF
                         ? 'bg-green-200 text-green-700'
                         : 'bg-red-200 text-red-700'
