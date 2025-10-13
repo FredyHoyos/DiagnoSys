@@ -16,13 +16,6 @@ type Category = {
   items: Item[];
 };
 
-type FormResponse = {
-  id: number;
-  name: string;
-  description?: string;
-  categories: Category[];
-};
-
 type CategoryState = {
   name: string;
   description: string;

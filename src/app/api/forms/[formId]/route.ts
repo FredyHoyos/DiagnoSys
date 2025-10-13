@@ -10,14 +10,13 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(
   request: NextRequest,
-  context: { params: { formId: string } }
+  context: { params: Promise<{ formId: string }> }
 ) {
   const { formId } = await context.params;
 
   try {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id ? parseInt(session.user.id) : null;
-    const isAdmin = session?.user?.role?.name === "admin";
 
     const formIdInt = parseInt(formId);
     if (isNaN(formIdInt)) {
