@@ -3,29 +3,57 @@ import React, { useState, useEffect } from "react";
 import FormHeader from "../components/FormHeader";
 import CategoryEditor from "../components/CategoryEditor";
 
-export default function EditFormPage({ params }: { params: { formId: string } }) {
+type Item = {
+  id: number;
+  name: string;
+  description?: string;
+};
+
+type Category = {
+  id: number;
+  name: string;
+  description?: string;
+  items: Item[];
+};
+
+type FormResponse = {
+  id: number;
+  name: string;
+  description?: string;
+  categories: Category[];
+};
+
+type CategoryState = {
+  name: string;
+  description: string;
+  items: string[];
+};
+
+export default function EditFormPage({
+  params,
+}: {
+  params: { formId: string };
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [categories, setCategories] = useState<
-    { name: string; description: string; items: string[] }[]
-  >([]);
+  const [categories, setCategories] = useState<CategoryState[]>([]);
 
   useEffect(() => {
-    // Cargar datos del formulario
-    
     const fetchData = async () => {
       const res = await fetch(`/api/forms/${params.formId}`, {
         credentials: "include",
-        });
+      });
       const data = await res.json();
+
       if (res.ok && data.form) {
         setTitle(data.form.name);
         setDescription(data.form.description || "");
+
         setCategories(
-          data.form.categories.map((c: any) => ({
+          (data.form.categories as Category[]).map((c) => ({
             name: c.name,
             description: c.description || "",
-            items: c.items.map((i: any) => i.name),
+            items: c.items.map((i) => i.name),
           }))
         );
       }
@@ -60,9 +88,11 @@ export default function EditFormPage({ params }: { params: { formId: string } })
           setCategories(categories.filter((_, i) => i !== index))
         }
         onCategoryChange={(index, field, value) => {
-          const updated = [...categories];
-          (updated[index] as any)[field] = value;
-          setCategories(updated);
+          setCategories((prev) =>
+            prev.map((cat, i) =>
+              i === index ? { ...cat, [field]: value } : cat
+            )
+          );
         }}
         onItemChange={(index, items) => {
           const updated = [...categories];
