@@ -5,14 +5,14 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/forms/[formId]
- * Obtiene un formulario específico con todas sus categorías e items
- * Incluye los puntajes del usuario si existen
+ * Obtiene un formulario específico con todas sus categorías e ítems.
+ * Incluye los puntajes del usuario si existen.
  */
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ formId: string }> }
+  context: { params: { formId: string } }
 ) {
-  const { formId } = await context.params;
+  const { formId } = context.params;
 
   try {
     const session = await getServerSession(authOptions);
@@ -46,7 +46,7 @@ export async function GET(
                         },
                       },
                     }
-                  : {}), // si no hay userId, no incluimos el filtro
+                  : {}),
                 _count: {
                   select: {
                     userScores: true,
@@ -71,7 +71,7 @@ export async function GET(
                 },
               },
             }
-          : { userSessions: { where: { id: 0 } } }), // si no hay userId, devuelve vacío
+          : { userSessions: { where: { id: 0 } } }),
         _count: { select: { categories: true, userSessions: true } },
       },
     });
@@ -80,7 +80,6 @@ export async function GET(
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
-    // Procesar estadísticas
     const totalItems = form.categories.reduce(
       (sum, cat) => sum + cat.items.length,
       0
