@@ -8,7 +8,10 @@ export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
     const isAdmin = session.user.role?.name === "admin";
@@ -17,7 +20,16 @@ export async function GET() {
       where: isAdmin ? {} : { isPublished: true },
       include: {
         module: { select: { id: true, name: true } },
-        _count: { select: { categories: true } },
+        categories: {
+          include: {
+            _count: {
+              select: { items: true },
+            },
+          },
+        },
+        _count: {
+          select: { categories: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -25,6 +37,9 @@ export async function GET() {
     return NextResponse.json({ forms });
   } catch (error) {
     console.error("Error fetching forms:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
