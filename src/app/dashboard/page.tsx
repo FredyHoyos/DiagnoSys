@@ -47,30 +47,8 @@ export default function DashboardPage() {
 
   return (
     <main className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>DiagnoSys Dashboard</h1>
-          {session?.user && (
-            <div className={styles.userInfo}>
-              <p><strong>Usuario:</strong> {session.user.name}</p>
-              <p><strong>Email:</strong> {session.user.email}</p>
-              {session.user.role && (
-                <p><strong>Rol:</strong> {session.user.role.displayName}</p>
-              )}
-            </div>
-          )}
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/auth/card" })}
-          className={styles.logoutButton}
-        >
-          Logout
-        </button>
-      </div>
-
       <section className={styles.section}>
-        <h2>Usuarios Registrados</h2>
+        <h1 className="text-4xl text-primary pb-7">Usuarios Registrados</h1>
 
         {loading ? (
           <ul className={styles.list}>

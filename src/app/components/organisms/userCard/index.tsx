@@ -1,8 +1,9 @@
 "use client";
 
 import UserInfo from "@/app/components/molecules/userInfo";
-import Button from "@/app/components/atoms/button";
+import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react";
+import { LogOut } from "lucide-react"
 
 type UserCardProps = {
   name: string;
@@ -13,11 +14,18 @@ type UserCardProps = {
 
 export default function UserCard({ name,gmail, role, avatar }: UserCardProps) {
   return (
-    <div className="mt-auto pt-4 border-t border-gray-200 flex flex-col items-center gap-4">
+    <div className="mt-auto pt-4 pb-7 border-t border-gray-200 flex flex-col items-center gap-4">
       <div className="w-full max-w-sm bg-white shadow-md rounded-2xl p-2 ">
         <UserInfo name={name} gmail={gmail} role={role} avatar={avatar} />
       </div>
-      <Button label="Logout" onClick={() => signOut({ callbackUrl: "/auth/card" })} />
+      <Button
+        variant="destructive"
+        onClick={() => signOut({ callbackUrl: "/auth/card" })}
+        className="flex items-center gap-2 cursor-pointer"
+      >
+        <LogOut className="h-5 w-5 text-white" />
+        Logout
+    </Button>
     </div>
 
   );
