@@ -98,6 +98,7 @@ export default function TargeticasPage() {
                   0
                 ) || 0
               }
+              formId={form.id.toString()}
             />
           ))
         )}

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import FormHeader from "./components/FormHeader";
-import CategoryEditor from "./components/CategoryEditor";
+import FormHeader from "../components/FormHeader";
+import CategoryEditor from "../components/CategoryEditor";
 
 export default function EditFormPage({ params }: { params: { formId: string } }) {
   const [title, setTitle] = useState("");
@@ -14,7 +14,9 @@ export default function EditFormPage({ params }: { params: { formId: string } })
     // Cargar datos del formulario
     
     const fetchData = async () => {
-      const res = await fetch(`/api/forms/${params.formId}`);
+      const res = await fetch(`/api/forms/${params.formId}`, {
+        credentials: "include",
+        });
       const data = await res.json();
       if (res.ok && data.form) {
         setTitle(data.form.name);
