@@ -49,6 +49,7 @@ export async function GET() {
  * - Si es admin → puede actualizar cualquier usuario.
  * - Si no es admin → solo puede actualizar su propio perfil.
  */
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, name, password } = await req.json();
+    const { email, name, password, currentPassword } = await req.json();
 
     // Verificar si el usuario existe
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -77,6 +78,14 @@ export async function POST(req: Request) {
         { error: "Unauthorized to modify this user." },
         { status: 403 }
       );
+    }
+
+    // Si hay una nueva contraseña, verificar si la contraseña actual es correcta
+    if (password && currentPassword) {
+      const isPasswordCorrect = await bcrypt.compare(currentPassword, existingUser.password);
+      if (!isPasswordCorrect) {
+        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
+      }
     }
 
     // Actualizar usuario
