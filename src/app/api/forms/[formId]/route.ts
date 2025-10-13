@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ formId: string }> }
+  context: { params: { formId: string } }
 ) {
   const { formId } = await context.params;
 
