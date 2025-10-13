@@ -49,7 +49,7 @@ export default function TargeticasPage() {
     fetchForms();
   }, []);
 
-  if (loading) return <p className="text-gray-500">Cargando formularios...</p>;
+  if (loading) return <p className="text-gray-500">Loading forms...</p>;
 
   // Cálculos seguros
   const totalCategories = forms?.reduce(
@@ -83,7 +83,7 @@ export default function TargeticasPage() {
 
       <div className="flex justify-center flex-wrap gap-8">
         {forms.length === 0 ? (
-          <p className="text-gray-500">No hay formularios disponibles.</p>
+          <p className="text-gray-500">No forms available.</p>
         ) : (
           forms.map((form) => (
             <TargetForm2

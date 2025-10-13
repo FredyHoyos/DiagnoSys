@@ -14,12 +14,12 @@ export default function FormHeader({
 }) {
   return (
     <div className="p-6 border rounded-xl bg-white shadow">
-      <h2 className="text-2xl font-bold mb-4">Editar Formulario</h2>
+      <h2 className="text-2xl font-bold mb-4">Edit form</h2>
 
       <div className="space-y-4">
         <div>
           <label className="block text-gray-700 font-medium mb-1">
-            Título
+            Title
           </label>
           <input
             type="text"
@@ -31,7 +31,7 @@ export default function FormHeader({
 
         <div>
           <label className="block text-gray-700 font-medium mb-1">
-            Descripción
+            Description
           </label>
           <textarea
             className="w-full border border-gray-300 rounded-lg p-2"

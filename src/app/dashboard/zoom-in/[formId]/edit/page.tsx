@@ -39,7 +39,7 @@ export default function EditFormPage({ params }: { params: { formId: string } })
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, categories }),
     });
-    alert("Formulario actualizado correctamente");
+    alert("Form updated successfully");
   };
 
   return (
@@ -72,12 +72,12 @@ export default function EditFormPage({ params }: { params: { formId: string } })
       />
 
       <div className="flex justify-end gap-4 mt-10">
-        <button className="px-4 py-2 bg-gray-200 rounded">Cancelar</button>
+        <button className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
         <button
           onClick={handleSave}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="px-4 py-2 bg-primary text-white rounded"
         >
-          Guardar Cambios
+          Save Changes
         </button>
       </div>
     </div>

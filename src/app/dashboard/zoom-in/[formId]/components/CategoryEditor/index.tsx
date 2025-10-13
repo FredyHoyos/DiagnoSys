@@ -19,12 +19,12 @@ export default function CategoryEditor({
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold">Categorías</h3>
+        <h3 className="text-xl font-semibold">Categories</h3>
         <button
           onClick={onAddCategory}
-          className="px-3 py-2 bg-black text-white rounded-lg"
+          className="px-3 py-2 bg-primary text-white rounded-lg cursor-pointer"
         >
-          + Agregar Categoría
+          + Add Category
         </button>
       </div>
 

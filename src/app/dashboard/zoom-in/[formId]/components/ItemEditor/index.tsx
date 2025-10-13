@@ -15,7 +15,7 @@ export default function ItemEditor({
 }) {
   return (
     <div className="mt-4 space-y-2">
-      <h4 className="text-gray-700 font-semibold">Ítems</h4>
+      <h4 className="text-gray-700 font-semibold">Items</h4>
 
       {items.map((item, index) => (
         <div key={index} className="flex items-center space-x-2">
@@ -37,9 +37,9 @@ export default function ItemEditor({
 
       <button
         onClick={onAddItem}
-        className="mt-2 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+        className="mt-2 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
       >
-        + Agregar Ítem
+        + Add Item
       </button>
     </div>
   );
