@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
+import { promises } from "dns";
 
 /**
  * GET /api/forms/[formId]
@@ -10,9 +11,9 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(
   request: NextRequest,
-  context: { params: { formId: string } }
+  context: { params: Promise<{ formId: string }> }
 ) {
-  const { formId } = context.params;
+  const { formId } = await context.params;
 
   try {
     const session = await getServerSession(authOptions);
