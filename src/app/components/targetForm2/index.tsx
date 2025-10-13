@@ -15,7 +15,7 @@ const TargetFormCard = ({
   const router = useRouter();
 
   const handleEdit = () => {
-    router.push(`/dashboard/zoom-in/${formId}/edit`);
+    router.push(`/dashboard/admin/zoom-in/${formId}/edit`);
   };
 
   return (
