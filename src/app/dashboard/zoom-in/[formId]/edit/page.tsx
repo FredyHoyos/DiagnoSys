@@ -29,11 +29,13 @@ type CategoryState = {
   items: string[];
 };
 
-export default function EditFormPage({
-  params,
-}: {
-  params: { formId: string };
-}) {
+interface PageProps {
+  params: {
+    formId: string;
+  };
+}
+
+export default function EditFormPage({ params }: PageProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categories, setCategories] = useState<CategoryState[]>([]);
@@ -82,7 +84,10 @@ export default function EditFormPage({
       <CategoryEditor
         categories={categories}
         onAddCategory={() =>
-          setCategories([...categories, { name: "", description: "", items: [] }])
+          setCategories([
+            ...categories,
+            { name: "", description: "", items: [] },
+          ])
         }
         onDeleteCategory={(index) =>
           setCategories(categories.filter((_, i) => i !== index))
