@@ -6,7 +6,7 @@
     transform-style: preserve-3d;
     transition: transform 0.8s ease-in-out;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgb(51, 105, 30);
+    box-shadow: 0 8px 25px rgb(51, 105, 30);
 }
 
 .card.flipped {
