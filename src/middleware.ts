@@ -7,23 +7,46 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const user = req.nextauth.token;
 
-    // Si no hay usuario autenticado, redirige a la página de autenticación
+    // Ignorar archivos estáticos y rutas públicas
+    const PUBLIC_FILE = /\.(.*)$/;
+    const isPublicRoute = [
+      "/auth",
+      "/auth/card",
+      "/api/auth",
+      "/favicon.ico",
+      "/logo.svg",
+    ].some((path) => pathname.startsWith(path));
+
+    const isStaticFile = PUBLIC_FILE.test(pathname);
+
+    if (isPublicRoute || isStaticFile) {
+      return NextResponse.next();
+    }
+
+    // Si no hay usuario autenticado, redirige a login
     if (!user) {
       return NextResponse.redirect(new URL("/auth/card", req.url));
     }
 
-    // Bloquea rutas /admin o /api/admin si no es admin
-    if ((pathname.startsWith("/dashboard/admin") || pathname.startsWith("/api/admin")) && user?.role?.name !== "admin") {
+    // Rutas protegidas por rol
+    if (
+      (pathname.startsWith("/dashboard/admin") || pathname.startsWith("/api/admin")) &&
+      user?.role?.name !== "admin"
+    ) {
       return NextResponse.redirect(new URL("/auth/card", req.url));
     }
 
-    // Bloquea rutas /consultant o /api/consultant si no es consultant
-    if ((pathname.startsWith("/dashboard/consultant") || pathname.startsWith("/api/consultant")) && user?.role?.name !== "consultant") {
+    if (
+      (pathname.startsWith("/dashboard/consultant") || pathname.startsWith("/api/consultant")) &&
+      user?.role?.name !== "consultant"
+    ) {
       return NextResponse.redirect(new URL("/auth/card", req.url));
     }
 
-    // Bloquea rutas /organization o /api/organization si no es organization
-    if ((pathname.startsWith("/dashboard/organization") || pathname.startsWith("/api/organization")) && user?.role?.name !== "organization") {
+    if (
+      (pathname.startsWith("/dashboard/organization") || pathname.startsWith("/api/organization")) &&
+      user?.role?.name !== "organization"
+    ) {
       return NextResponse.redirect(new URL("/auth/card", req.url));
     }
 
@@ -31,13 +54,23 @@ export default withAuth(
   },
   {
     pages: {
-      signIn: "/auth/card", // Ruta de redirección en caso de no autenticación
+      signIn: "/auth/card",
     },
   }
 );
 
 export const config = {
   matcher: [
-    "/((?!auth|api/auth).*)", // Protege todas las rutas excepto las de autenticación
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (NextAuth endpoints)
+     * - auth (authentication pages)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - Files with extensions (static assets)
+     */
+    "/((?!api/auth|auth|_next/static|_next/image|favicon.ico|.*\\.).*)",
   ],
 };
+
