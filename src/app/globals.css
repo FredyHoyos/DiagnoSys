@@ -201,3 +201,29 @@
     @apply bg-background text-foreground;
   }
 } 
+
+.background-gif {
+  background-image: url('/background2.png');
+  background-size: cover; 
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -1; /* Asegura que el GIF esté detrás del contenido */
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.background-gif::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Define el color y la opacidad. RGBA(R, G, B, A) */
+  background-color: rgba(255, 255, 255, 0.1); /* Blanco con 10% de opacidad */ 
+  z-index: 1; /* Asegura que la capa esté por encima del GIF */
+}
+
