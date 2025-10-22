@@ -79,7 +79,6 @@ export async function GET() {
                 id: true,
                 baseFormId: true,
                 isCompleted: true,
-                progress: true,
                 completedAt: true,
                 updatedAt: true
             }
@@ -101,7 +100,6 @@ export async function GET() {
                 evaluation: existingEvaluation ? {
                     id: existingEvaluation.id,
                     isCompleted: existingEvaluation.isCompleted,
-                    progress: existingEvaluation.progress,
                     completedAt: existingEvaluation.completedAt,
                     lastUpdated: existingEvaluation.updatedAt,
                     status: existingEvaluation.isCompleted ? 'completed' : 'in_progress'

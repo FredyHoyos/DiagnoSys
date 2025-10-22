@@ -92,7 +92,6 @@ export async function GET(
                 const newPersonalizedForm = await tx.personalizedForm.create({
                     data: {
                         name: baseForm.name,
-                        description: baseForm.description,
                         baseFormId: baseFormIdInt,
                         userId: organizationUserId,
                         auditId: null // Sin auditoría para auto-evaluaciones
@@ -117,7 +116,7 @@ export async function GET(
                                 isCustom: false,
                                 baseItemId: baseItem.id,
                                 personalizedCategoryId: personalizedCategory.id,
-                                score: null // Sin puntaje inicial
+                                score: 1 // Puntaje inicial por defecto
                             }
                         });
                     }
@@ -142,15 +141,12 @@ export async function GET(
         const formData = {
             id: personalizedForm!.id,
             name: personalizedForm!.name,
-            description: personalizedForm!.description,
             baseForm: {
                 id: baseForm.id,
                 name: baseForm.name,
                 module: baseForm.module
             },
             isCompleted: personalizedForm!.isCompleted,
-            progress: personalizedForm!.progress,
-            globalComments: personalizedForm!.globalComments,
             completedAt: personalizedForm!.completedAt,
             categories: personalizedForm!.personalizedCategories.map(cat => ({
                 id: cat.id,
@@ -159,9 +155,7 @@ export async function GET(
                     id: item.id,
                     name: item.name,
                     isCustom: item.isCustom,
-                    score: item.score,
-                    notes: item.notes,
-                    comment: item.comment
+                    score: item.score
                 }))
             })),
             createdAt: personalizedForm!.createdAt,
@@ -173,7 +167,7 @@ export async function GET(
             (sum, cat) => sum + cat.personalizedItems.length, 0
         );
         const scoredItems = personalizedForm!.personalizedCategories.reduce(
-            (sum, cat) => sum + cat.personalizedItems.filter(item => item.score !== null).length, 0
+            (sum, cat) => sum + cat.personalizedItems.length, 0
         );
 
         return NextResponse.json({
@@ -185,8 +179,7 @@ export async function GET(
                 avgScore: scoredItems > 0 
                     ? personalizedForm!.personalizedCategories.reduce((sum, cat) => 
                         sum + cat.personalizedItems
-                            .filter(item => item.score !== null)
-                            .reduce((itemSum, item) => itemSum + (item.score || 0), 0), 0
+                            .reduce((itemSum, item) => itemSum + item.score, 0), 0
                       ) / scoredItems
                     : 0
             },
@@ -229,7 +222,7 @@ export async function POST(
         }
 
         const body = await request.json();
-        const { categories, globalComments, isCompleted } = body;
+        const { categories, isCompleted } = body;
         
         const baseFormIdInt = parseInt(baseFormId);
         const organizationUserId = parseInt(session.user.id);
@@ -284,9 +277,7 @@ export async function POST(
                             await tx.personalizedItem.update({
                                 where: { id: itemData.itemId },
                                 data: {
-                                    score: itemData.score,
-                                    notes: itemData.notes || null,
-                                    comment: itemData.comment || null
+                                    score: itemData.score
                                 }
                             });
                             totalScoredItems++;
@@ -306,9 +297,7 @@ export async function POST(
             const updatedForm = await tx.personalizedForm.update({
                 where: { id: personalizedForm.id },
                 data: {
-                    globalComments: globalComments || null,
                     isCompleted: isCompleted === true,
-                    progress: progress,
                     completedAt: isCompleted === true ? new Date() : null,
                     updatedAt: new Date()
                 }
@@ -329,8 +318,6 @@ export async function POST(
             form: {
                 id: result.updatedForm.id,
                 isCompleted: result.updatedForm.isCompleted,
-                progress: result.updatedForm.progress,
-                globalComments: result.updatedForm.globalComments,
                 completedAt: result.updatedForm.completedAt,
                 updatedAt: result.updatedForm.updatedAt
             },

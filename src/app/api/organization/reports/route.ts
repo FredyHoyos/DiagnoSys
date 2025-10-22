@@ -7,7 +7,6 @@ interface EvaluationData {
     formId: number;
     formName: string;
     isCompleted: boolean;
-    progress: number;
     scoredItems: number;
     totalScore: number;
     avgScore: number;
@@ -90,13 +89,7 @@ export async function GET() {
                 },
                 personalizedCategories: {
                     include: {
-                        personalizedItems: {
-                            where: {
-                                score: {
-                                    not: null
-                                }
-                            }
-                        }
+                        personalizedItems: true
                     }
                 }
             },
@@ -108,7 +101,7 @@ export async function GET() {
         // Estadísticas generales
         const totalEvaluations = personalizedForms.length;
         const completedEvaluations = personalizedForms.filter(f => f.isCompleted).length;
-        const inProgressEvaluations = personalizedForms.filter(f => !f.isCompleted && f.progress > 0).length;
+        const inProgressEvaluations = personalizedForms.filter(f => !f.isCompleted).length;
 
         // Estadísticas por módulo
         const moduleStats = personalizedForms.reduce((modules, form) => {
@@ -139,7 +132,6 @@ export async function GET() {
                 formId: form.id,
                 formName: form.name,
                 isCompleted: form.isCompleted,
-                progress: form.progress,
                 scoredItems: scoredItems,
                 totalScore: totalScore,
                 avgScore: scoredItems > 0 ? totalScore / scoredItems : 0,
