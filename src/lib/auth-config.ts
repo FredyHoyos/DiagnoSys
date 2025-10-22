@@ -1,7 +1,7 @@
-import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import type { NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
 const prisma = new PrismaClient();
@@ -64,6 +64,7 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user }: { token: JWT; user?: import("next-auth").User }) {
             if (user) {
+                token.id = user.id; // Agregar el ID del usuario al token
                 token.role = user.role;
                 token.rememberMe = !!user.rememberMe;
                 token.exp =
@@ -80,6 +81,9 @@ export const authOptions: NextAuthOptions = {
             session: import("next-auth").Session;
             token: JWT;
         }) {
+            if (token.id) {
+                session.user.id = token.id as string; // Agregar el ID del usuario a la sesión
+            }
             if (typeof token.exp === "number") {
                 session.expires = new Date(token.exp * 1000).toISOString();
             }
