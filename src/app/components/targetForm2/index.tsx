@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import Button from "@/app/components/atoms/button";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
+import { FileText } from "lucide-react"; 
 
 const TargetFormCard = ({
   title = "Title",
@@ -15,38 +15,66 @@ const TargetFormCard = ({
   const router = useRouter();
 
   const handleEdit = () => {
-    router.push(`/dashboard/admin/zoom-in/${formId}/edit`);
+    // Determinar la ruta correcta para el edit basándose en el contexto
+    const currentPath = window.location.pathname;
+    
+    if (currentPath.includes('/admin/zoom-in')) {
+      router.push(`/dashboard/admin/zoom-in/forms-edit/${formId}`);
+    } else if (currentPath.includes('/admin/zoom-out')) {
+      router.push(`/dashboard/admin/zoom-out/forms-edit/${formId}`);
+    }
+  };
+
+  const handlePreview = () => {
+    // Determinar la ruta correcta para el preview basándose en el contexto
+    const currentPath = window.location.pathname;
+    
+    if (currentPath.includes('/admin/zoom-in')) {
+      router.push(`/dashboard/admin/zoom-in/forms-preview/${formId}`);
+    } else if (currentPath.includes('/admin/zoom-out')) {
+      router.push(`/dashboard/admin/zoom-out/forms-preview/${formId}`);
+    }
   };
 
   return (
-    <div className="flex flex-row space-x-3 rounded-lg border border-gray-300 p-4 shadow-sm w-80 items-center">
-      <div className="flex-1">
-        <div className="mb-2 flex flex-row justify-between items-center">
-          <h1 className="text-2xl font-bold">{title}</h1>
-          <h2
-            className={`text-xs rounded-md flex items-center justify-center p-1 h-7 ${
+    <div className="green-interactive border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col min-h-[260px] min-w-[350px] max-w-md flex-1">
+      <div className="flex-grow">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <FileText className="w-6 h-6 text-[#55A7FF]" />
+            <h3 className="font-semibold text-xl text-[#0b2b1f]">{title}</h3>
+          </div>
+          <span
+            className={`text-xs px-2 py-1 rounded-full font-medium ${
               publicF
-                ? "bg-green-200 text-green-700"
-                : "bg-red-200 text-red-700"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
             }`}
           >
             {publicF ? "Public" : "Private"}
-          </h2>
+          </span>
         </div>
 
-        <div className="space-y-2">
-          <p className="text-gray-600">{description}</p>
-          <p className="text-gray-600">
-            {categorieNumber} Categories • {itemNumber} ítems
-          </p>
-        </div>
+        <p className="text-sm text-gray-800 mb-4">{description}</p>
+        
+        <p className="text-sm text-gray-700 mb-6">
+          {categorieNumber} categories • {itemNumber} items
+        </p>
+      </div>
 
-        <div>
-          <Button label="Edit" onClick={handleEdit} />
-          <button className="mt-4 ml-2 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition cursor-pointer">
-            Preview
-          </button>
-        </div>
+      <div className="flex gap-2">
+        <button 
+          className="bg-[#2E6347] text-white px-4 py-2 rounded-2xl font-medium hover:bg-[#265239] transition-colors duration-200 flex-1 cursor-pointer"
+          onClick={handleEdit}
+        >
+          Edit
+        </button>
+        <button 
+          className="bg-gray-200 text-gray-800 px-4 py-2 rounded-2xl font-medium hover:bg-gray-300 transition-colors duration-200 flex-1 cursor-pointer"
+          onClick={handlePreview}
+        >
+          Preview
+        </button>
       </div>
     </div>
   );

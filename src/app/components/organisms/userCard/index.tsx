@@ -14,12 +14,12 @@ type UserCardProps = {
 
 export default function UserCard({ name,gmail, role, avatar }: UserCardProps) {
   return (
-    <div className="mt-auto pt-4 pb-7 border-t border-gray-200 flex flex-col items-center gap-4">
-      <div className="w-full max-w-sm bg-white shadow-md rounded-2xl p-2 ">
+    <div className="mt-auto pt-4 green border-t  flex flex-col items-center gap-4">
+      <div className="w-full max-w-sm  rounded-2xl p-2 ">
         <UserInfo name={name} gmail={gmail} role={role} avatar={avatar} />
       </div>
       <Button
-        variant="destructive"
+        variant="default"
         onClick={() => signOut({ callbackUrl: "/auth/card" })}
         className="flex items-center gap-2 cursor-pointer"
       >

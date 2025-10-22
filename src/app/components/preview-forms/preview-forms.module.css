@@ -1,0 +1,200 @@
+/* ------------- Layout básico ------------- */
+.container {
+    padding: 2rem;
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 1rem;
+    }
+}
+
+.title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2E6347;
+}
+
+.subtitle {
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+/* ------------- Grid ------------- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: stretch;
+}
+
+/* ------------- Card real ------------- */
+.card {
+    background: radial-gradient(ellipse at right top,
+            #95DBC9 10%,
+            #C9F7B0 60%,
+            #ffffff 100%);
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 25px rgb(18, 114, 98);
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cardContent {
+    flex-grow: 1;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.icon {
+    font-size: 1.4rem;
+    color: #55A7FF;
+}
+
+.titleCard {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #0b2b1f;
+    /* opcional: más contraste */
+}
+
+.description {
+    font-size: 0.9rem;
+    color: #222;
+}
+
+.meta {
+    margin: 0.8rem 0 1.2rem 0;
+    font-size: 0.85rem;
+    color: #222;
+}
+
+.button {
+    background: #2E6347;
+    color: white;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.button:hover {
+    background: #265239;
+}
+
+.tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 500;
+    line-height: 1.2;
+    background: #e6f4ee;
+    color: #2E6347;
+}
+
+/* ------------- Skeleton loader (neutro + shimmer) ------------- */
+/* skeletonCard usa fondo neutro y shimmer */
+.skeletonCard {
+    background: radial-gradient(ellipse at right top,
+            #95DBC9 10%,
+            #C9F7B0 60%,
+            #ffffff 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    background-size: 200% 100%;
+    animation: loadingShimmer 1.2s linear infinite;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@keyframes loadingShimmer {
+    to {
+        background-position-x: -200%;
+    }
+}
+
+/* header row: título skeleton + tag skeleton */
+.skeletonHeaderRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.skeletonHeaderLeft {
+    height: 22px;
+    width: 55%;
+    border-radius: 6px;
+    background-color: #e0e0e0;
+}
+
+/* skeleton específico para el tag (chip) */
+.skeletonTag {
+    height: 18px;
+    min-width: 56px;
+    border-radius: 999px;
+    background-color: #e0e0e0;
+    /* border opcional para detalle; se puede quitar */
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.skeletonLine {
+    height: 12px;
+    width: 100%;
+    border-radius: 4px;
+    background-color: #e8e8e8;
+}
+
+.skeletonMeta {
+    height: 12px;
+    width: 40%;
+    border-radius: 4px;
+    background-color: #e0e0e0;
+    margin: 0.6rem 0 1rem;
+}
+
+.skeletonButton {
+    height: 36px;
+    width: 100%;
+    border-radius: 15px;
+    background-color: #dcdcdc;
+    margin-top: auto;
+}
+
+/* ------------- Error ------------- */
+.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    color: #dc3545;
+}

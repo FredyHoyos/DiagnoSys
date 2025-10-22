@@ -150,10 +150,10 @@ export default function EditProfileModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="cursor-pointer flex items-center p-1 rounded hover:scale-105 transition-transform">
-          <Pencil1Icon className="w-4 h-4 text-red-500 mr-1" /> Edit profile
+          <Pencil1Icon className="w-5 h-5 font-bold text-blue-500 mr-1" /> Edit profile
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg green-interactive">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
@@ -161,7 +161,7 @@ export default function EditProfileModal({
           {/* Name */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name*
+              Name
             </Label>
             <div className="col-span-3">
               <Input id="name" {...register("name")} />
@@ -174,7 +174,7 @@ export default function EditProfileModal({
           {/* Gmail */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="gmail" className="text-right">
-              Gmail*
+              Gmail
             </Label>
             <div className="col-span-3">
               <Input id="gmail" {...register("gmail")} disabled />
@@ -189,8 +189,8 @@ export default function EditProfileModal({
             <Label htmlFor="sector" className="text-right">
               Sector
             </Label>
-            <div className="col-span-3">
-              <select {...register("sector")} className="w-full">
+            <div className="col-span-3 ">
+              <select {...register("sector")} className="w-full bg-teal-50 border-gray-300">
                 <option value="">Select Sector</option>
                 <option value="Gobierno">Government</option>
                 <option value="Salud">Health</option>
@@ -208,7 +208,7 @@ export default function EditProfileModal({
               Company Size
             </Label>
             <div className="col-span-3">
-              <select {...register("companySize")} className="w-full">
+              <select {...register("companySize")} className="w-full bg-teal-50">
                 <option value="">Select Size</option>
                 <option value="0-10">0-10 employees</option>
                 <option value="11-50">11-50 employees</option>
@@ -220,12 +220,12 @@ export default function EditProfileModal({
 
           {/* Role (solo lectura) */}
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">Role*</Label>
+            <Label htmlFor="role" className="text-right">Role</Label>
             <Input
               id="role"
               value={role}
               disabled
-              className="col-span-3 bg-gray-100 cursor-not-allowed"
+              className="col-span-3 bg-teal-50 cursor-not-allowed"
             />
           </div>
 
@@ -234,7 +234,7 @@ export default function EditProfileModal({
           <Button
             type="button"
             onClick={() => setChangePassword(!changePassword)}
-            className="mt-2 w-40 bg-red-500 hover:bg-red-600 cursor-pointer"
+            className="mt-2 w-40 bg-blue-600 hover:bg-blue-500 cursor-pointer"
           >
             {changePassword ? "Hide Change Password" : "Change Password"}
           </Button>
@@ -246,7 +246,7 @@ export default function EditProfileModal({
                 <Label htmlFor="currentPassword" className="text-right">
                   Current Password*
                 </Label>
-                <div className="col-span-3">
+                <div className="col-span-3 bg-teal-50">
                   <Input
                     id="currentPassword"
                     type="password"
@@ -258,7 +258,7 @@ export default function EditProfileModal({
                 <Label htmlFor="newPassword" className="text-right">
                   New Password*
                 </Label>
-                <div className="col-span-3">
+                <div className="col-span-3 bg-teal-50">
                   <Input
                     id="newPassword"
                     type="password"
@@ -275,7 +275,7 @@ export default function EditProfileModal({
                 <Label htmlFor="confirmNewPassword" className="text-right">
                   Confirm New Password*
                 </Label>
-                <div className="col-span-3">
+                <div className="col-span-3 bg-teal-50">
                   <Input
                     id="confirmNewPassword"
                     type="password"

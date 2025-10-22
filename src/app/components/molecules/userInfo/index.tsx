@@ -18,9 +18,9 @@ export default function UserInfo({ name, gmail, role, avatar }: UserInfoProps) {
       <div className="flex items-center justify-center gap-3 flex-wrap">
         <Avatar src={avatar} size={56} />
         <div className="flex flex-col">
-          <TextLabel text={name} className="font-semibold text-lg" />
-          <TextLabel text={gmail} className="text-sm text-gray-500" />
-          <TextLabel text={role} className="text-sm text-gray-500" />
+          <TextLabel text={name} className="font-bold text-lg" />
+          <TextLabel text={gmail} className="text-sm text-blue-500" />
+          <TextLabel text={role} className="text-sm text-gray-800" />
         </div>
       </div>
 

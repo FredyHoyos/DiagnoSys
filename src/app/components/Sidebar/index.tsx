@@ -36,6 +36,10 @@ export default function Sidebar() {
       { href: "/dashboard/admin/users", label: "Users", icon: <PersonIcon /> },
     ],
     consultant: [
+      { href: "/dashboard/consultant/zoom-in", label: "Zoom-in", icon: <ZoomInIcon /> },
+      { href: "/dashboard/consultant/zoom-out", label: "Zoom-out", icon: <ZoomOutIcon /> },
+      { href: "/dashboard/consultant/categorization", label: "Categorization", icon: <LayoutIcon /> },
+      { href: "/dashboard/consultant/prioritization", label: "Prioritization", icon: <ListBulletIcon /> },
       { href: "/dashboard/consultant/organizations", label: "Organizations", icon: <LayoutIcon /> },
       { href: "/dashboard/consultant/reports", label: "Reports", icon: <ZoomOutIcon /> },
     ],
@@ -44,6 +48,7 @@ export default function Sidebar() {
       { href: "/dashboard/organization/zoom-out", label: "Zoom-out", icon: <ZoomOutIcon /> },
       { href: "/dashboard/organization/categorization", label: "Categorization", icon: <LayoutIcon /> },
       { href: "/dashboard/organization/prioritization", label: "Prioritization", icon: <ListBulletIcon /> },
+      { href: "/dashboard/organization/reports", label: "Reports", icon: <ZoomOutIcon /> },
     ],
   };
 
@@ -79,8 +84,9 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen w-64 bg-white shadow-lg p-4 z-40 pt-16 md:pt-3 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static flex flex-col`}
+        className={`fixed top-0 left-0 h-screen w-64  shadow-lg p-4 z-40 pt-16 md:pt-3 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static flex flex-col`}
       >
+        <div className="absolute inset-0 green"></div>
         <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
 
         <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">

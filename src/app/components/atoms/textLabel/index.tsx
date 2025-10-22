@@ -6,5 +6,5 @@ type TextLabelProps = {
 };
 
 export default function TextLabel({ text, className }: TextLabelProps) {
-  return <p className={`text-gray-800 ${className}`}>{text}</p>;
+  return <p className={` font-bold text-[#2E6347] ${className}`}>{text}</p>;
 }

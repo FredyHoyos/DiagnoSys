@@ -6,7 +6,7 @@ export default function AuthLayout({
     return (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
             {/* Nuevo div para el fondo GIF */}
-            <div className="absolute inset-0 B background-gif"></div>
+            <div className="absolute inset-0 background-gif"></div>
 
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-8 lg:py-12">
                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
