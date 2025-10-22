@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 interface ItemScore {
     itemId: number;
     score: number;
-    comment?: string;
 }
 
 interface CategoryScores {
@@ -16,7 +15,6 @@ interface CategoryScores {
 
 interface EvaluationData {
     categories: CategoryScores[];
-    globalComments?: string;
     isCompleted?: boolean;
 }
 
@@ -47,7 +45,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { categories, globalComments, isCompleted }: EvaluationData = body;
+        const { categories, isCompleted }: EvaluationData = body;
         
         const auditIdInt = parseInt(auditId);
         const formIdInt = parseInt(formId);
@@ -117,8 +115,7 @@ export async function PUT(
                             personalizedCategoryId: category.categoryId
                         },
                         data: {
-                            score: itemScore.score,
-                            comment: itemScore.comment || null
+                            score: itemScore.score
                         }
                     });
                 }
@@ -144,9 +141,7 @@ export async function PUT(
             const updatedForm = await tx.personalizedForm.update({
                 where: { id: formIdInt },
                 data: {
-                    globalComments: globalComments || null,
                     isCompleted: isCompleted === true,
-                    progress: progress,
                     completedAt: isCompleted === true ? new Date() : null,
                     updatedAt: new Date()
                 }
@@ -172,22 +167,7 @@ export async function PUT(
                 },
                 personalizedCategories: {
                     include: {
-                        personalizedItems: {
-                            where: {
-                                score: {
-                                    not: null
-                                }
-                            }
-                        }
-                    },
-                    where: {
-                        personalizedItems: {
-                            some: {
-                                score: {
-                                    not: null
-                                }
-                            }
-                        }
+                        personalizedItems: true
                     }
                 }
             }
@@ -215,8 +195,6 @@ export async function PUT(
                 name: finalForm?.name,
                 baseForm: finalForm?.baseForm,
                 isCompleted: finalForm?.isCompleted,
-                progress: finalForm?.progress,
-                globalComments: finalForm?.globalComments,
                 completedAt: finalForm?.completedAt,
                 updatedAt: finalForm?.updatedAt
             },

@@ -114,13 +114,7 @@ export async function GET(
                         },
                         personalizedCategories: {
                             include: {
-                                personalizedItems: {
-                                    where: {
-                                        score: {
-                                            not: null
-                                        }
-                                    }
-                                }
+                                personalizedItems: true
                             }
                         }
                     }
@@ -248,7 +242,7 @@ export async function GET(
                 formName: form.name,
                 moduleName: form.baseForm.module.name,
                 completedAt: form.completedAt,
-                progress: form.progress
+                isCompleted: form.isCompleted
             }));
 
         return NextResponse.json({

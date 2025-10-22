@@ -93,8 +93,8 @@ export async function GET(
         // Procesar datos
         const processedAudits = audits.map(audit => {
             const completedForms = audit.personalizedForms.filter(form => form.isCompleted).length;
-            const totalProgress = audit.personalizedForms.reduce((sum, form) => sum + form.progress, 0);
-            const avgProgress = audit.personalizedForms.length > 0 ? totalProgress / audit.personalizedForms.length : 0;
+            const totalForms = audit.personalizedForms.length;
+            const completionRate = totalForms > 0 ? (completedForms / totalForms) * 100 : 0;
 
             return {
                 id: audit.id,
@@ -104,14 +104,13 @@ export async function GET(
                 stats: {
                     totalForms: audit._count.personalizedForms,
                     completedForms: completedForms,
-                    avgProgress: Math.round(avgProgress * 100) / 100
+                    completionRate: Math.round(completionRate * 100) / 100
                 },
                 forms: audit.personalizedForms.map(form => ({
                     id: form.id,
                     name: form.name,
                     baseForm: form.baseForm,
                     isCompleted: form.isCompleted,
-                    progress: form.progress,
                     categoriesCount: form._count.personalizedCategories,
                     completedAt: form.completedAt,
                     updatedAt: form.updatedAt

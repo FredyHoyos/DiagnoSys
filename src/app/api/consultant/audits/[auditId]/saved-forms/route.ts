@@ -84,20 +84,7 @@ export async function GET(
                 personalizedCategories: {
                     include: {
                         personalizedItems: {
-                            where: {
-                                score: {
-                                    not: null // Solo items con calificación
-                                }
-                            }
-                        }
-                    },
-                    where: {
-                        personalizedItems: {
-                            some: {
-                                score: {
-                                    not: null // Solo categorías que tienen items calificados
-                                }
-                            }
+                            // All personalizedItems have scores now (score is required)
                         }
                     }
                 },
@@ -120,16 +107,14 @@ export async function GET(
             return {
                 id: form.id,
                 name: form.name,
-                description: form.description,
                 baseForm: form.baseForm,
                 isCompleted: form.isCompleted,
-                progress: form.progress,
                 stats: {
                     categoriesWithScores: categoriesWithScores.length,
                     totalScoredItems: totalScoredItems,
                     avgScore: categoriesWithScores.length > 0 
                         ? categoriesWithScores.reduce((sum, cat) => {
-                            const catAvg = cat.personalizedItems.reduce((itemSum, item) => itemSum + (item.score || 0), 0) / cat.personalizedItems.length;
+                            const catAvg = cat.personalizedItems.reduce((itemSum, item) => itemSum + item.score, 0) / cat.personalizedItems.length;
                             return sum + (isNaN(catAvg) ? 0 : catAvg);
                           }, 0) / categoriesWithScores.length
                         : 0
@@ -139,7 +124,7 @@ export async function GET(
                     name: cat.name,
                     itemsCount: cat.personalizedItems.length,
                     avgScore: cat.personalizedItems.length > 0
-                        ? cat.personalizedItems.reduce((sum, item) => sum + (item.score || 0), 0) / cat.personalizedItems.length
+                        ? cat.personalizedItems.reduce((sum, item) => sum + item.score, 0) / cat.personalizedItems.length
                         : 0
                 })),
                 completedAt: form.completedAt,
@@ -158,8 +143,8 @@ export async function GET(
             stats: {
                 totalForms: processedForms.length,
                 completedForms: processedForms.filter(f => f.isCompleted).length,
-                avgProgress: processedForms.length > 0 
-                    ? processedForms.reduce((sum, form) => sum + form.progress, 0) / processedForms.length
+                avgScore: processedForms.length > 0 
+                    ? processedForms.reduce((sum, form) => sum + form.stats.avgScore, 0) / processedForms.length
                     : 0
             },
             message: "Saved forms retrieved successfully"

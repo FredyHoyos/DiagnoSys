@@ -131,7 +131,6 @@ export async function GET(
             const result = {
                 id: existingPersonalizedForm.id,
                 name: existingPersonalizedForm.name,
-                description: existingPersonalizedForm.description,
                 baseForm: existingPersonalizedForm.baseForm,
                 audit: {
                     id: audit.id,
@@ -139,7 +138,7 @@ export async function GET(
                     organization: audit.organization
                 },
                 isCompleted: existingPersonalizedForm.isCompleted,
-                progress: existingPersonalizedForm.progress,
+                // progress field removed from schema
                 categories: existingPersonalizedForm.personalizedCategories.map(cat => ({
                     id: cat.id,
                     name: cat.name,
@@ -152,7 +151,7 @@ export async function GET(
                         baseItem: item.baseItem,
                         isCustom: item.isCustom,
                         score: item.score,
-                        notes: item.notes,
+                        // notes field removed from schema
                         createdAt: item.createdAt,
                         updatedAt: item.updatedAt
                     }))
@@ -304,13 +303,12 @@ export async function POST(
             );
         }
 
-        // Calcular progreso y completación
+        // Calcular completación
         const totalItems = formData.categories.reduce((sum, cat) => sum + cat.items.length, 0);
         const scoredItems = formData.categories.reduce((sum, cat) => 
             sum + cat.items.filter(item => item.score !== null && item.score !== undefined).length, 0
         );
-        const progress = totalItems > 0 ? scoredItems / totalItems : 0;
-        const isCompleted = progress === 1.0;
+        const isCompleted = scoredItems > 0; // Completed if any item has score
 
         // Usar transacción para guardar todo
         const result = await prisma.$transaction(async (tx) => {
@@ -333,40 +331,27 @@ export async function POST(
             const personalizedForm = await tx.personalizedForm.create({
                 data: {
                     name: formData.name,
-                    description: formData.description,
                     baseFormId: baseFormIdInt,
                     userId: consultantId,
                     auditId: auditIdInt,
                     isCompleted,
                     completedAt: isCompleted ? new Date() : null,
-                    progress,
                     personalizedCategories: {
                         create: formData.categories.map(catData => ({
                             name: catData.name,
                             baseCategoryId: catData.baseCategoryId,
+                            baseCategory: {
+                                connect: { id: catData.baseCategoryId }
+                            },
                             personalizedItems: {
                                 create: catData.items.map(itemData => ({
                                     name: itemData.name,
                                     baseItemId: itemData.baseItemId || null,
                                     isCustom: !itemData.baseItemId,
-                                    score: itemData.score || null,
-                                    notes: itemData.notes || null
+                                    score: itemData.score || 1 // score is required, default to 1 if null
                                 }))
                             }
                         }))
-                    }
-                },
-                include: {
-                    personalizedCategories: {
-                        include: {
-                            personalizedItems: true
-                        }
-                    },
-                    baseForm: {
-                        select: {
-                            id: true,
-                            name: true
-                        }
                     }
                 }
             });
@@ -378,13 +363,11 @@ export async function POST(
             form: {
                 id: result.id,
                 name: result.name,
-                description: result.description,
-                baseForm: result.baseForm,
+                baseFormId: result.baseFormId,
                 isCompleted: result.isCompleted,
-                progress: result.progress,
                 stats: {
-                    totalCategories: result.personalizedCategories.length,
-                    totalItems: result.personalizedCategories.reduce((sum, cat) => sum + cat.personalizedItems.length, 0),
+                    categoriesCreated: formData.categories.length,
+                    totalItemsSubmitted: totalItems,
                     scoredItems: scoredItems
                 },
                 completedAt: result.completedAt,
