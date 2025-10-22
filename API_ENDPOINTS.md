@@ -1,6 +1,7 @@
 # DiagnoSys - API Endpoints Documentation
 
 ## 📋 **RESUMEN COMPLETO DE ENDPOINTS IMPLEMENTADOS**
+---
 
 ### 🔧 **ADMINISTRADORES** (`/api/admin/`)
 
@@ -11,7 +12,6 @@
 - **PUT** `/api/admin/forms/[formId]` - Actualizar formulario completo
 - **DELETE** `/api/admin/forms/[formId]` - Eliminar formulario
 - **PATCH** `/api/admin/forms/[formId]/publish` - Publicar/despublicar formulario
-- **PUT** `/api/admin/forms/[formId]/structure` - Actualizar estructura (categorías/items)
 
 #### **Gestión de Items**
 - **GET** `/api/admin/items` - Listar items disponibles
@@ -22,7 +22,7 @@
 
 ---
 
-### � **AUTENTICACIÓN** (`/api/auth/`)
+### 🔐 **AUTENTICACIÓN** (`/api/auth/`)
 
 #### **Gestión de Usuarios y Autenticación**
 - **POST** `/api/auth/[...nextauth]` - NextAuth.js authentication (sign in/out)
@@ -43,14 +43,10 @@
 #### **Gestión de Organizaciones**
 - **GET** `/api/consultant/organizations` - Listar organizaciones gestionadas
 - **POST** `/api/consultant/organizations` - Crear nueva organización
-- **PUT** `/api/consultant/organizations/[orgId]` - Actualizar organización
-- **DELETE** `/api/consultant/organizations/[orgId]` - Eliminar organización
 
 #### **Gestión de Auditorías**
 - **GET** `/api/consultant/organizations/[orgId]/audits` - Listar auditorías de organización
 - **POST** `/api/consultant/organizations/[orgId]/audits` - Crear nueva auditoría
-- **PUT** `/api/consultant/organizations/[orgId]/audits/[auditId]` - Actualizar auditoría
-- **DELETE** `/api/consultant/organizations/[orgId]/audits/[auditId]` - Eliminar auditoría
 
 #### **Formularios Personalizados en Auditorías**
 - **GET** `/api/consultant/audits/[auditId]/forms/base/[baseFormId]` - Obtener/crear formulario personalizado
@@ -88,37 +84,13 @@
 
 ---
 
-### 📊 **SISTEMA LEGACY** (`/api/user-items/`, `/api/user-sessions/`)
-
-#### **Gestión de Items de Usuario (Sistema anterior)**
-- **GET** `/api/user-items` - Listar puntajes de items de usuario
-- **POST** `/api/user-items` - Crear nuevo puntaje de item
-- **GET** `/api/user-items/[userScoreId]` - Obtener puntaje específico
-- **PUT** `/api/user-items/[userScoreId]` - Actualizar puntaje de item
-- **DELETE** `/api/user-items/[userScoreId]` - Eliminar puntaje de item
-
-#### **Gestión de Sesiones de Usuario (Sistema anterior)**
-- **GET** `/api/user-sessions` - Listar sesiones de formularios de usuario
-- **POST** `/api/user-sessions` - Crear nueva sesión de formulario
-- **POST** `/api/user-sessions/[sessionId]/complete` - Completar sesión de formulario
-- **GET** `/api/user-sessions/[sessionId]/items` - Obtener items de una sesión
-- **POST** `/api/user-sessions/[sessionId]/items` - Agregar items a una sesión
-- **GET** `/api/user-sessions/[sessionId]/items/[itemId]` - Obtener item específico de sesión
-- **PUT** `/api/user-sessions/[sessionId]/items/[itemId]` - Actualizar item de sesión
-- **DELETE** `/api/user-sessions/[sessionId]/items/[itemId]` - Eliminar item de sesión
-
----
-
 ## 🗄️ **MODELO DE DATOS**
 
-### **⚠️ NOTA IMPORTANTE: TRANSICIÓN DE SISTEMAS**
+### **⚠️ NOTA IMPORTANTE: SISTEMA UNIFICADO**
 
-El proyecto DiagnoSys contiene **DOS SISTEMAS DE EVALUACIÓN**:
+El proyecto DiagnoSys implementa un **SISTEMA UNIFICADO DE EVALUACIÓN** con roles diferenciados:
 
-1. **🆕 SISTEMA NUEVO (ZOOM IN)** - Sistema principal con roles diferenciados
-2. **📜 SISTEMA LEGACY** - Sistema anterior mantenido para compatibilidad
-
-### **🆕 SISTEMA NUEVO - Estructura Jerárquica**
+### **🆕 SISTEMA ACTUAL - Estructura Jerárquica**
 ```
 Organization
 ├── Audit (creada por Consultor)
@@ -129,15 +101,6 @@ Organization
 └── PersonalizedForm (auto-evaluación, auditId: null)
     └── PersonalizedCategory
         └── PersonalizedItem (score: 1-5, comment, notes)
-```
-
-### **📜 SISTEMA LEGACY - Estructura Anterior**
-```
-User
-├── UserFormSession (sesión de evaluación)
-│   └── UserItemScore (puntaje individual por item)
-│
-└── UserItemScore (puntajes directos sin sesión)
 ```
 
 ### **🔄 Flujos de Trabajo**
@@ -204,12 +167,11 @@ En Next.js 13+ App Router, no pueden coexistir dos rutas dinámicas al mismo niv
 
 ### **✅ Sistema Completo Funcional:**
 
-#### **🔧 Backend APIs (50 endpoints HTTP en 32 rutas)**
+#### **🔧 Backend APIs (35 endpoints HTTP en 25 rutas)**
 - ✅ **Administradores**: CRUD completo de formularios y usuarios
 - ✅ **Consultores**: Gestión de organizaciones, auditorías y evaluaciones
 - ✅ **Organizaciones**: Auto-evaluación y reportes
 - ✅ **Autenticación**: NextAuth con roles y recuperación de contraseña
-- ✅ **Sistema Legacy**: Compatibilidad con evaluaciones anteriores
 
 #### **🏗️ Infraestructura**
 - ✅ **Next.js 15.5.2**: Migración completa con nuevas características
@@ -247,27 +209,26 @@ En Next.js 13+ App Router, no pueden coexistir dos rutas dinámicas al mismo niv
 
 | Categoría | Rutas | Endpoints HTTP | Descripción |
 |-----------|-------|---------------|-------------|
-| **🔧 Admin** | 6 | 11 | Gestión de formularios base e items |
+| **🔧 Admin** | 6 | 10 | Gestión de formularios base e items |
 | **🔐 Auth** | 5 | 7 | Autenticación y gestión de usuarios |
-| **👔 Consultores** | 7 | 11 | Auditorías y evaluaciones organizacionales |
+| **👔 Consultores** | 6 | 7 | Auditorías y evaluaciones organizacionales |
 | **🏢 Organizaciones** | 3 | 4 | Auto-evaluación y reportes |
 | **📋 Formularios** | 3 | 4 | Sistema público de formularios |
 | **📊 Módulos** | 2 | 3 | Gestión de módulos de evaluación |
-| **📜 Legacy** | 6 | 10 | Sistema anterior (compatibilidad) |
-| **TOTAL** | **32** | **50** | **Sistema completo funcional** |
+| **TOTAL** | **25** | **35** | **Sistema completo funcional** |
 
 ### **🔧 Métodos HTTP Utilizados**
-- **GET**: 20 endpoints (consultas y lecturas)
-- **POST**: 15 endpoints (creación de recursos)
-- **PUT**: 7 endpoints (actualizaciones completas)
-- **DELETE**: 5 endpoints (eliminaciones)
-- **PATCH**: 3 endpoints (actualizaciones parciales)
+- **GET**: 15 endpoints (consultas y lecturas)
+- **POST**: 11 endpoints (creación de recursos)
+- **PUT**: 5 endpoints (actualizaciones completas)
+- **DELETE**: 3 endpoints (eliminaciones)
+- **PATCH**: 1 endpoint (actualizaciones parciales)
 
 ### **🏛️ Arquitectura de Roles**
 - **👨‍💼 Administradores**: 17 endpoints disponibles
-- **👔 Consultores**: 18 endpoints disponibles  
-- **🏢 Organizaciones**: 7 endpoints disponibles
-- **🌐 Público**: 8 endpoints sin autenticación
+- **👔 Consultores**: 11 endpoints disponibles  
+- **🏢 Organizaciones**: 4 endpoints disponibles
+- **🌐 Público**: 3 endpoints sin autenticación
 
 ### **📅 Estado de Desarrollo**
 - **✅ Completado**: 100% de los endpoints planeados
