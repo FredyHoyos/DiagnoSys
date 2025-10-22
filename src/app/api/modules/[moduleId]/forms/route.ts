@@ -45,49 +45,25 @@ export async function GET(
             );
         }
 
-        // Obtener formularios con información adicional para el usuario
-        const userId = parseInt(session.user.id);
-        
+        // Obtener formularios básicos sin información de usuario específica
         const forms = await prisma.form.findMany({
             where: { moduleId: moduleIdInt },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                tag: true,
+                isPublished: true,
+                createdAt: true,
+                updatedAt: true,
                 categories: {
                     include: {
-                        items: {
-                            include: {
-                                userScores: {
-                                    where: { userId },
-                                    select: {
-                                        id: true,
-                                        score: true,
-                                        updatedAt: true
-                                    }
-                                }
-                            }
-                        },
-                        _count: {
-                            select: {
-                                items: true
-                            }
-                        }
-                    }
-                },
-                userSessions: {
-                    where: { 
-                        userId,
-                        isCompleted: true 
-                    },
-                    select: {
-                        id: true,
-                        createdAt: true,
-                        updatedAt: true,
-                        completedAt: true
+                        items: true
                     }
                 },
                 _count: {
                     select: {
-                        categories: true,
-                        userSessions: true
+                        categories: true
                     }
                 }
             },
@@ -96,35 +72,15 @@ export async function GET(
             }
         });
 
-        // Procesar los datos para incluir estadísticas del usuario
+        // Procesar los datos para incluir estadísticas básicas
         const processedForms = forms.map(form => {
-            const formWithIncludes = form as typeof form & {
-                categories: Array<{
-                    items: Array<{
-                        userScores: Array<{ score: number | null }>
-                    }>
-                }>,
-                userSessions: Array<{ completedAt: Date | null }>
-            };
-            
-            const totalItems = formWithIncludes.categories.reduce((sum: number, cat) => sum + cat.items.length, 0);
-            const userScoredItems = formWithIncludes.categories.reduce((sum: number, cat) => 
-                sum + cat.items.filter(item => 
-                    item.userScores.some(score => score.score !== null)
-                ).length, 0
-            );
-            
-            const isCompleted = formWithIncludes.userSessions.length > 0;
-            const completionPercentage = totalItems > 0 ? Math.round((userScoredItems / totalItems) * 100) : 0;
+            const totalItems = form.categories.reduce((sum: number, cat) => sum + cat.items.length, 0);
 
             return {
                 ...form,
                 stats: {
                     totalItems,
-                    userScoredItems,
-                    completionPercentage,
-                    isCompleted,
-                    lastActivity: formWithIncludes.userSessions[0]?.completedAt || null
+                    totalCategories: form.categories.length
                 }
             };
         });
@@ -213,7 +169,7 @@ export async function POST(
                 _count: {
                     select: {
                         categories: true,
-                        userSessions: true
+                        personalizedForms: true
                     }
                 }
             }

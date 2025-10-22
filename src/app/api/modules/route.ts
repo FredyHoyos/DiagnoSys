@@ -27,7 +27,7 @@ export async function GET() {
                         _count: {
                             select: {
                                 categories: true,
-                                userSessions: true
+                                personalizedForms: true
                             }
                         }
                     }

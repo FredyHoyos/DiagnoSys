@@ -3,19 +3,33 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 
+interface SelectedItem {
+    itemId: number;
+    score: number;
+    isNew: boolean;
+    name: string;
+}
+
+interface SelectedCategory {
+    categoryId: number;
+    name: string;
+    selectedItems: SelectedItem[];
+}
+
 /**
  * POST /api/forms/[formId]/complete
- * Marca un formulario como completado por el usuario
+ * Guarda las respuestas como un formulario personalizado del usuario
  */
 export async function POST(
     request: NextRequest,
     context: { params: Promise<{ formId: string }> }
 ) {
     const { formId } = await context.params;
+    
     try {
         const session = await getServerSession(authOptions);
         
-        if (!session || !session.user) {
+        if (!session?.user?.id) {
             return NextResponse.json(
                 { error: "Authentication required" },
                 { status: 401 }
@@ -23,191 +37,198 @@ export async function POST(
         }
 
         const formIdInt = parseInt(formId);
+        const userId = parseInt(session.user.id);
         
-        if (isNaN(formIdInt)) {
+        if (isNaN(formIdInt) || isNaN(userId)) {
             return NextResponse.json(
-                { error: "Invalid form ID" },
+                { error: "Invalid form ID or user ID" },
                 { status: 400 }
             );
         }
 
-        const userId = parseInt(session.user.id);
+        const body = await request.json();
+        const { selectedCategories }: { selectedCategories: SelectedCategory[] } = body;
 
-        // Verificar que el formulario existe
-        const form = await prisma.form.findUnique({
-            where: { id: formIdInt },
-            include: {
-                module: {
-                    select: {
-                        id: true,
-                        name: true
-                    }
+        // Validar estructura de datos
+        if (!selectedCategories || !Array.isArray(selectedCategories) || selectedCategories.length === 0) {
+            return NextResponse.json(
+                { error: "No categories with selected items" },
+                { status: 400 }
+            );
+        }
+
+        // Validar que cada categoría tenga al menos un item seleccionado con score
+        for (const category of selectedCategories) {
+            if (!category.name || typeof category.name !== 'string' || category.name.trim() === '') {
+                return NextResponse.json(
+                    { error: `Category ${category.categoryId || 'unknown'} is missing a valid name` },
+                    { status: 400 }
+                );
+            }
+            
+            if (!category.selectedItems || category.selectedItems.length === 0) {
+                return NextResponse.json(
+                    { error: "Each category must have at least one item selected" },
+                    { status: 400 }
+                );
+            }
+            
+            for (const item of category.selectedItems) {
+                if (!item.score || item.score < 1 || item.score > 5) {
+                    return NextResponse.json(
+                        { error: "All selected items must have a valid score (1-5)" },
+                        { status: 400 }
+                    );
                 }
             }
+        }
+
+        // Obtener información del usuario para determinar auditId
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { roleId: true, organizationId: true }
         });
 
-        if (!form) {
+        if (!user) {
+            return NextResponse.json(
+                { error: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        // Obtener formulario base para obtener su nombre
+        const baseForm = await prisma.form.findUnique({
+            where: { id: formIdInt },
+            select: { name: true }
+        });
+
+        if (!baseForm) {
             return NextResponse.json(
                 { error: "Form not found" },
                 { status: 404 }
             );
         }
 
-        // Marcar la sesión actual como completada
-        const currentSession = await prisma.userFormSession.findFirst({
-            where: {
-                userId: userId,
-                formId: formIdInt,
-                isCurrent: true
-            }
+        console.log(`Creating PersonalizedForm for user ${userId} on form ${formId}:`, {
+            categoriesCount: selectedCategories.length,
+            totalItems: selectedCategories.reduce((sum, cat) => sum + cat.selectedItems.length, 0)
         });
 
-        if (!currentSession) {
-            return NextResponse.json(
-                { error: "No current session found for this form" },
-                { status: 404 }
-            );
-        }
+        // Transacción para crear el formulario personalizado (con timeout extendido)
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Buscar si ya existe un PersonalizedForm para este usuario y formulario base
+            let personalizedForm = await tx.personalizedForm.findFirst({
+                where: {
+                    userId: userId,
+                    baseFormId: formIdInt,
+                    auditId: null // Por ahora solo manejamos casos sin auditoría
+                }
+            });
 
-        const userFormSession = await prisma.userFormSession.update({
-            where: {
-                id: currentSession.id
-            },
-            data: {
-                isCompleted: true,
-                completedAt: new Date()
-            },
-            include: {
-                form: {
-                    select: {
-                        id: true,
-                        name: true,
-                        module: {
-                            select: {
-                                id: true,
-                                name: true
-                            }
-                        }
+            if (personalizedForm) {
+                // Actualizar existente
+                personalizedForm = await tx.personalizedForm.update({
+                    where: { id: personalizedForm.id },
+                    data: {
+                        name: `${baseForm.name} - ${new Date().toLocaleDateString()}`,
+                        isCompleted: true,
+                        completedAt: new Date(),
+                        updatedAt: new Date()
                     }
-                }
+                });
+            } else {
+                // Crear nuevo
+                personalizedForm = await tx.personalizedForm.create({
+                    data: {
+                        name: `${baseForm.name} - ${new Date().toLocaleDateString()}`,
+                        baseFormId: formIdInt,
+                        userId: userId,
+                        isCompleted: true,
+                        completedAt: new Date()
+                    }
+                });
             }
-        });
 
-        // Obtener estadísticas del formulario para el usuario
-        const userItemsCount = await prisma.userItemScore.count({
-            where: {
-                userId: userId,
-                sessionId: userFormSession.id
-            }
-        });
-
-        const userScoredItemsCount = await prisma.userItemScore.count({
-            where: {
-                userId: userId,
-                sessionId: userFormSession.id,
-                score: {
-                    not: null
+            // 2. Eliminar categorías personalizadas anteriores (para reemplazar completamente)
+            await tx.personalizedCategory.deleteMany({
+                where: {
+                    personalizedFormId: personalizedForm.id
                 }
+            });
+
+            let totalItemsProcessed = 0;
+            let newItemsCreated = 0;
+
+            // 3. Crear categorías personalizadas con sus items (optimizado con createMany)
+            for (const category of selectedCategories) {
+                // Crear PersonalizedCategory
+                const personalizedCategory = await tx.personalizedCategory.create({
+                    data: {
+                        name: category.name || `Category ${category.categoryId}`,
+                        baseCategoryId: category.categoryId,
+                        personalizedFormId: personalizedForm.id
+                    }
+                });
+
+                // 4. Preparar datos de items para crear en lote
+                const itemsToCreate = category.selectedItems.map((item: SelectedItem) => {
+                    if (item.isNew) {
+                        newItemsCreated++;
+                        return {
+                            name: item.name.trim(),
+                            isCustom: true,
+                            baseItemId: null,
+                            personalizedCategoryId: personalizedCategory.id,
+                            score: item.score
+                        };
+                    } else {
+                        return {
+                            name: item.name.trim(),
+                            isCustom: false,
+                            baseItemId: item.itemId,
+                            personalizedCategoryId: personalizedCategory.id,
+                            score: item.score
+                        };
+                    }
+                });
+
+                // Crear todos los items de la categoría en una sola operación
+                await tx.personalizedItem.createMany({
+                    data: itemsToCreate
+                });
+
+                totalItemsProcessed += category.selectedItems.length;
             }
+
+            return {
+                personalizedFormId: personalizedForm.id,
+                totalItemsProcessed,
+                newItemsCreated,
+                categoriesProcessed: selectedCategories.length
+            };
+        }, {
+            timeout: 15000 // Timeout de 15 segundos en lugar de 5
         });
 
         return NextResponse.json({
-            session: userFormSession,
-            stats: {
-                totalUserItems: userItemsCount,
-                scoredItems: userScoredItemsCount,
-                completionPercentage: userItemsCount > 0 
-                    ? Math.round((userScoredItemsCount / userItemsCount) * 100) 
-                    : 0
-            },
-            message: "Form session marked as completed successfully"
-        }, { status: 200 });
-
-    } catch (error) {
-        console.error("Error completing form:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
-    }
-}
-
-/**
- * DELETE /api/forms/[formId]/complete
- * Desmarca un formulario como completado
- */
-export async function DELETE(
-    request: NextRequest,
-    context: { params: Promise<{ formId: string }> }
-) {
-    const { formId } = await context.params;
-    try {
-        const session = await getServerSession(authOptions);
-        
-        if (!session || !session.user) {
-            return NextResponse.json(
-                { error: "Authentication required" },
-                { status: 401 }
-            );
-        }
-
-        const formIdInt = parseInt(formId);
-        
-        if (isNaN(formIdInt)) {
-            return NextResponse.json(
-                { error: "Invalid form ID" },
-                { status: 400 }
-            );
-        }
-
-        const userId = parseInt(session.user.id);
-
-        // Marcar la sesión actual como no completada
-        const currentSession = await prisma.userFormSession.findFirst({
-            where: {
-                userId: userId,
-                formId: formIdInt,
-                isCurrent: true
-            }
-        });
-
-        if (!currentSession) {
-            return NextResponse.json(
-                { error: "No current session found for this form" },
-                { status: 404 }
-            );
-        }
-
-        await prisma.userFormSession.update({
-            where: {
-                id: currentSession.id
-            },
+            success: true,
+            message: "✅ Formulario personalizado guardado correctamente",
             data: {
-                isCompleted: false,
-                completedAt: null
+                baseFormId: formIdInt,
+                userId: userId,
+                personalizedFormId: result.personalizedFormId,
+                summary: {
+                    categoriesEvaluated: result.categoriesProcessed,
+                    totalItemsEvaluated: result.totalItemsProcessed,
+                    newItemsCreated: result.newItemsCreated
+                }
             }
         });
 
-        return NextResponse.json({
-            message: "Form session unmarked as completed successfully"
-        });
-
     } catch (error) {
-        console.error("Error uncompleting form:", error);
-        
-        function hasCodeProperty(err: unknown): err is { code: string } {
-            return typeof err === "object" && err !== null && "code" in err && typeof (err as { code: unknown }).code === "string";
-        }
-
-        if (hasCodeProperty(error) && error.code === 'P2025') {
-            return NextResponse.json(
-                { error: "Form session not found" },
-                { status: 404 }
-            );
-        }
-
+        console.error("Error saving personalized form:", error);
         return NextResponse.json(
-            { error: "Internal server error" },
+            { error: "Error interno del servidor al guardar el formulario personalizado" },
             { status: 500 }
         );
     }
