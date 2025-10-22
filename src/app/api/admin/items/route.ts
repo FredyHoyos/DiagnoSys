@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
                 },
                 _count: {
                     select: {
-                        userScores: true
+                        personalizedItems: true
                     }
                 }
             }
@@ -163,17 +163,25 @@ export async function GET(request: NextRequest) {
                         }
                     }
                 },
-                userScores: {
+                personalizedItems: {
                     include: {
-                        user: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true,
-                                role: {
-                                    select: {
-                                        name: true,
-                                        displayName: true
+                        personalizedCategory: {
+                            include: {
+                                personalizedForm: {
+                                    include: {
+                                        user: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                email: true,
+                                                role: {
+                                                    select: {
+                                                        name: true,
+                                                        displayName: true
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -182,7 +190,7 @@ export async function GET(request: NextRequest) {
                 },
                 _count: {
                     select: {
-                        userScores: true
+                        personalizedItems: true
                     }
                 }
             },
@@ -198,33 +206,29 @@ export async function GET(request: NextRequest) {
             ]
         });
 
-        // Agregar estadísticas a cada item
+        // Agregar estadísticas a cada item basado en personalizedItems
         const itemsWithStats = items.map(item => {
-            const totalUsers = item.userScores.length;
-            const scoredUsers = item.userScores.filter(score => score.score !== null).length;
-            const scores = item.userScores
-                .filter(score => score.score !== null)
-                .map(score => score.score!)
-                .filter((score): score is number => typeof score === 'number');
+            const totalUsers = item.personalizedItems.length;
+            const scores = item.personalizedItems.map(pItem => pItem.score);
             
             const averageScore = calculateAverageScore(scores);
 
             const scoreDistribution = {
-                1: scores.filter(s => s === 1).length,
-                2: scores.filter(s => s === 2).length,
-                3: scores.filter(s => s === 3).length,
-                4: scores.filter(s => s === 4).length,
-                5: scores.filter(s => s === 5).length
+                1: scores.filter((s: number) => s === 1).length,
+                2: scores.filter((s: number) => s === 2).length,
+                3: scores.filter((s: number) => s === 3).length,
+                4: scores.filter((s: number) => s === 4).length,
+                5: scores.filter((s: number) => s === 5).length
             };
 
             return {
                 ...item,
                 stats: {
                     totalUsers,
-                    scoredUsers,
+                    scoredUsers: totalUsers, // Todos los personalizedItems tienen score
                     averageScore,
                     scoreDistribution,
-                    adoptionRate: totalUsers > 0 ? Math.round((scoredUsers / totalUsers) * 100) : 0
+                    adoptionRate: 100 // 100% ya que solo se guardan items con score
                 }
             };
         });

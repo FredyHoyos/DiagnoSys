@@ -66,17 +66,25 @@ export async function PUT(
                         }
                     }
                 },
-                userScores: {
+                personalizedItems: {
                     include: {
-                        user: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true,
-                                role: {
-                                    select: {
-                                        name: true,
-                                        displayName: true
+                        personalizedCategory: {
+                            include: {
+                                personalizedForm: {
+                                    include: {
+                                        user: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                email: true,
+                                                role: {
+                                                    select: {
+                                                        name: true,
+                                                        displayName: true
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -85,7 +93,7 @@ export async function PUT(
                 },
                 _count: {
                     select: {
-                        userScores: true
+                        personalizedItems: true
                     }
                 }
             }
@@ -147,7 +155,7 @@ export async function DELETE(
             include: {
                 _count: {
                     select: {
-                        userScores: true
+                        personalizedItems: true
                     }
                 }
             }
@@ -160,14 +168,14 @@ export async function DELETE(
             );
         }
 
-        // Eliminar el item (los userScores se eliminan en cascada)
+        // Eliminar el item (los personalizedItems se eliminan en cascada)
         await prisma.item.delete({
             where: { id: itemIdInt }
         });
 
         return NextResponse.json({
-            message: `Item deleted successfully. ${item._count.userScores} user scores were also removed.`,
-            deletedUserScores: item._count.userScores
+            message: `Item deleted successfully. ${item._count.personalizedItems} personalized items were also removed.`,
+            deletedPersonalizedItems: item._count.personalizedItems
         });
 
     } catch (error) {
@@ -228,17 +236,25 @@ export async function GET(
                         }
                     }
                 },
-                userScores: {
+                personalizedItems: {
                     include: {
-                        user: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true,
-                                role: {
-                                    select: {
-                                        name: true,
-                                        displayName: true
+                        personalizedCategory: {
+                            include: {
+                                personalizedForm: {
+                                    include: {
+                                        user: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                email: true,
+                                                role: {
+                                                    select: {
+                                                        name: true,
+                                                        displayName: true
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -258,13 +274,9 @@ export async function GET(
             );
         }
 
-        // Calcular estadísticas detalladas
-        const totalUsers = item.userScores.length;
-        const scoredUsers = item.userScores.filter(score => score.score !== null).length;
-        const scores = item.userScores
-            .filter(score => score.score !== null)
-            .map(score => score.score!)
-            .filter((score): score is number => typeof score === 'number');
+        // Calcular estadísticas detalladas basadas en personalizedItems
+        const totalUsers = item.personalizedItems.length;
+        const scores = item.personalizedItems.map(pItem => pItem.score);
         
         const averageScore = calculateAverageScore(scores);
 
@@ -276,15 +288,13 @@ export async function GET(
             5: scores.filter(s => s === 5).length
         };
 
-        const roleDistribution = item.userScores.reduce((acc, score) => {
-            const roleName = score.user.role.name;
+        const roleDistribution = item.personalizedItems.reduce((acc, pItem) => {
+            const roleName = pItem.personalizedCategory.personalizedForm.user.role.name;
             if (!acc[roleName]) {
                 acc[roleName] = { total: 0, scored: 0 };
             }
             acc[roleName].total++;
-            if (score.score !== null) {
-                acc[roleName].scored++;
-            }
+            acc[roleName].scored++; // Todos los personalizedItems tienen score
             return acc;
         }, {} as Record<string, { total: number; scored: number }>);
 
@@ -292,12 +302,12 @@ export async function GET(
             ...item,
             stats: {
                 totalUsers,
-                scoredUsers,
+                scoredUsers: totalUsers, // Todos los personalizedItems tienen score
                 averageScore,
                 scoreDistribution,
                 roleDistribution,
-                adoptionRate: totalUsers > 0 ? Math.round((scoredUsers / totalUsers) * 100) : 0,
-                lastActivity: item.userScores[0]?.updatedAt || null
+                adoptionRate: 100, // 100% ya que solo se guardan items con score
+                lastActivity: item.personalizedItems[0]?.updatedAt || null
             }
         };
 

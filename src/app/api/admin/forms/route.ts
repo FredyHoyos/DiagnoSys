@@ -27,7 +27,14 @@ export async function GET() {
         }
 
         const forms = await prisma.form.findMany({
-            include: {
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                tag: true, // ← Agregar el campo tag
+                isPublished: true,
+                createdAt: true,
+                updatedAt: true,
                 module: {
                     select: {
                         id: true,
@@ -67,6 +74,7 @@ export async function GET() {
                 id: form.id,
                 name: form.name,
                 description: form.description,
+                tag: form.tag, // ← Incluir el tag en la respuesta
                 isPublished: form.isPublished,
                 module: form.module,
                 stats: {
@@ -116,7 +124,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { name, description, moduleId } = await request.json();
+        const { name, description, moduleId, tag } = await request.json();
 
         if (!name || !moduleId) {
             return NextResponse.json(
@@ -141,6 +149,7 @@ export async function POST(request: NextRequest) {
             data: {
                 name,
                 description: description || null,
+                tag: tag || null, // ← Incluir el tag opcional
                 moduleId: parseInt(moduleId),
                 isPublished: false // Los formularios inician como no publicados
             },
@@ -165,6 +174,7 @@ export async function POST(request: NextRequest) {
                 id: form.id,
                 name: form.name,
                 description: form.description,
+                tag: form.tag, // ← Incluir tag en la respuesta
                 isPublished: form.isPublished,
                 module: form.module,
                 stats: {
