@@ -20,7 +20,6 @@ model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique // "admin", "consultant", "organization"
   displayName String   // "Administrator", "Consultant", "Organization"
-  description String?
   createdAt   DateTime @default(now())
   users       User[]
 }
@@ -30,13 +29,11 @@ model User {
   name          String
   email         String              @unique
   password      String
-  roleId        Int                 // OBLIGATORIO escoger rol
+  roleId        Int
   role          Role                @relation(fields: [roleId], references: [id])
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   tokens        ResetToken[]
-  userItems     UserItemScore[]
-  formSessions  UserFormSession[]   // Nuevas sesiones de formularios
   
   // Para consultores: empresas que auditan
   audits        Audit[]
@@ -75,15 +72,15 @@ model Form {
   id            Int                 @id @default(autoincrement())
   name          String              @unique
   description   String?
+  tag           String?             // Tag for form classification (Skills, Capabilities, etc.)
   moduleId      Int
   module        Module              @relation(fields: [moduleId], references: [id])
   categories    Category[]
-  userSessions  UserFormSession[]   // Sesiones de usuario
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   isPublished   Boolean             @default(false) // Solo formularios publicados son visibles
   
-  // Relaciones con formularios personalizados
+  // Formularios personalizados basados en este formulario base
   personalizedForms PersonalizedForm[]
 }
 
@@ -129,8 +126,7 @@ model Audit {
 
 model PersonalizedForm {
   id            Int      @id @default(autoincrement())
-  name          String   // Copia del nombre del formulario base
-  description   String?  // Copia de la descripción del formulario base
+  name          String   // Nombre personalizado o copia del formulario base
   
   // Relación con formulario base
   baseFormId    Int      // Formulario base del cual deriva
@@ -147,8 +143,6 @@ model PersonalizedForm {
   // Estado del formulario
   isCompleted     Boolean  @default(false)
   completedAt     DateTime?
-  progress        Float    @default(0.0) // Porcentaje de items con puntaje
-  globalComments  String?  // Comentarios generales del formulario
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -193,10 +187,8 @@ model PersonalizedItem {
   personalizedCategoryId  Int
   personalizedCategory    PersonalizedCategory @relation(fields: [personalizedCategoryId], references: [id], onDelete: Cascade)
   
-  // Puntaje asignado por el usuario (1-5)
-  score                   Int?     // Null hasta que el usuario asigne puntaje
-  notes                   String?  // Notas adicionales del usuario
-  comment                 String?  // Comentario específico para este item
+  // Puntaje asignado por el usuario (1-5) - OBLIGATORIO para items que se guardan
+  score                   Int      // 1-5, siempre presente para items guardados
   
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
@@ -225,7 +217,6 @@ model Item {
   name        String   
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
-  userScores  UserItemScore[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -233,45 +224,4 @@ model Item {
   personalizedItems PersonalizedItem[] @relation("BaseItem")
 
   @@unique([name, categoryId]) // NAME UNIQUE within a category
-}
-
-// =============================
-// User Responses
-// =============================
-
-// Versiones de formularios guardadas por el usuario
-model UserFormSession {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  formId        Int
-  sessionName   String?  // "Versión 1", "Evaluación Q1 2024", etc.
-  isCompleted   Boolean  @default(false)
-  completedAt   DateTime? // Timestamp cuando se completó la sesión
-  isCurrent     Boolean  @default(true) // Solo una sesión actual por usuario/form
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  form          Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
-  userItems     UserItemScore[]   // Items seleccionados en esta sesión
-  
-  @@unique([userId, formId, isCurrent]) // Solo una sesión actual por user/form
-}
-
-// Items seleccionados y puntuados por el usuario en una sesión específica
-model UserItemScore {
-  id              Int               @id @default(autoincrement())
-  userId          Int
-  itemId          Int
-  sessionId       Int               // Relacionado con UserFormSession
-  score           Int?              // 1-5, initially null when item is just selected
-  isSelected      Boolean           @default(true) // Usuario seleccionó este item
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  item            Item              @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  session         UserFormSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, itemId, sessionId]) // one score per user per item per session
 }
