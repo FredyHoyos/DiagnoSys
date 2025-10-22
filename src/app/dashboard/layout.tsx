@@ -10,7 +10,9 @@ export default function DashboardLayout({
 }) {
   return (
     <SessionProvider>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex w-screen h-screen">
+        {/* Nuevo div para el fondo */}
+        <div className="absolute inset-0 background-in"></div>
         {/* Sidebar fijo */}
         <Sidebar />
 

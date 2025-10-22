@@ -6,7 +6,7 @@ export default function ZoomInPage() {
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-[#2E6347]">Zoom In</h1>
-                    <p className="mt-2 text-lg  text-black ">
+                    <p className="mt-2 text-lg  text-black">
                         Individual skills needed to operate in digital environments and adopt new technologies.
                     </p>
                 </div>

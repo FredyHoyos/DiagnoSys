@@ -7,7 +7,6 @@
     gap: 2rem;
     width: 100%;
     min-height: 100vh;
-    background: #f9fafb;
     /* fondo claro */
     box-sizing: border-box;
 }
@@ -101,7 +100,10 @@
     padding: 1rem 1.2rem;
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
-    background: white;
+    background: radial-gradient(ellipse at right top,
+            #95DBC9 0%,
+            #C9F7B0 47%,
+            #ffffff 100%);
     box-shadow: 0 4px 15px rgba(51, 105, 30, 0.15);
     /* sombra verde suave */
     transition: box-shadow 0.2s ease, transform 0.1s ease;
@@ -124,7 +126,10 @@
     padding: 1rem 1.2rem;
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
-    background: white;
+    background: radial-gradient(ellipse at right top,
+            #95DBC9 0%,
+            #C9F7B0 47%,
+            #ffffff 100%);
     animation: pulse 1.5s infinite ease-in-out;
 }
 
