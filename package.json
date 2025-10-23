@@ -11,6 +11,7 @@
     "db:seed": "npx prisma db seed"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.15.0",
     "@prisma/extension-accelerate": "^2.0.2",
