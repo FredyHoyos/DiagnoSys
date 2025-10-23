@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface Note {
   id: string;
@@ -16,53 +16,65 @@ interface Category {
   notes: Note[];
 }
 
+interface FormResponse {
+  id: number;
+  name: string;
+  categories: {
+    id: number;
+    name: string;
+  }[];
+}
+
 export default function ZoomOutCategorization() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [destinations, setDestinations] = useState({
-    opportunities: [] as Note[],
-    needs: [] as Note[],
-    problems: [] as Note[],
+  const [destinations, setDestinations] = useState<{
+    opportunities: Note[];
+    needs: Note[];
+    problems: Note[];
+  }>({
+    opportunities: [],
+    needs: [],
+    problems: [],
   });
 
   const [loading, setLoading] = useState(true);
 
-  // 🎯 Fetch forms from the API
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        const res = await fetch("/api/modules/2/forms");
-        if (!res.ok) throw new Error("Failed to fetch forms");
-        const data = await res.json();
+        const res = await fetch('/api/modules/2/forms');
+        if (!res.ok) throw new Error('Failed to fetch forms');
 
-        console.log("API response:", data);
+        const data: { forms: FormResponse[] } = await res.json();
 
-        // Coordinated color palettes: [lightColor, darkColor]
-        const colorPairs = [
-          ["bg-pink-100", "bg-pink-500"],
-          ["bg-green-100", "bg-green-500"],
-          ["bg-yellow-100", "bg-yellow-500"],
-          ["bg-blue-100", "bg-blue-500"],
-          ["bg-purple-100", "bg-purple-500"],
-          ["bg-orange-100", "bg-orange-500"],
+        console.log('API response:', data);
+
+        const colorPairs: [string, string][] = [
+          ['bg-pink-100', 'bg-pink-500'],
+          ['bg-green-100', 'bg-green-500'],
+          ['bg-yellow-100', 'bg-yellow-500'],
+          ['bg-blue-100', 'bg-blue-500'],
+          ['bg-purple-100', 'bg-purple-500'],
+          ['bg-orange-100', 'bg-orange-500'],
         ];
 
-        const mappedCategories: Category[] = data.forms.map((form: any, index: number) => {
+        const mappedCategories: Category[] = data.forms.map((form, index) => {
           const [light, dark] = colorPairs[index % colorPairs.length];
           return {
             id: form.id.toString(),
             title: form.name,
-            color: light, // light color for the main card
-            notes: form.categories.map((cat: any) => ({
+            color: light,
+            notes: form.categories.map((cat) => ({
               id: cat.id.toString(),
               name: cat.name,
-              color: dark, // darker tone for the notes
+              color: dark,
             })),
           };
         });
 
         setCategories(mappedCategories);
       } catch (err) {
-        console.error("Error fetching forms", err);
+        console.error('Error fetching forms', err);
       } finally {
         setLoading(false);
       }
@@ -71,37 +83,30 @@ export default function ZoomOutCategorization() {
     fetchForms();
   }, []);
 
-  // 🎯 Drag & Drop logic
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     const { source, destination } = result;
     if (!destination) return;
 
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    )
-      return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-    // If dragging from a category
     if (source.droppableId.startsWith('category-')) {
       const categoryId = source.droppableId.split('-')[1];
-      const sourceCategory = categories.find((c) => c.id === categoryId)!;
+      const sourceCategory = categories.find((c) => c.id === categoryId);
+      if (!sourceCategory) return;
+
       const draggedNote = sourceCategory.notes[source.index];
 
-      // Remove from the origin
       const newCategories = categories.map((c) =>
         c.id === categoryId
           ? { ...c, notes: c.notes.filter((n) => n.id !== draggedNote.id) }
           : c
       );
 
-      // Add to the destination
       const newDestinations = { ...destinations };
-      newDestinations[destination.droppableId as keyof typeof destinations].splice(
-        destination.index,
-        0,
-        draggedNote
-      );
+      const key = destination.droppableId as keyof typeof destinations;
+      const updatedList = [...newDestinations[key]];
+      updatedList.splice(destination.index, 0, draggedNote);
+      newDestinations[key] = updatedList;
 
       setCategories(newCategories);
       setDestinations(newDestinations);
@@ -118,22 +123,14 @@ export default function ZoomOutCategorization() {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-3 gap-6">
-          {/* Categories (main cards) */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
             {categories.map((category) => (
-              <div
-                key={category.id}
-                className={`${category.color} rounded-xl p-4 shadow-md flex flex-col`}
-              >
+              <div key={category.id} className={`${category.color} rounded-xl p-4 shadow-md flex flex-col`}>
                 <h2 className="font-semibold text-gray-800 mb-2 text-lg">{category.title}</h2>
 
                 <Droppable droppableId={`category-${category.id}`}>
                   {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className="flex flex-wrap gap-2"
-                    >
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-wrap gap-2">
                       {category.notes.map((note, index) => (
                         <Draggable key={note.id} draggableId={note.id} index={index}>
                           {(provided) => (
@@ -156,13 +153,10 @@ export default function ZoomOutCategorization() {
             ))}
           </div>
 
-          {/* Opportunities, Needs, Problems */}
           <div className="flex flex-col gap-6">
-            {['opportunities', 'needs', 'problems'].map((key) => (
+            {(['opportunities', 'needs', 'problems'] as const).map((key) => (
               <div key={key}>
-                <h3 className="text-lg font-bold uppercase mb-2 text-gray-800">
-                  {key}
-                </h3>
+                <h3 className="text-lg font-bold uppercase mb-2 text-gray-800">{key}</h3>
                 <Droppable droppableId={key}>
                   {(provided) => (
                     <div
@@ -170,22 +164,20 @@ export default function ZoomOutCategorization() {
                       {...provided.droppableProps}
                       className="min-h-[100px] bg-white rounded-lg shadow-md p-3 flex flex-wrap gap-2"
                     >
-                      {destinations[key as keyof typeof destinations].map(
-                        (note, index) => (
-                          <Draggable key={note.id} draggableId={note.id} index={index}>
-                            {(provided) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`px-3 py-2 ${note.color} rounded-md shadow text-white`}
-                              >
-                                {note.name}
-                              </div>
-                            )}
-                          </Draggable>
-                        )
-                      )}
+                      {destinations[key].map((note, index) => (
+                        <Draggable key={note.id} draggableId={note.id} index={index}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`px-3 py-2 ${note.color} rounded-md shadow text-white`}
+                            >
+                              {note.name}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
                       {provided.placeholder}
                     </div>
                   )}
