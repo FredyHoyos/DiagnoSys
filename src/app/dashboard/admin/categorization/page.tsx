@@ -87,8 +87,28 @@ export default function ZoomOutCategorization() {
     const { source, destination } = result;
     if (!destination) return;
 
+    // Evitar movimientos sin cambio
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
+    // Si el movimiento ocurre dentro de la misma categoría
+    if (source.droppableId.startsWith('category-') && destination.droppableId.startsWith('category-')) {
+      const categoryId = source.droppableId.split('-')[1];
+      const category = categories.find((c) => c.id === categoryId);
+      if (!category) return;
+
+      const reorderedNotes = Array.from(category.notes);
+      const [moved] = reorderedNotes.splice(source.index, 1);
+      reorderedNotes.splice(destination.index, 0, moved);
+
+      const newCategories = categories.map((c) =>
+        c.id === categoryId ? { ...c, notes: reorderedNotes } : c
+      );
+
+      setCategories(newCategories);
+      return;
+    }
+
+    // Si el movimiento es de una categoría a un destino (opportunities, needs, problems)
     if (source.droppableId.startsWith('category-')) {
       const categoryId = source.droppableId.split('-')[1];
       const sourceCategory = categories.find((c) => c.id === categoryId);
@@ -112,6 +132,7 @@ export default function ZoomOutCategorization() {
       setDestinations(newDestinations);
     }
   };
+
 
   if (loading) return <p className="text-center mt-10 text-gray-500">Loading data...</p>;
 
