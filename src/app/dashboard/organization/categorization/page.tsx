@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import React, { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface Note {
   id: string;
@@ -42,20 +42,20 @@ export default function ZoomOutCategorization() {
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        const res = await fetch('/api/modules/2/forms');
-        if (!res.ok) throw new Error('Failed to fetch forms');
+        const res = await fetch("/api/modules/2/forms");
+        if (!res.ok) throw new Error("Failed to fetch forms");
 
         const data: { forms: FormResponse[] } = await res.json();
 
-        console.log('API response:', data);
+        console.log("API response:", data);
 
         const colorPairs: [string, string][] = [
-          ['bg-pink-100', 'bg-pink-500'],
-          ['bg-green-100', 'bg-green-500'],
-          ['bg-yellow-100', 'bg-yellow-500'],
-          ['bg-blue-100', 'bg-blue-500'],
-          ['bg-purple-100', 'bg-purple-500'],
-          ['bg-orange-100', 'bg-orange-500'],
+          ["bg-pink-100", "bg-pink-500"],
+          ["bg-green-100", "bg-green-500"],
+          ["bg-yellow-100", "bg-yellow-500"],
+          ["bg-blue-100", "bg-blue-500"],
+          ["bg-purple-100", "bg-purple-500"],
+          ["bg-orange-100", "bg-orange-500"],
         ];
 
         const mappedCategories: Category[] = data.forms.map((form, index) => {
@@ -74,7 +74,7 @@ export default function ZoomOutCategorization() {
 
         setCategories(mappedCategories);
       } catch (err) {
-        console.error('Error fetching forms', err);
+        console.error("Error fetching forms", err);
       } finally {
         setLoading(false);
       }
@@ -130,8 +130,6 @@ export default function ZoomOutCategorization() {
     setDestinations(newDestinations);
   };
 
-
-
   if (loading) return <p className="text-center mt-10 text-gray-500">Loading data...</p>;
 
   // Calcular si ya están todos los papelitos clasificados
@@ -148,7 +146,7 @@ export default function ZoomOutCategorization() {
   // Función de guardar
   const handleSave = async () => {
     const payload = destinations;
-    console.log("Datos guardados:", payload);
+    console.log("Saved data:", payload);
 
     try {
       const res = await fetch("/api/modules/2/save", {
@@ -158,14 +156,12 @@ export default function ZoomOutCategorization() {
       });
 
       if (!res.ok) throw new Error("Error saving data");
-      alert("Datos guardados correctamente ✅");
+      alert("Data saved successfully");
     } catch (err) {
       console.error(err);
-      alert("Error al guardar los datos ❌");
+      alert("Error saving data");
     }
   };
-
-
 
   return (
     <div className="p-6 min-h-screen">
@@ -206,7 +202,7 @@ export default function ZoomOutCategorization() {
           </div>
 
           <div className="flex flex-col gap-6">
-            {(['opportunities', 'needs', 'problems'] as const).map((key) => (
+            {(["opportunities", "needs", "problems"] as const).map((key) => (
               <div key={key}>
                 <h3 className="text-lg font-bold uppercase mb-2 text-gray-800">{key}</h3>
                 <Droppable droppableId={key}>
@@ -250,10 +246,9 @@ export default function ZoomOutCategorization() {
               : "bg-gray-400 cursor-not-allowed"
           }`}
         >
-          Guardar
+          Save
         </button>
       </div>
-
     </div>
   );
 }

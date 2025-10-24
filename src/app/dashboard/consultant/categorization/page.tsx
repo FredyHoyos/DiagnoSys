@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import React, { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface Note {
   id: string;
@@ -42,20 +42,20 @@ export default function ZoomOutCategorization() {
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        const res = await fetch('/api/modules/2/forms');
-        if (!res.ok) throw new Error('Failed to fetch forms');
+        const res = await fetch("/api/modules/2/forms");
+        if (!res.ok) throw new Error("Failed to fetch forms");
 
         const data: { forms: FormResponse[] } = await res.json();
 
-        console.log('API response:', data);
+        console.log("API response:", data);
 
         const colorPairs: [string, string][] = [
-          ['bg-pink-100', 'bg-pink-500'],
-          ['bg-green-100', 'bg-green-500'],
-          ['bg-yellow-100', 'bg-yellow-500'],
-          ['bg-blue-100', 'bg-blue-500'],
-          ['bg-purple-100', 'bg-purple-500'],
-          ['bg-orange-100', 'bg-orange-500'],
+          ["bg-pink-100", "bg-pink-500"],
+          ["bg-green-100", "bg-green-500"],
+          ["bg-yellow-100", "bg-yellow-500"],
+          ["bg-blue-100", "bg-blue-500"],
+          ["bg-purple-100", "bg-purple-500"],
+          ["bg-orange-100", "bg-orange-500"],
         ];
 
         const mappedCategories: Category[] = data.forms.map((form, index) => {
@@ -74,7 +74,7 @@ export default function ZoomOutCategorization() {
 
         setCategories(mappedCategories);
       } catch (err) {
-        console.error('Error fetching forms', err);
+        console.error("Error fetching forms", err);
       } finally {
         setLoading(false);
       }
@@ -87,33 +87,81 @@ export default function ZoomOutCategorization() {
     const { source, destination } = result;
     if (!destination) return;
 
+    // Evitar movimientos sin cambio
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-    if (source.droppableId.startsWith('category-')) {
-      const categoryId = source.droppableId.split('-')[1];
-      const sourceCategory = categories.find((c) => c.id === categoryId);
+    const newCategories = [...categories];
+    const newDestinations = { ...destinations };
+
+    // Obtener la nota que se mueve
+    let draggedNote: Note | null = null;
+
+    // Si viene desde una categoría
+    if (source.droppableId.startsWith("category-")) {
+      const sourceCategoryId = source.droppableId.split("-")[1];
+      const sourceCategory = newCategories.find((c) => c.id === sourceCategoryId);
       if (!sourceCategory) return;
-
-      const draggedNote = sourceCategory.notes[source.index];
-
-      const newCategories = categories.map((c) =>
-        c.id === categoryId
-          ? { ...c, notes: c.notes.filter((n) => n.id !== draggedNote.id) }
-          : c
-      );
-
-      const newDestinations = { ...destinations };
-      const key = destination.droppableId as keyof typeof destinations;
-      const updatedList = [...newDestinations[key]];
-      updatedList.splice(destination.index, 0, draggedNote);
-      newDestinations[key] = updatedList;
-
-      setCategories(newCategories);
-      setDestinations(newDestinations);
+      [draggedNote] = sourceCategory.notes.splice(source.index, 1);
     }
+
+    // Si viene desde un destino (opportunities, needs o problems)
+    else if (["opportunities", "needs", "problems"].includes(source.droppableId)) {
+      const key = source.droppableId as keyof typeof destinations;
+      [draggedNote] = newDestinations[key].splice(source.index, 1);
+    }
+
+    if (!draggedNote) return;
+
+    // Si va hacia una categoría
+    if (destination.droppableId.startsWith("category-")) {
+      const destCategoryId = destination.droppableId.split("-")[1];
+      const destCategory = newCategories.find((c) => c.id === destCategoryId);
+      if (!destCategory) return;
+      destCategory.notes.splice(destination.index, 0, draggedNote);
+    }
+
+    // Si va hacia un destino (puede ser el mismo u otro)
+    else if (["opportunities", "needs", "problems"].includes(destination.droppableId)) {
+      const key = destination.droppableId as keyof typeof destinations;
+      newDestinations[key].splice(destination.index, 0, draggedNote);
+    }
+
+    setCategories(newCategories);
+    setDestinations(newDestinations);
   };
 
   if (loading) return <p className="text-center mt-10 text-gray-500">Loading data...</p>;
+
+  // Calcular si ya están todos los papelitos clasificados
+  const allNotes = categories.flatMap((c) => c.notes);
+  const allDestNotes = [
+    ...destinations.opportunities,
+    ...destinations.needs,
+    ...destinations.problems,
+  ];
+
+  // Solo activar si ya no quedan notas sin mover
+  const allAssigned = allNotes.length === 0 && allDestNotes.length > 0;
+
+  // Función de guardar
+  const handleSave = async () => {
+    const payload = destinations;
+    console.log("Saved data:", payload);
+
+    try {
+      const res = await fetch("/api/modules/2/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Error saving data");
+      alert("Data saved successfully ✅");
+    } catch (err) {
+      console.error(err);
+      alert("Error saving data ❌");
+    }
+  };
 
   return (
     <div className="p-6 min-h-screen">
@@ -154,7 +202,7 @@ export default function ZoomOutCategorization() {
           </div>
 
           <div className="flex flex-col gap-6">
-            {(['opportunities', 'needs', 'problems'] as const).map((key) => (
+            {(["opportunities", "needs", "problems"] as const).map((key) => (
               <div key={key}>
                 <h3 className="text-lg font-bold uppercase mb-2 text-gray-800">{key}</h3>
                 <Droppable droppableId={key}>
@@ -187,6 +235,20 @@ export default function ZoomOutCategorization() {
           </div>
         </div>
       </DragDropContext>
+
+      <div className="mt-8 text-center">
+        <button
+          onClick={handleSave}
+          disabled={!allAssigned}
+          className={`px-6 py-3 rounded-lg text-white font-semibold transition-colors ${
+            allAssigned
+              ? "bg-primary cursor-pointer"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          Save
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {useSession } from "next-auth/react";
+import { useSession, SessionContextValue } from "next-auth/react";
 import styles from "./dashboard.module.css";
 
 type User = {
@@ -17,7 +17,7 @@ type User = {
 };
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status }: SessionContextValue = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +40,7 @@ export default function DashboardPage() {
   if (status === "loading") {
     return (
       <main className={styles.container}>
-        <div className={styles.loading}>Cargando...</div>
+        <div className={styles.loading}>Loading...</div>
       </main>
     );
   }
@@ -48,7 +48,7 @@ export default function DashboardPage() {
   return (
     <main className={styles.container}>
       <section className={styles.section}>
-        <h1 className="text-4xl text-primary pb-7">Usuarios Registrados</h1>
+        <h1 className="text-4xl text-primary pb-7">Registered Users</h1>
 
         {loading ? (
           <ul className={styles.list}>
@@ -65,11 +65,11 @@ export default function DashboardPage() {
             {users.map((u) => (
               <li key={u.id} className={styles.card}>
                 <p><strong>ID:</strong> {u.id}</p>
-                <p><strong>Nombre:</strong> {u.name}</p>
+                <p><strong>Name:</strong> {u.name}</p>
                 <p><strong>Email:</strong> {u.email}</p>
-                <p><strong>Rol:</strong> {u.role?.displayName || 'Sin rol'}</p>
-                <p><strong>Creado:</strong> {new Date(u.createdAt).toLocaleString()}</p>
-                <p><strong>Actualizado:</strong> {new Date(u.updatedAt).toLocaleString()}</p>
+                <p><strong>Role:</strong> {u.role?.displayName || "No role"}</p>
+                <p><strong>Created:</strong> {new Date(u.createdAt).toLocaleString()}</p>
+                <p><strong>Updated:</strong> {new Date(u.updatedAt).toLocaleString()}</p>
               </li>
             ))}
           </ul>
