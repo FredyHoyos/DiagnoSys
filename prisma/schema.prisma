@@ -19,29 +19,29 @@ datasource db {
 model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique // "admin", "consultant", "organization"
-  displayName String   // "Administrator", "Consultant", "Organization"
+  displayName String // "Administrator", "Consultant", "Organization"
   createdAt   DateTime @default(now())
   users       User[]
 }
 
 model User {
-  id            Int                 @id @default(autoincrement())
-  name          String
-  email         String              @unique
-  password      String
-  roleId        Int
-  role          Role                @relation(fields: [roleId], references: [id])
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  tokens        ResetToken[]
-  
+  id        Int          @id @default(autoincrement())
+  name      String
+  email     String       @unique
+  password  String
+  roleId    Int
+  role      Role         @relation(fields: [roleId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  tokens    ResetToken[]
+
   // Para consultores: empresas que auditan
-  audits        Audit[]
-  
+  audits Audit[]
+
   // Para organizaciones: empresa que representan
-  organizationId Int?                // Solo para rol "organization"
-  organization   Organization?       @relation(fields: [organizationId], references: [id])
-  
+  organizationId Int? // Solo para rol "organization"
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
   // Formularios personalizados creados por este usuario
   personalizedForms PersonalizedForm[] @relation("PersonalizedFormOwner")
 }
@@ -60,26 +60,26 @@ model ResetToken {
 // =============================
 
 model Module {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
   description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   forms       Form[]
 }
 
 model Form {
-  id            Int                 @id @default(autoincrement())
-  name          String              @unique
-  description   String?
-  tag           String?             // Tag for form classification (Skills, Capabilities, etc.)
-  moduleId      Int
-  module        Module              @relation(fields: [moduleId], references: [id])
-  categories    Category[]
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  isPublished   Boolean             @default(false) // Solo formularios publicados son visibles
-  
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  tag         String? // Tag for form classification (Skills, Capabilities, etc.)
+  moduleId    Int
+  module      Module     @relation(fields: [moduleId], references: [id])
+  categories  Category[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  isPublished Boolean    @default(false) // Solo formularios publicados son visibles
+
   // Formularios personalizados basados en este formulario base
   personalizedForms PersonalizedForm[]
 }
@@ -89,34 +89,37 @@ model Form {
 // =============================
 
 model Organization {
-  id            Int      @id @default(autoincrement())
-  name          String
-  description   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   // Usuarios que representan esta organización
-  users         User[]
-  
+  users User[]
+
   // Auditorías realizadas a esta organización
-  audits        Audit[]
+  audits Audit[]
+
+  // Categorizaciones realizadas por la organización
+  categorizationSessions CategorizationSession[]
 }
 
 model Audit {
-  id              Int      @id @default(autoincrement())
-  name            String   // "Auditoría Q1 2024", "Evaluación inicial", etc.
-  description     String?
-  consultantId    Int      // Usuario consultor que realiza la auditoría
-  organizationId  Int      // Empresa auditada
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  consultant      User         @relation(fields: [consultantId], references: [id])
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  
+  id             Int      @id @default(autoincrement())
+  name           String // "Auditoría Q1 2024", "Evaluación inicial", etc.
+  description    String?
+  consultantId   Int // Usuario consultor que realiza la auditoría
+  organizationId Int // Empresa auditada
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  consultant   User         @relation(fields: [consultantId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
   // Formularios personalizados creados en esta auditoría
   personalizedForms PersonalizedForm[]
-  
+
   @@unique([consultantId, organizationId, name]) // No duplicar nombre por consultor/empresa
 }
 
@@ -125,87 +128,87 @@ model Audit {
 // =============================
 
 model PersonalizedForm {
-  id            Int      @id @default(autoincrement())
-  name          String   // Nombre personalizado o copia del formulario base
-  
+  id   Int    @id @default(autoincrement())
+  name String // Nombre personalizado o copia del formulario base
+
   // Relación con formulario base
-  baseFormId    Int      // Formulario base del cual deriva
-  baseForm      Form     @relation(fields: [baseFormId], references: [id])
-  
+  baseFormId Int // Formulario base del cual deriva
+  baseForm   Form @relation(fields: [baseFormId], references: [id])
+
   // Propietario del formulario personalizado
-  userId        Int      // Usuario que personalizó (Consultor u Organización)
-  user          User     @relation("PersonalizedFormOwner", fields: [userId], references: [id])
-  
+  userId Int // Usuario que personalizó (Consultor u Organización)
+  user   User @relation("PersonalizedFormOwner", fields: [userId], references: [id])
+
   // Para consultores: auditoría a la que pertenece
-  auditId       Int?     // Null para organizaciones, obligatorio para consultores
-  audit         Audit?   @relation(fields: [auditId], references: [id])
-  
+  auditId Int? // Null para organizaciones, obligatorio para consultores
+  audit   Audit? @relation(fields: [auditId], references: [id])
+
   // Estado del formulario
-  isCompleted     Boolean  @default(false)
-  completedAt     DateTime?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Categorías personalizadas
   personalizedCategories PersonalizedCategory[]
-  
+
   @@unique([userId, baseFormId, auditId]) // Un formulario personalizado por usuario/base/auditoría
 }
 
 model PersonalizedCategory {
-  id                    Int      @id @default(autoincrement())
-  name                  String   // Copia del nombre de la categoría base
-  
+  id   Int    @id @default(autoincrement())
+  name String // Copia del nombre de la categoría base
+
   // Relación con categoría base
-  baseCategoryId        Int      // Categoría base del cual deriva
-  baseCategory          Category @relation("BaseCategory", fields: [baseCategoryId], references: [id])
-  
+  baseCategoryId Int // Categoría base del cual deriva
+  baseCategory   Category @relation("BaseCategory", fields: [baseCategoryId], references: [id])
+
   // Formulario personalizado al que pertenece
-  personalizedFormId    Int
-  personalizedForm      PersonalizedForm @relation(fields: [personalizedFormId], references: [id], onDelete: Cascade)
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
+  personalizedFormId Int
+  personalizedForm   PersonalizedForm @relation(fields: [personalizedFormId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Items personalizados
-  personalizedItems     PersonalizedItem[]
-  
+  personalizedItems PersonalizedItem[]
+
   @@unique([personalizedFormId, baseCategoryId]) // Una categoría personalizada por formulario/base
 }
 
 model PersonalizedItem {
-  id                      Int      @id @default(autoincrement())
-  name                    String   // Nombre del item (copiado de base o personalizado)
-  isCustom                Boolean  @default(false) // true si es agregado por el usuario
-  
+  id       Int     @id @default(autoincrement())
+  name     String // Nombre del item (copiado de base o personalizado)
+  isCustom Boolean @default(false) // true si es agregado por el usuario
+
   // Relación con item base (null si es personalizado)
-  baseItemId              Int?     // Null para items personalizados
-  baseItem                Item?    @relation("BaseItem", fields: [baseItemId], references: [id])
-  
+  baseItemId Int? // Null para items personalizados
+  baseItem   Item? @relation("BaseItem", fields: [baseItemId], references: [id])
+
   // Categoría personalizada a la que pertenece
-  personalizedCategoryId  Int
-  personalizedCategory    PersonalizedCategory @relation(fields: [personalizedCategoryId], references: [id], onDelete: Cascade)
-  
+  personalizedCategoryId Int
+  personalizedCategory   PersonalizedCategory @relation(fields: [personalizedCategoryId], references: [id], onDelete: Cascade)
+
   // Puntaje asignado por el usuario (1-5) - OBLIGATORIO para items que se guardan
-  score                   Int      // 1-5, siempre presente para items guardados
-  
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  
+  score Int // 1-5, siempre presente para items guardados
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([personalizedCategoryId, baseItemId]) // Un item base por categoría personalizada
   @@unique([personalizedCategoryId, name]) // Nombres únicos por categoría personalizada
 }
 
 model Category {
-  id          Int      @id @default(autoincrement())
-  name        String   
-  formId      Int
-  form        Form     @relation(fields: [formId], references: [id])
-  items       Item[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        Int      @id @default(autoincrement())
+  name      String
+  formId    Int
+  form      Form     @relation(fields: [formId], references: [id])
+  items     Item[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Categorías personalizadas basadas en esta categoría
   personalizedCategories PersonalizedCategory[] @relation("BaseCategory")
 
@@ -213,15 +216,49 @@ model Category {
 }
 
 model Item {
-  id          Int      @id @default(autoincrement())
-  name        String   
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id         Int      @id @default(autoincrement())
+  name       String
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   // Items personalizados basados en este item
   personalizedItems PersonalizedItem[] @relation("BaseItem")
 
   @@unique([name, categoryId]) // NAME UNIQUE within a category
+}
+
+model CategorizationSession {
+  id             Int          @id @default(autoincrement())
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name String // Ej: "Categorización Octubre 2025"
+  date DateTime @default(now())
+
+  // Relación con las entradas (opportunities, needs, problems)
+  entries CategorizationEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CategorizationEntry {
+  id        Int                   @id @default(autoincrement())
+  sessionId Int
+  session   CategorizationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  type  CategorizationType // Enum: "OPPORTUNITY" | "NEED" | "PROBLEM"
+  name  String
+  color String? // Color visual del tag o nota
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum CategorizationType {
+  OPPORTUNITY
+  NEED
+  PROBLEM
 }
