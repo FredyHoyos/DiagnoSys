@@ -83,52 +83,52 @@ export default function ZoomOutCategorization() {
     fetchForms();
   }, []);
 
-const handleDragEnd = (result: DropResult) => {
-  const { source, destination } = result;
-  if (!destination) return;
+  const handleDragEnd = (result: DropResult) => {
+    const { source, destination } = result;
+    if (!destination) return;
 
-  // Evitar movimientos sin cambio
-  if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+    // Evitar movimientos sin cambio
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-  const newCategories = [...categories];
-  const newDestinations = { ...destinations };
+    const newCategories = [...categories];
+    const newDestinations = { ...destinations };
 
-  // Obtener la nota que se mueve
-  let draggedNote: Note | null = null;
+    // Obtener la nota que se mueve
+    let draggedNote: Note | null = null;
 
-  // 🟩 1. Si viene desde una categoría
-  if (source.droppableId.startsWith("category-")) {
-    const sourceCategoryId = source.droppableId.split("-")[1];
-    const sourceCategory = newCategories.find((c) => c.id === sourceCategoryId);
-    if (!sourceCategory) return;
-    [draggedNote] = sourceCategory.notes.splice(source.index, 1);
-  }
+    // Si viene desde una categoría
+    if (source.droppableId.startsWith("category-")) {
+      const sourceCategoryId = source.droppableId.split("-")[1];
+      const sourceCategory = newCategories.find((c) => c.id === sourceCategoryId);
+      if (!sourceCategory) return;
+      [draggedNote] = sourceCategory.notes.splice(source.index, 1);
+    }
 
-  // 🟦 2. Si viene desde un destino (opportunities, needs o problems)
-  else if (["opportunities", "needs", "problems"].includes(source.droppableId)) {
-    const key = source.droppableId as keyof typeof destinations;
-    [draggedNote] = newDestinations[key].splice(source.index, 1);
-  }
+    // Si viene desde un destino (opportunities, needs o problems)
+    else if (["opportunities", "needs", "problems"].includes(source.droppableId)) {
+      const key = source.droppableId as keyof typeof destinations;
+      [draggedNote] = newDestinations[key].splice(source.index, 1);
+    }
 
-  if (!draggedNote) return;
+    if (!draggedNote) return;
 
-  // 🔸 3. Si va hacia una categoría
-  if (destination.droppableId.startsWith("category-")) {
-    const destCategoryId = destination.droppableId.split("-")[1];
-    const destCategory = newCategories.find((c) => c.id === destCategoryId);
-    if (!destCategory) return;
-    destCategory.notes.splice(destination.index, 0, draggedNote);
-  }
+    // Si va hacia una categoría
+    if (destination.droppableId.startsWith("category-")) {
+      const destCategoryId = destination.droppableId.split("-")[1];
+      const destCategory = newCategories.find((c) => c.id === destCategoryId);
+      if (!destCategory) return;
+      destCategory.notes.splice(destination.index, 0, draggedNote);
+    }
 
-  // 🔹 4. Si va hacia un destino (puede ser el mismo u otro)
-  else if (["opportunities", "needs", "problems"].includes(destination.droppableId)) {
-    const key = destination.droppableId as keyof typeof destinations;
-    newDestinations[key].splice(destination.index, 0, draggedNote);
-  }
+    // Si va hacia un destino (puede ser el mismo u otro)
+    else if (["opportunities", "needs", "problems"].includes(destination.droppableId)) {
+      const key = destination.droppableId as keyof typeof destinations;
+      newDestinations[key].splice(destination.index, 0, draggedNote);
+    }
 
-  setCategories(newCategories);
-  setDestinations(newDestinations);
-};
+    setCategories(newCategories);
+    setDestinations(newDestinations);
+  };
 
 
 

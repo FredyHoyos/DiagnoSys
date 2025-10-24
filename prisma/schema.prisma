@@ -44,6 +44,10 @@ model User {
 
   // Formularios personalizados creados por este usuario
   personalizedForms PersonalizedForm[] @relation("PersonalizedFormOwner")
+
+  opportunities Opportunity[]
+  needs         Need[]
+  problems      Problem[]
 }
 
 model ResetToken {
@@ -100,9 +104,6 @@ model Organization {
 
   // Auditorías realizadas a esta organización
   audits Audit[]
-
-  // Categorizaciones realizadas por la organización
-  categorizationSessions CategorizationSession[]
 }
 
 model Audit {
@@ -229,36 +230,36 @@ model Item {
   @@unique([name, categoryId]) // NAME UNIQUE within a category
 }
 
-model CategorizationSession {
-  id             Int          @id @default(autoincrement())
-  organizationId Int
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+// =============================
+// Oportunidades, Necesidades y Problemas
+// =============================
 
-  name String // Ej: "Categorización Octubre 2025"
-  date DateTime @default(now())
-
-  // Relación con las entradas (opportunities, needs, problems)
-  entries CategorizationEntry[]
-
+model Opportunity {
+  id        Int      @id @default(autoincrement())
+  name      String
+  color     String?
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model CategorizationEntry {
-  id        Int                   @id @default(autoincrement())
-  sessionId Int
-  session   CategorizationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  type  CategorizationType // Enum: "OPPORTUNITY" | "NEED" | "PROBLEM"
-  name  String
-  color String? // Color visual del tag o nota
-
+model Need {
+  id        Int      @id @default(autoincrement())
+  name      String
+  color     String?
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-enum CategorizationType {
-  OPPORTUNITY
-  NEED
-  PROBLEM
+model Problem {
+  id        Int      @id @default(autoincrement())
+  name      String
+  color     String?
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
