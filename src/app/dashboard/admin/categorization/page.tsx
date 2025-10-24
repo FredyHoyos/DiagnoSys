@@ -83,58 +83,81 @@ export default function ZoomOutCategorization() {
     fetchForms();
   }, []);
 
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
-    if (!destination) return;
+const handleDragEnd = (result: DropResult) => {
+  const { source, destination } = result;
+  if (!destination) return;
 
-    // Evitar movimientos sin cambio
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+  // Evitar movimientos sin cambio
+  if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-    // Si el movimiento ocurre dentro de la misma categoría
-    if (source.droppableId.startsWith('category-') && destination.droppableId.startsWith('category-')) {
-      const categoryId = source.droppableId.split('-')[1];
-      const category = categories.find((c) => c.id === categoryId);
-      if (!category) return;
+  const newCategories = [...categories];
+  const newDestinations = { ...destinations };
 
-      const reorderedNotes = Array.from(category.notes);
-      const [moved] = reorderedNotes.splice(source.index, 1);
-      reorderedNotes.splice(destination.index, 0, moved);
+  // Obtener la nota que se mueve
+  let draggedNote: Note | null = null;
 
-      const newCategories = categories.map((c) =>
-        c.id === categoryId ? { ...c, notes: reorderedNotes } : c
-      );
+  // 🟩 1. Si viene desde una categoría
+  if (source.droppableId.startsWith("category-")) {
+    const sourceCategoryId = source.droppableId.split("-")[1];
+    const sourceCategory = newCategories.find((c) => c.id === sourceCategoryId);
+    if (!sourceCategory) return;
+    [draggedNote] = sourceCategory.notes.splice(source.index, 1);
+  }
 
-      setCategories(newCategories);
-      return;
-    }
+  // 🟦 2. Si viene desde un destino (opportunities, needs o problems)
+  else if (["opportunities", "needs", "problems"].includes(source.droppableId)) {
+    const key = source.droppableId as keyof typeof destinations;
+    [draggedNote] = newDestinations[key].splice(source.index, 1);
+  }
 
-    // Si el movimiento es de una categoría a un destino (opportunities, needs, problems)
-    if (source.droppableId.startsWith('category-')) {
-      const categoryId = source.droppableId.split('-')[1];
-      const sourceCategory = categories.find((c) => c.id === categoryId);
-      if (!sourceCategory) return;
+  if (!draggedNote) return;
 
-      const draggedNote = sourceCategory.notes[source.index];
+  // 🔸 3. Si va hacia una categoría
+  if (destination.droppableId.startsWith("category-")) {
+    const destCategoryId = destination.droppableId.split("-")[1];
+    const destCategory = newCategories.find((c) => c.id === destCategoryId);
+    if (!destCategory) return;
+    destCategory.notes.splice(destination.index, 0, draggedNote);
+  }
 
-      const newCategories = categories.map((c) =>
-        c.id === categoryId
-          ? { ...c, notes: c.notes.filter((n) => n.id !== draggedNote.id) }
-          : c
-      );
+  // 🔹 4. Si va hacia un destino (puede ser el mismo u otro)
+  else if (["opportunities", "needs", "problems"].includes(destination.droppableId)) {
+    const key = destination.droppableId as keyof typeof destinations;
+    newDestinations[key].splice(destination.index, 0, draggedNote);
+  }
 
-      const newDestinations = { ...destinations };
-      const key = destination.droppableId as keyof typeof destinations;
-      const updatedList = [...newDestinations[key]];
-      updatedList.splice(destination.index, 0, draggedNote);
-      newDestinations[key] = updatedList;
+  setCategories(newCategories);
+  setDestinations(newDestinations);
+};
 
-      setCategories(newCategories);
-      setDestinations(newDestinations);
-    }
-  };
 
 
   if (loading) return <p className="text-center mt-10 text-gray-500">Loading data...</p>;
+
+  // Calcular si ya están todos los papelitos clasificados
+  const allNotes = categories.flatMap((c) => c.notes);
+  const allDestNotes = [
+    ...destinations.opportunities,
+    ...destinations.needs,
+    ...destinations.problems,
+  ];
+
+  // Solo activar si ya no quedan notas sin mover
+  const allAssigned = allNotes.length === 0 && allDestNotes.length > 0;
+
+  // Función de guardar
+  const handleSave = async () => {
+    const payload = destinations;
+    console.log("Datos guardados:", payload);
+
+    // Aquí podrías hacer un POST a tu API
+    // await fetch("/api/modules/2/save", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(payload),
+    // });
+  };
+
 
   return (
     <div className="p-6 min-h-screen">
@@ -208,6 +231,21 @@ export default function ZoomOutCategorization() {
           </div>
         </div>
       </DragDropContext>
+
+      <div className="mt-8 text-center">
+        <button
+          onClick={handleSave}
+          disabled={!allAssigned}
+          className={`px-6 py-3 rounded-lg text-white font-semibold transition-colors ${
+            allAssigned
+              ? "bg-primary cursor-pointer"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          Guardar
+        </button>
+      </div>
+
     </div>
   );
 }
