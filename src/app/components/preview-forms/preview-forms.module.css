@@ -24,10 +24,15 @@
 /* ------------- Grid ------------- */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: 350px 350px;
     gap: 1.5rem;
     justify-content: center;
     align-items: stretch;
+}
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ------------- Card real ------------- */

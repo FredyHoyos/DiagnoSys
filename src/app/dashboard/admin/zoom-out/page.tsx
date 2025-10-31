@@ -182,7 +182,7 @@ export default function AdminZoomOutPage() {
 
         <h2 className="text-2xl font-bold mb-4 pt-20 text-[#2E6347]">Forms</h2>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 justify-center">
+        <div className="grid lg:grid-cols-2 grid-cols-1 gap-6 justify-center">
           {forms.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No forms available.</p>
