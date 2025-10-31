@@ -85,7 +85,7 @@ export default function Page() {
             <p className="text-sm text-gray-600 mt-1">DiagnoSys — understand, assess, and project your organization’s digital transformation with a guided, flexible, and strategic tool.</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="hidden sm:inline-block px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-indigo-650 transition" onClick={handleClick}>Start Diagnosis</button>
+            <button className="hidden sm:inline-block px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-indigo-650 transition cursor-pointer" onClick={handleClick}>Start Diagnosis</button>
           </div>
         </header>
 
