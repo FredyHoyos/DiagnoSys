@@ -195,7 +195,7 @@ export default function PriorityQuadrants() {
               { id: "q1", title: "High priority", color: "bg-green-400" },
               { id: "q3", title: "Low priority", color: "bg-red-500" },
               { id: "q4", title: "Medium priority", color: "bg-yellow-300" },
-            ] as const).map((q, i) => (
+            ] as const).map((q) => (
               <Droppable key={q.id} droppableId={q.id}>
                 {(provided) => (
                   <div

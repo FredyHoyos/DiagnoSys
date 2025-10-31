@@ -16,7 +16,7 @@ export default function Page() {
         return;
       }
 
-      let path = `/dashboard/${role.name}/zoom-in`;
+      const path = `/dashboard/${role.name}/zoom-in`;
       router.push(path);
     };
   const steps = [
