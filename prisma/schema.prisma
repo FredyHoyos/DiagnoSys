@@ -45,6 +45,9 @@ model User {
   // Formularios personalizados creados por este usuario
   personalizedForms PersonalizedForm[] @relation("PersonalizedFormOwner")
 
+  // Reports created by this organization user
+  reports Report[] @relation("ReportOwner")
+
   opportunities Opportunity[]
   needs         Need[]
   problems      Problem[]
@@ -125,6 +128,30 @@ model Audit {
 }
 
 // =============================
+// Organization Reports
+// =============================
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  name      String   // Report name given by organization
+  version   Int      @default(1) // Auto-incremented version for organization
+  userId    Int      // Organization user who created the report
+  user      User     @relation("ReportOwner", fields: [userId], references: [id])
+  
+  // Report status
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Personalized forms associated with this report
+  personalizedForms PersonalizedForm[]
+
+  @@unique([userId, name, version]) // Unique name and version per organization
+}
+
+// =============================
 // Formularios Personalizados
 // =============================
 
@@ -144,6 +171,10 @@ model PersonalizedForm {
   auditId Int? // Null para organizaciones, obligatorio para consultores
   audit   Audit? @relation(fields: [auditId], references: [id])
 
+  // Para organizaciones: reporte al que pertenece
+  reportId Int? // Null para consultores, obligatorio para organizaciones
+  report   Report? @relation(fields: [reportId], references: [id])
+
   // Estado del formulario
   isCompleted Boolean   @default(false)
   completedAt DateTime?
@@ -154,7 +185,7 @@ model PersonalizedForm {
   // Categorías personalizadas
   personalizedCategories PersonalizedCategory[]
 
-  @@unique([userId, baseFormId, auditId]) // Un formulario personalizado por usuario/base/auditoría
+  @@unique([userId, baseFormId, auditId, reportId]) // Un formulario personalizado por usuario/base/auditoría/reporte
 }
 
 model PersonalizedCategory {
