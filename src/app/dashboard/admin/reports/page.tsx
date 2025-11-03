@@ -20,6 +20,11 @@ interface FormData {
     module: string;
     isCompleted: boolean;
     completedAt: string | null;
+    user: {
+        name: string;
+        email: string;
+        organization: string;
+    };
     categoryData: CategoryData[];
     stats: {
         totalItems: number;
@@ -51,14 +56,14 @@ export default function ReportsPage() {
     const fetchPersonalizedForms = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/organization/reports/radar-data');
+            const response = await fetch('/api/admin/reports/radar-data');
             
             if (!response.ok) {
                 throw new Error('Failed to fetch personalized forms');
             }
 
             const data: ApiResponse = await response.json();
-            console.log('🎯 Frontend received data:', data);
+            console.log('🎯 Admin Frontend received data:', data);
             console.log('🎯 ZoomIn forms:', data.zoomInForms);
             console.log('🎯 ZoomOut forms:', data.zoomOutForms);
             
@@ -295,7 +300,7 @@ export default function ReportsPage() {
                                 <div key={form.id} className="min-h-[400px] flex">
                                     <FormRadarChart
                                         title={form.name}
-                                        description={`Module: ${form.module} | Avg Score: ${form.stats.avgScore}/5.0`}
+                                        description={`User: ${form.user.name} | Organization: ${form.user.organization} | Avg Score: ${form.stats.avgScore}/5.0`}
                                         data={form.categoryData}
                                         className="w-full"
                                     />
@@ -317,7 +322,7 @@ export default function ReportsPage() {
                                 <div key={form.id} className="min-h-[400px] flex">
                                     <FormRadarChart
                                         title={form.name}
-                                        description={`Module: ${form.module} | Avg Score: ${form.stats.avgScore}/5.0`}
+                                        description={`User: ${form.user.name} | Organization: ${form.user.organization} | Avg Score: ${form.stats.avgScore}/5.0`}
                                         data={form.categoryData}
                                         className="w-full"
                                     />

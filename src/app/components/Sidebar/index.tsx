@@ -33,6 +33,7 @@ export default function Sidebar() {
       { href: "/dashboard/admin/zoom-out", label: "Zoom-out", icon: <ZoomOutIcon /> },
       { href: "/dashboard/admin/categorization", label: "Categorization", icon: <LayoutIcon /> },
       { href: "/dashboard/admin/prioritization", label: "Prioritization", icon: <ListBulletIcon /> },
+      { href: "/dashboard/admin/reports", label: "Reports", icon: <ZoomOutIcon /> },
       { href: "/dashboard/admin/users", label: "Users", icon: <PersonIcon /> },
     ],
     consultant: [

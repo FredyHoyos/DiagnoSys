@@ -17,7 +17,7 @@ type User = {
 };
 
 export default function DashboardPage() {
-  const { data: session, status }: SessionContextValue = useSession();
+  const {status }: SessionContextValue = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 

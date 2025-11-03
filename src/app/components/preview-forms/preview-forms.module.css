@@ -29,6 +29,11 @@
     justify-content: center;
     align-items: stretch;
 }
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ------------- Card real ------------- */
 .card {
