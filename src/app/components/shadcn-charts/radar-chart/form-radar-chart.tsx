@@ -100,6 +100,9 @@ function RadarChartSkeleton({ title, description, className }: { title: string, 
 }
 
 export function FormRadarChart({ title, description, data = [], className, isLoading = false }: FormRadarChartProps & { isLoading?: boolean }) {
+    // Counter for unique keys
+    let dotCounter = 0;
+    
     // Show skeleton while loading
     if (isLoading) {
         return <RadarChartSkeleton title={title} description={description} className={className} />;
@@ -323,13 +326,19 @@ export function FormRadarChart({ title, description, data = [], className, isLoa
                                     strokeWidth={data.length > 15 ? 2 : 3}
                                     dot={(props: { cx: number; cy: number; payload: { category: string; score: number; maxScore: number; percentage: number } }) => {
                                         const { cx, cy, payload } = props;
+                                        const currentDotId = dotCounter++;
+                                        
+                                        // Validar coordenadas
+                                        const validCx = isNaN(cx) ? 0 : cx;
+                                        const validCy = isNaN(cy) ? 0 : cy;
                                         
                                         // Si la categoría está vacía (punto invisible), renderizar transparente
                                         if (!payload?.category || payload.category.trim() === '') {
                                             return (
                                                 <circle
-                                                    cx={cx}
-                                                    cy={cy}
+                                                    key={`invisible-dot-${currentDotId}`}
+                                                    cx={validCx}
+                                                    cy={validCy}
                                                     r={0}
                                                     fill="transparent"
                                                     stroke="transparent"
@@ -340,8 +349,9 @@ export function FormRadarChart({ title, description, data = [], className, isLoa
                                         // Renderizar punto normal para categorías reales
                                         return (
                                             <circle
-                                                cx={cx}
-                                                cy={cy}
+                                                key={`visible-dot-${currentDotId}-${payload?.category || 'unknown'}`}
+                                                cx={validCx}
+                                                cy={validCy}
                                                 r={data.length > 15 ? 4 : data.length > 10 ? 5 : 6}
                                                 fill="#3B82F6"
                                                 stroke="#fff"
