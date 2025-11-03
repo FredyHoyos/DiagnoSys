@@ -1,39 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 
-interface EvaluationData {
-    formId: number;
-    formName: string;
-    isCompleted: boolean;
-    scoredItems: number;
-    totalScore: number;
-    avgScore: number;
-    completedAt: Date | null;
-    updatedAt: Date;
-}
-
-interface ModuleStatsData {
-    id: number;
-    name: string;
-    evaluations: EvaluationData[];
-    totalScore: number;
-    totalItems: number;
-    completedCount: number;
-    avgScore: number;
-    completionRate: number;
-}
-
-interface CategoryAnalysisData {
-    name: string;
-    scores: number[];
-    totalEvaluations: number;
-}
-
 /**
  * GET /api/organization/reports
- * Generar reporte de auto-evaluaciones completadas por la organización
+ * Get all reports for the authenticated organization
  */
 export async function GET() {
     try {
@@ -53,207 +25,191 @@ export async function GET() {
             );
         }
 
-        const organizationUserId = parseInt(session.user.id);
-        
-        // Obtener usuario y organización
-        const user = await prisma.user.findUnique({
-            where: { id: organizationUserId },
-            include: {
-                organization: true
-            }
-        });
+        const userId = parseInt(session.user.id);
 
-        if (!user || !user.organization) {
-            return NextResponse.json(
-                { error: "Organization not found" },
-                { status: 404 }
-            );
-        }
-
-        // Obtener todas las auto-evaluaciones
-        const personalizedForms = await prisma.personalizedForm.findMany({
-            where: {
-                userId: organizationUserId,
-                auditId: null // Solo auto-evaluaciones
-            },
+        // Get all reports for this organization with stats
+        const reports = await prisma.report.findMany({
+            where: { userId },
             include: {
-                baseForm: {
+                personalizedForms: {
                     include: {
-                        module: {
+                        baseForm: {
                             select: {
                                 id: true,
-                                name: true
+                                name: true,
+                                tag: true
+                            }
+                        },
+                        personalizedCategories: {
+                            include: {
+                                personalizedItems: true
                             }
                         }
                     }
                 },
-                personalizedCategories: {
-                    include: {
-                        personalizedItems: true
+                _count: {
+                    select: {
+                        personalizedForms: true
                     }
                 }
             },
-            orderBy: {
-                updatedAt: 'desc'
-            }
+            orderBy: { createdAt: 'desc' }
         });
 
-        // Estadísticas generales
-        const totalEvaluations = personalizedForms.length;
-        const completedEvaluations = personalizedForms.filter(f => f.isCompleted).length;
-        const inProgressEvaluations = personalizedForms.filter(f => !f.isCompleted).length;
-
-        // Estadísticas por módulo
-        const moduleStats = personalizedForms.reduce((modules, form) => {
-            const moduleId = form.baseForm.module.id;
-            const moduleName = form.baseForm.module.name;
-            
-            if (!modules[moduleId]) {
-                modules[moduleId] = {
-                    id: moduleId,
-                    name: moduleName,
-                    evaluations: [],
-                    totalScore: 0,
-                    totalItems: 0,
-                    completedCount: 0,
-                    avgScore: 0,
-                    completionRate: 0
-                };
-            }
-            
-            const scoredItems = form.personalizedCategories.reduce((sum, cat) => 
-                sum + cat.personalizedItems.length, 0
+        // Process reports with stats
+        const processedReports = reports.map(report => {
+            const zoomInForms = report.personalizedForms.filter(
+                form => form.baseForm.tag === 'zoom-in'
             );
-            const totalScore = form.personalizedCategories.reduce((sum, cat) => 
-                sum + cat.personalizedItems.reduce((itemSum, item) => itemSum + (item.score || 0), 0), 0
+            const zoomOutForms = report.personalizedForms.filter(
+                form => form.baseForm.tag === 'zoom-out'
             );
 
-            modules[moduleId].evaluations.push({
-                formId: form.id,
-                formName: form.name,
-                isCompleted: form.isCompleted,
-                scoredItems: scoredItems,
-                totalScore: totalScore,
-                avgScore: scoredItems > 0 ? totalScore / scoredItems : 0,
-                completedAt: form.completedAt,
-                updatedAt: form.updatedAt
-            });
+            const completedForms = report.personalizedForms.filter(form => form.isCompleted);
+            const totalForms = report.personalizedForms.length;
+            const completionRate = totalForms > 0 ? Math.round((completedForms.length / totalForms) * 100) : 0;
 
-            modules[moduleId].totalItems += scoredItems;
-            modules[moduleId].totalScore += totalScore;
-            if (form.isCompleted) modules[moduleId].completedCount++;
-            
-            return modules;
-        }, {} as Record<number, ModuleStatsData>);
-
-        // Calcular promedios por módulo
-        Object.values(moduleStats).forEach((module: ModuleStatsData) => {
-            module.avgScore = module.totalItems > 0 ? module.totalScore / module.totalItems : 0;
-            module.completionRate = module.evaluations.length > 0 
-                ? Math.round((module.completedCount / module.evaluations.length) * 100) 
-                : 0;
-        });
-
-        // Análisis de rendimiento por categoría
-        const categoryAnalysis = personalizedForms.reduce((categories, form) => {
-            form.personalizedCategories.forEach(cat => {
-                if (cat.personalizedItems.length > 0) {
-                    const avgScore = cat.personalizedItems.reduce((sum, item) => sum + (item.score || 0), 0) / cat.personalizedItems.length;
-                    
-                    if (!categories[cat.name]) {
-                        categories[cat.name] = {
-                            name: cat.name,
-                            scores: [],
-                            totalEvaluations: 0
-                        };
-                    }
-                    
-                    categories[cat.name].scores.push(avgScore);
-                    categories[cat.name].totalEvaluations++;
+            return {
+                id: report.id,
+                name: report.name,
+                version: report.version,
+                isCompleted: report.isCompleted,
+                completedAt: report.completedAt,
+                createdAt: report.createdAt,
+                updatedAt: report.updatedAt,
+                stats: {
+                    totalForms,
+                    completedForms: completedForms.length,
+                    completionRate,
+                    zoomInTotal: zoomInForms.length,
+                    zoomInCompleted: zoomInForms.filter(f => f.isCompleted).length,
+                    zoomOutTotal: zoomOutForms.length,
+                    zoomOutCompleted: zoomOutForms.filter(f => f.isCompleted).length
                 }
-            });
-            return categories;
-        }, {} as Record<string, CategoryAnalysisData>);
-
-        // Calcular estadísticas por categoría y ordenar
-        const categoryPerformance = Object.values(categoryAnalysis).map((cat: CategoryAnalysisData) => ({
-            name: cat.name,
-            avgScore: cat.scores.reduce((sum: number, score: number) => sum + score, 0) / cat.scores.length,
-            evaluations: cat.totalEvaluations,
-            minScore: Math.min(...cat.scores),
-            maxScore: Math.max(...cat.scores)
-        })).sort((a, b) => b.avgScore - a.avgScore);
-
-        // Top 5 fortalezas y áreas de mejora
-        const strengths = categoryPerformance.slice(0, 5);
-        const improvementAreas = categoryPerformance.slice(-5).reverse();
-
-        // Progreso temporal
-        const timeline = personalizedForms
-            .filter(form => form.completedAt)
-            .sort((a, b) => new Date(a.completedAt!).getTime() - new Date(b.completedAt!).getTime())
-            .map(form => ({
-                formId: form.id,
-                formName: form.name,
-                moduleName: form.baseForm.module.name,
-                completedAt: form.completedAt,
-                avgScore: form.personalizedCategories.reduce((sum, cat) => {
-                    const catItems = cat.personalizedItems;
-                    if (catItems.length === 0) return sum;
-                    return sum + (catItems.reduce((itemSum, item) => itemSum + (item.score || 0), 0) / catItems.length);
-                }, 0) / (form.personalizedCategories.length || 1)
-            }));
-
-        // Puntuación general
-        const allScores = personalizedForms.reduce((scores, form) => {
-            form.personalizedCategories.forEach(cat => {
-                cat.personalizedItems.forEach(item => {
-                    if (item.score !== null) {
-                        scores.push(item.score);
-                    }
-                });
-            });
-            return scores;
-        }, [] as number[]);
-
-        const overallAvg = allScores.length > 0 ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : 0;
-
-        // Distribución de puntajes
-        const scoreDistribution = [1, 2, 3, 4, 5].map(score => ({
-            score,
-            count: allScores.filter(s => s === score).length,
-            percentage: allScores.length > 0 ? Math.round((allScores.filter(s => s === score).length / allScores.length) * 100) : 0
-        }));
+            };
+        });
 
         return NextResponse.json({
-            organization: {
-                id: user.organization.id,
-                name: user.organization.name,
-                description: user.organization.description
-            },
-            summary: {
-                totalEvaluations,
-                completedEvaluations,
-                inProgressEvaluations,
-                completionRate: totalEvaluations > 0 ? Math.round((completedEvaluations / totalEvaluations) * 100) : 0,
-                overallAverage: Math.round(overallAvg * 100) / 100,
-                totalResponses: allScores.length,
-                maturityLevel: overallAvg >= 4 ? 'High' : overallAvg >= 3 ? 'Medium' : overallAvg >= 2 ? 'Low' : 'Critical'
-            },
-            moduleStats: Object.values(moduleStats),
-            analysis: {
-                scoreDistribution,
-                categoryPerformance,
-                strengths,
-                improvementAreas
-            },
-            timeline,
-            generatedAt: new Date().toISOString(),
-            message: "Organization report generated successfully"
+            reports: processedReports,
+            message: "Reports retrieved successfully"
         });
 
     } catch (error) {
-        console.error("Error generating organization report:", error);
+        console.error("🚨 Error fetching reports:", error);
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * POST /api/organization/reports
+ * Create a new report for the authenticated organization
+ */
+export async function POST(request: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+        
+        if (!session || !session.user) {
+            return NextResponse.json(
+                { error: "Authentication required" },
+                { status: 401 }
+            );
+        }
+
+        if (session.user.role?.name !== 'organization') {
+            return NextResponse.json(
+                { error: "Organization access required" },
+                { status: 403 }
+            );
+        }
+
+        const userId = parseInt(session.user.id);
+        const { name } = await request.json();
+
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return NextResponse.json(
+                { error: "Report name is required" },
+                { status: 400 }
+            );
+        }
+
+        // Get the next version number for this organization and report name
+        const existingReports = await prisma.report.findMany({
+            where: {
+                userId,
+                name: name.trim()
+            },
+            select: { version: true },
+            orderBy: { version: 'desc' },
+            take: 1
+        });
+
+        const nextVersion = existingReports.length > 0 ? existingReports[0].version + 1 : 1;
+
+        // Create the new report
+        const newReport = await prisma.report.create({
+            data: {
+                name: name.trim(),
+                version: nextVersion,
+                userId
+            }
+        });
+
+        // Get all published forms to create personalized forms for this report
+        const publishedForms = await prisma.form.findMany({
+            where: { isPublished: true },
+            include: {
+                categories: {
+                    include: {
+                        items: true
+                    }
+                }
+            }
+        });
+
+        // Create personalized forms for this report
+        const personalizedFormsData = publishedForms.map(form => ({
+            name: form.name,
+            baseFormId: form.id,
+            userId,
+            reportId: newReport.id
+        }));
+
+        if (personalizedFormsData.length > 0) {
+            await prisma.personalizedForm.createMany({
+                data: personalizedFormsData
+            });
+        }
+
+        // Return the created report with stats
+        const reportWithStats = {
+            id: newReport.id,
+            name: newReport.name,
+            version: newReport.version,
+            isCompleted: newReport.isCompleted,
+            completedAt: newReport.completedAt,
+            createdAt: newReport.createdAt,
+            updatedAt: newReport.updatedAt,
+            stats: {
+                totalForms: publishedForms.length,
+                completedForms: 0,
+                completionRate: 0,
+                zoomInTotal: publishedForms.filter(f => f.tag === 'zoom-in').length,
+                zoomInCompleted: 0,
+                zoomOutTotal: publishedForms.filter(f => f.tag === 'zoom-out').length,
+                zoomOutCompleted: 0
+            }
+        };
+
+        return NextResponse.json({
+            report: reportWithStats,
+            message: "Report created successfully"
+        }, { status: 201 });
+
+    } catch (error) {
+        console.error("🚨 Error creating report:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
