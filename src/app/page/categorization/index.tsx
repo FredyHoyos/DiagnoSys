@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import styles from "@/app/components/forms/form-base.module.css";
 
 interface Note {
   id: string;
@@ -27,6 +28,7 @@ interface FormResponse {
 
 export default function ZoomOutCategorization() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [errorModal, setErrorModal] = useState<string | null>(null);
   const [destinations, setDestinations] = useState<{
     opportunities: Note[];
     needs: Note[];
@@ -154,10 +156,10 @@ export default function ZoomOutCategorization() {
       });
 
       if (!res.ok) throw new Error("Error saving data");
-      alert("Data saved successfully ✅");
+      setErrorModal("Data saved successfully ✅");
     } catch (err) {
       console.error(err);
-      alert("Error saving data ❌");
+      setErrorModal("Error saving data ❌");
     }
   };
 
@@ -247,6 +249,20 @@ export default function ZoomOutCategorization() {
           Save
         </button>
       </div>
+                        {/* === Modal de Error/Éxito === */}
+            {errorModal && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.errorModal}>
+                        <p>{errorModal}</p>
+                        <button
+                            className={styles.confirmButton}
+                            onClick={() => setErrorModal(null)}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
     </div>
   );
 }
