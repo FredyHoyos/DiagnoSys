@@ -179,12 +179,12 @@ export default function PriorityQuadrants() {
         </div>
 
         {/* MATRIZ DE 4 CUADRANTES */}
-        <div className="relative w-full md:w-[800px] mx-auto">
+        <div className="relative w-full md:w-[800px] mx-auto bg-amber-400 ">
           {/* Ejes */}
           <div className="absolute -left-32 top-1/2 -translate-y-1/2 -rotate-90 text-gray-700 font-bold">
             Low Impact - High Impact
           </div>
-          <div className="absolute bottom-0 left-1/2 translate-x-[-50%] translate-y-8 text-gray-700 font-bold">
+          <div className="absolute bottom-0 left-1/2 translate-x-[-50%] translate-y-8 text-gray-700 font-bold min-w-max">
             Low urgency - High urgency
           </div>
 
