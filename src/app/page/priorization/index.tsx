@@ -50,10 +50,10 @@ export default function PriorityQuadrants() {
         const data: { forms: FormResponse[] } = await res.json();
 
         const colorPairs: [string, string][] = [
-          ["bg-pink-100", "bg-pink-500"],
-          ["bg-green-100", "bg-green-500"],
-          ["bg-yellow-100", "bg-yellow-500"],
-          ["bg-blue-100", "bg-blue-500"],
+          ["green-interactive border border-2 border-red-300", "bg-red-300"],
+          ["green-interactive border border-2 border-green-300", "bg-green-300"],
+          ["green-interactive border border-2 border-yellow-200", "bg-yellow-200"],
+          ["green-interactive border border-2 border-blue-300", "bg-blue-300"],
         ];
 
         const mappedCategories: Category[] = data.forms.map((form, index) => {
@@ -163,7 +163,7 @@ export default function PriorityQuadrants() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`px-3 py-2 ${note.color} text-white rounded-md shadow cursor-pointer`}
+                            className={`px-3 py-2 ${note.color} text-gray-700 rounded-md shadow cursor-pointer`}
                           >
                             {note.name}
                           </div>
@@ -179,7 +179,7 @@ export default function PriorityQuadrants() {
         </div>
 
         {/* MATRIZ DE 4 CUADRANTES */}
-        <div className="relative w-full md:w-[800px] mx-auto bg-amber-400 ">
+        <div className="relative w-full md:w-[800px] mx-auto">
           {/* Ejes */}
           <div className="absolute -left-32 top-1/2 -translate-y-1/2 -rotate-90 text-gray-700 font-bold">
             Low Impact - High Impact
@@ -191,17 +191,17 @@ export default function PriorityQuadrants() {
           {/* Cuadrantes */}
           <div className="grid grid-cols-2 grid-rows-2 border border-gray-500">
             {([
-              { id: "q2", title: "Medium priority", color: "bg-yellow-300" },
-              { id: "q1", title: "High priority", color: "bg-green-400" },
-              { id: "q3", title: "Low priority", color: "bg-red-500" },
-              { id: "q4", title: "Medium priority", color: "bg-yellow-300" },
+              { id: "q2", title: "Medium priority", border: "border-yellow-300" },
+              { id: "q1", title: "High priority", border: "border-green-400"  },
+              { id: "q3", title: "Low priority", border: "border-red-500"  },
+              { id: "q4", title: "Medium priority", border: "border-yellow-300"  },
             ] as const).map((q) => (
               <Droppable key={q.id} droppableId={q.id}>
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`${q.color} border border-gray-400 min-h-[200px] flex flex-col items-center justify-center p-4 relative`}
+                    className={`green-interactive border-4 ${q.border} min-h-[200px] flex flex-col items-center justify-center p-4 relative`}
                   >
                     <h3 className="text-lg font-bold text-gray-800 mb-2">{q.title}</h3>
                     <div className="flex flex-wrap gap-2 justify-center">
@@ -212,7 +212,7 @@ export default function PriorityQuadrants() {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`px-3 py-2 ${note.color} rounded-md shadow text-white`}
+                              className={`px-3 py-2 ${note.color} rounded-md shadow text-gray-700`}
                             >
                               {note.name}
                             </div>

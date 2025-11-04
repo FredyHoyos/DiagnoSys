@@ -50,12 +50,10 @@ export default function ZoomOutCategorization() {
         console.log("API response:", data);
 
         const colorPairs: [string, string][] = [
-          ["bg-pink-100", "bg-pink-500"],
-          ["bg-green-100", "bg-green-500"],
-          ["bg-yellow-100", "bg-yellow-500"],
-          ["bg-blue-100", "bg-blue-500"],
-          ["bg-purple-100", "bg-purple-500"],
-          ["bg-orange-100", "bg-orange-500"],
+          ["green-interactive border border-2 border-red-300", "bg-red-300"],
+          ["green-interactive border border-2 border-green-300", "bg-green-300"],
+          ["green-interactive border border-2 border-yellow-200", "bg-yellow-200"],
+          ["green-interactive border border-2 border-blue-300", "bg-blue-300"],
         ];
 
         const mappedCategories: Category[] = data.forms.map((form, index) => {
@@ -186,7 +184,7 @@ export default function ZoomOutCategorization() {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`px-3 py-2 ${note.color} text-white rounded-md shadow cursor-pointer`}
+                              className={`px-3 py-2 ${note.color} text-gray-700 rounded-md shadow cursor-pointer`}
                             >
                               {note.name}
                             </div>
@@ -210,7 +208,7 @@ export default function ZoomOutCategorization() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className="min-h-[100px] bg-white rounded-lg shadow-md p-3 flex flex-wrap gap-2"
+                      className="min-h-[100px] green-interactive rounded-lg shadow-md p-3 flex flex-wrap gap-2"
                     >
                       {destinations[key].map((note, index) => (
                         <Draggable key={note.id} draggableId={note.id} index={index}>
@@ -219,7 +217,7 @@ export default function ZoomOutCategorization() {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`px-3 py-2 ${note.color} rounded-md shadow text-white`}
+                              className={`px-3 py-2 ${note.color} rounded-md shadow text-gray-700`}
                             >
                               {note.name}
                             </div>
