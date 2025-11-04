@@ -85,7 +85,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen w-64  shadow-lg p-4 z-40 pt-16 md:pt-3 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static flex flex-col`}
+        className={`pb-11 md:pb-5 fixed top-0 left-0 h-screen w-64  shadow-lg p-4 z-40 pt-16 md:pt-3 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static flex flex-col`}
       >
         <div className="absolute inset-0 green"></div>
         <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
