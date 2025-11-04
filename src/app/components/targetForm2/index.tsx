@@ -37,7 +37,7 @@ const TargetFormCard = ({
   };
 
   return (
-    <div className="green-interactive border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col min-h-[260px] min-w-[350px] max-w-md flex-1">
+    <div className="green-interactive border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col min-h-[260px] max-w-md flex-1">
       <div className="flex-grow">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
