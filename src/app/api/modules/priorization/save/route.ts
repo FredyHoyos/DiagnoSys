@@ -8,9 +8,10 @@ interface BaseItemInput {
 }
 
 interface SaveRequestBody {
-  opportunities?: BaseItemInput[];
-  needs?: BaseItemInput[];
-  problems?: BaseItemInput[];
+  highPriority?: BaseItemInput[];
+  mediumPriority?: BaseItemInput[];
+  lowPriority?: BaseItemInput[];
+  mediumPriority2?: BaseItemInput[]; // segundo grupo "Medium priority"
 }
 
 export async function POST(req: Request) {
@@ -29,33 +30,43 @@ export async function POST(req: Request) {
     }
 
     const body: SaveRequestBody = await req.json();
-    const { opportunities, needs, problems } = body;
+    const { highPriority, mediumPriority, lowPriority, mediumPriority2 } = body;
 
-    // Guardar oportunidades
-    if (opportunities?.length) {
-      await prisma.opportunity.createMany({
-        data: opportunities.map((o) => ({
-          name: o.name,
+    // Guardar High priority
+    if (highPriority?.length) {
+      await prisma.highPriority.createMany({
+        data: highPriority.map((item) => ({
+          name: item.name,
           userId: user.id,
         })),
       });
     }
 
-    // Guardar necesidades
-    if (needs?.length) {
-      await prisma.need.createMany({
-        data: needs.map((n) => ({
-          name: n.name,
+    // Guardar Medium priority
+    if (mediumPriority?.length) {
+      await prisma.mediumPriority.createMany({
+        data: mediumPriority.map((item) => ({
+          name: item.name,
           userId: user.id,
         })),
       });
     }
 
-    // Guardar problemas
-    if (problems?.length) {
-      await prisma.problem.createMany({
-        data: problems.map((p) => ({
-          name: p.name,
+    // Guardar Low priority
+    if (lowPriority?.length) {
+      await prisma.lowPriority.createMany({
+        data: lowPriority.map((item) => ({
+          name: item.name,
+          userId: user.id,
+        })),
+      });
+    }
+
+    // Guardar segundo grupo Medium priority
+    if (mediumPriority2?.length) {
+      await prisma.mediumPriority2.createMany({
+        data: mediumPriority2.map((item) => ({
+          name: item.name,
           userId: user.id,
         })),
       });

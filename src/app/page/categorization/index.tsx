@@ -249,20 +249,20 @@ export default function ZoomOutCategorization() {
           Save
         </button>
       </div>
-                        {/* === Modal de Error/Éxito === */}
-            {errorModal && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.errorModal}>
-                        <p>{errorModal}</p>
-                        <button
-                            className={styles.confirmButton}
-                            onClick={() => setErrorModal(null)}
-                        >
-                            OK
-                        </button>
-                    </div>
-                </div>
-            )}
+      {/* Modal */}
+      {errorModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.errorModal}>
+            <p>{errorModal}</p>
+            <button
+              className={styles.confirmButton}
+              onClick={() => setErrorModal(null)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
