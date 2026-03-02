@@ -37,7 +37,10 @@ export async function GET() {
                             select: {
                                 id: true,
                                 name: true,
-                                tag: true
+                                tag: true,
+                                module: {
+                                    select: { id: true, name: true }
+                                }
                             }
                         },
                         personalizedCategories: {
@@ -59,10 +62,10 @@ export async function GET() {
         // Process reports with stats
         const processedReports = reports.map(report => {
             const zoomInForms = report.personalizedForms.filter(
-                form => form.baseForm.tag === 'zoom-in'
+                form => form.baseForm.module?.name?.toLowerCase().includes('zoom in')
             );
             const zoomOutForms = report.personalizedForms.filter(
-                form => form.baseForm.tag === 'zoom-out'
+                form => form.baseForm.module?.name?.toLowerCase().includes('zoom out')
             );
 
             const completedForms = report.personalizedForms.filter(form => form.isCompleted);
@@ -161,6 +164,9 @@ export async function POST(request: NextRequest) {
         const publishedForms = await prisma.form.findMany({
             where: { isPublished: true },
             include: {
+                module: {
+                    select: { id: true, name: true }
+                },
                 categories: {
                     include: {
                         items: true
@@ -196,9 +202,9 @@ export async function POST(request: NextRequest) {
                 totalForms: publishedForms.length,
                 completedForms: 0,
                 completionRate: 0,
-                zoomInTotal: publishedForms.filter(f => f.tag === 'zoom-in').length,
+                zoomInTotal: publishedForms.filter(f => f.module?.name?.toLowerCase().includes('zoom in')).length,
                 zoomInCompleted: 0,
-                zoomOutTotal: publishedForms.filter(f => f.tag === 'zoom-out').length,
+                zoomOutTotal: publishedForms.filter(f => f.module?.name?.toLowerCase().includes('zoom out')).length,
                 zoomOutCompleted: 0
             }
         };

@@ -88,6 +88,9 @@ export async function GET(
         const publishedForms = await prisma.form.findMany({
             where: { isPublished: true },
             include: {
+                module: {
+                    select: { id: true, name: true }
+                },
                 categories: {
                     include: {
                         items: true
@@ -98,7 +101,7 @@ export async function GET(
 
         // Separate forms by zoom type and calculate stats
         const zoomInForms = publishedForms
-            .filter(form => form.tag === 'zoom-in')
+            .filter(form => form.module?.name?.toLowerCase().includes('zoom in'))
             .map(baseForm => {
                 const personalizedForm = report.personalizedForms.find(
                     pf => pf.baseFormId === baseForm.id
@@ -124,7 +127,7 @@ export async function GET(
             });
 
         const zoomOutForms = publishedForms
-            .filter(form => form.tag === 'zoom-out')
+            .filter(form => form.module?.name?.toLowerCase().includes('zoom out'))
             .map(baseForm => {
                 const personalizedForm = report.personalizedForms.find(
                     pf => pf.baseFormId === baseForm.id
