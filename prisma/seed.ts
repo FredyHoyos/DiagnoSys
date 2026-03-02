@@ -8,22 +8,16 @@ async function main() {
   // Crear roles por defecto
   const roles = [
     {
-      id: 1,
       name: 'admin',
       displayName: 'Administrator',
-      description: 'System administrator with full access'
     },
     {
-      id: 2,
       name: 'consultant',
       displayName: 'Consultant',
-      description: 'Independent consulting professional'
     },
     {
-      id: 3,
       name: 'organization',
       displayName: 'Organization',
-      description: 'Company or institutional representative'
     }
   ]
 
@@ -50,7 +44,7 @@ async function main() {
     update: {},
     create: {
       name: 'Zoom In',
-      description: 'Module focused on evaluating internal digital maturity (skills, capabilities, and assets).',
+      description: 'Módulo enfocado en evaluar la madurez digital interna de la organización (habilidades, capacidades y activos).',
     },
   })
 
@@ -64,7 +58,7 @@ async function main() {
     update: {},
     create: {
       name: 'Zoom Out',
-      description: 'Module focused on evaluating external forces that exert positive or negative pressure on the business model.',
+      description: 'Módulo enfocado en evaluar las fuerzas externas que ejercen presión positiva o negativa sobre el modelo de negocio.',
     },
   })
 
@@ -76,257 +70,257 @@ async function main() {
 
   const zoomInForms = [
     {
-      name: 'Skills',
-      tag: 'Skills',
-      description: 'Individual competencies needed to operate in digital environments and adopt new technologies.',
+      name: 'Habilidades',
+      tag: 'habilidades',
+      description: 'Competencias individuales necesarias para operar en entornos digitales y adoptar nuevas tecnologías.',
       categories: [
         {
-          name: 'Basic digital skills',
+          name: 'Habilidades digitales básicas',
           examples: [
-            'Cloud office management',
-            'Secure navigation',
-            'Corporate email use',
+            'Gestión de ofimática en la nube',
+            'Navegación segura',
+            'Uso del correo corporativo',
           ],
         },
         {
-          name: 'Analytical skills',
+          name: 'Habilidades analíticas',
           examples: [
-            'Data interpretation',
-            'Critical thinking',
-            'Process modeling',
+            'Interpretación de datos',
+            'Pensamiento crítico',
+            'Modelado de procesos',
           ],
         },
         {
-          name: 'Technical skills',
+          name: 'Habilidades técnicas',
           examples: [
-            'Programming',
-            'Database management',
-            'Network administration',
+            'Programación',
+            'Gestión de bases de datos',
+            'Administración de redes',
           ],
         },
         {
-          name: 'Emerging technology skills',
+          name: 'Habilidades en tecnologías emergentes',
           examples: [
-            'Artificial intelligence',
-            'Data science',
+            'Inteligencia artificial',
+            'Ciencia de datos',
             'Blockchain',
-            'Automation (RPA)',
+            'Automatización (RPA)',
           ],
         },
         {
-          name: 'Digital collaboration skills',
+          name: 'Habilidades de colaboración digital',
           examples: [
-            'Collaborative platforms (MS Teams, Google Workspace, Notion)',
+            'Plataformas colaborativas (MS Teams, Google Workspace, Notion)',
           ],
         },
         {
-          name: 'Change management skills',
+          name: 'Habilidades de gestión del cambio',
           examples: [
-            'Resilience',
-            'Adaptability',
-            'Leadership during technological disruption',
+            'Resiliencia',
+            'Adaptabilidad',
+            'Liderazgo durante la disrupción tecnológica',
           ],
         },
         {
-          name: 'Innovation skills',
+          name: 'Habilidades de innovación',
           examples: [
-            'Creativity',
+            'Creatividad',
             'Design Thinking',
-            'Rapid prototyping',
+            'Prototipado rápido',
           ],
         },
         {
-          name: 'Cybersecurity skills',
+          name: 'Habilidades en ciberseguridad',
           examples: [
-            'Security best practices',
-            'Access management',
-            'Threat recognition',
+            'Buenas prácticas de seguridad',
+            'Gestión de accesos',
+            'Reconocimiento de amenazas',
           ],
         },
       ],
     },
     {
-      name: 'Capabilities',
-      tag: 'Capabilities',
-      description: 'Organizational abilities that enable a company to operate, innovate, and adapt in digital environments.',
+      name: 'Capacidades',
+      tag: 'capacidades',
+      description: 'Capacidades organizacionales que permiten a una empresa operar, innovar y adaptarse en entornos digitales.',
       categories: [
         {
-          name: 'Operational capabilities',
+          name: 'Capacidades operativas',
           examples: [
-            'Process automation',
+            'Automatización de procesos',
             'BPM',
-            'Digital quality control',
-            'Traceability',
+            'Control de calidad digital',
+            'Trazabilidad',
           ],
         },
         {
-          name: 'Commercial capabilities',
+          name: 'Capacidades comerciales',
           examples: [
-            'E-commerce',
+            'Comercio electrónico',
             'CRM',
-            'Digital marketing',
-            'Omnichannel customer experience',
+            'Marketing digital',
+            'Experiencia del cliente omnicanal',
           ],
         },
         {
-          name: 'Technological capabilities',
+          name: 'Capacidades tecnológicas',
           examples: [
-            'IT management',
-            'Enterprise architecture',
-            'Software development',
-            'API management',
+            'Gestión TI',
+            'Arquitectura empresarial',
+            'Desarrollo de software',
+            'Gestión de APIs',
           ],
         },
         {
-          name: 'Analytical capabilities',
+          name: 'Capacidades analíticas',
           examples: [
-            'Data analytics',
-            'Business intelligence',
+            'Analítica de datos',
+            'Inteligencia de negocios',
             'Dashboards',
           ],
         },
         {
-          name: 'Strategic capabilities',
+          name: 'Capacidades estratégicas',
           examples: [
-            'Data-driven decision-making',
-            'Organizational agility',
-            'Open innovation',
+            'Toma de decisiones basada en datos',
+            'Agilidad organizacional',
+            'Innovación abierta',
           ],
         },
         {
-          name: 'Knowledge management capabilities',
+          name: 'Capacidades de gestión del conocimiento',
           examples: [
-            'Digital documentation',
-            'Learning management',
-            'Communities of practice',
+            'Documentación digital',
+            'Gestión del aprendizaje',
+            'Comunidades de práctica',
           ],
         },
         {
-          name: 'Digital sustainability capabilities',
+          name: 'Capacidades de sostenibilidad digital',
           examples: [
-            'Data lifecycle management',
-            'Energy efficiency',
-            'Circular economy',
+            'Gestión del ciclo de vida de los datos',
+            'Eficiencia energética',
+            'Economía circular',
           ],
         },
         {
-          name: 'Organizational cybersecurity capabilities',
+          name: 'Capacidades de ciberseguridad organizacional',
           examples: [
-            'Digital risk management',
-            'Incident response',
-            'Asset protection',
+            'Gestión del riesgo digital',
+            'Respuesta a incidentes',
+            'Protección de activos',
           ],
         },
       ],
     },
     {
-      name: 'Strategic Assets',
-      tag: 'Strategic Assets',
-      description: 'Elements that currently provide direct or indirect economic value to the business.',
+      name: 'Activos Estratégicos',
+      tag: 'activos-estrategicos',
+      description: 'Elementos que actualmente generan valor económico directo o indirecto para el negocio.',
       categories: [
         {
-          name: 'Digital products and services',
+          name: 'Productos y servicios digitales',
           examples: [
-            'Web platforms',
-            'Mobile apps',
-            'Cloud-based services',
+            'Plataformas web',
+            'Aplicaciones móviles',
+            'Servicios basados en la nube',
           ],
         },
         {
-          name: 'Monetized databases',
+          name: 'Bases de datos monetizadas',
           examples: [
-            'Customer listings',
-            'Product catalogs',
-            'Transactional data',
+            'Listados de clientes',
+            'Catálogos de productos',
+            'Datos transaccionales',
           ],
         },
         {
-          name: 'Intellectual property',
+          name: 'Propiedad intelectual',
           examples: [
-            'Patents',
-            'Proprietary algorithms',
-            'Registered software',
+            'Patentes',
+            'Algoritmos propietarios',
+            'Software registrado',
           ],
         },
         {
-          name: 'Technological systems and platforms',
+          name: 'Sistemas y plataformas tecnológicas',
           examples: [
             'ERP',
             'CRM',
             'LMS',
-            'Automation or integration platforms',
+            'Plataformas de automatización o integración',
           ],
         },
         {
-          name: 'Customer or partner networks',
+          name: 'Redes de clientes o socios',
           examples: [
-            'Tech alliances',
+            'Alianzas tecnológicas',
             'Marketplaces',
-            'Collaborative ecosystems',
+            'Ecosistemas colaborativos',
           ],
         },
         {
-          name: 'Digital business models',
+          name: 'Modelos de negocio digitales',
           examples: [
-            'Subscription models',
-            'Platform economy',
-            'SaaS services',
+            'Modelos de suscripción',
+            'Economía de plataformas',
+            'Servicios SaaS',
           ],
         },
       ],
     },
     {
-      name: 'Hidden Assets',
-      tag: 'Hidden Assets',
-      description: 'Valuable elements not yet fully exploited or monetized that can enable innovation.',
+      name: 'Activos Ocultos',
+      tag: 'activos-ocultos',
+      description: 'Elementos valiosos aún no explotados o monetizados completamente que pueden habilitar la innovación.',
       categories: [
         {
-          name: 'Internal know-how',
+          name: 'Know-how interno',
           examples: [
-            'Team experience',
-            'Undocumented best practices',
+            'Experiencia del equipo',
+            'Mejores prácticas no documentadas',
           ],
         },
         {
-          name: 'Internal and external networks',
+          name: 'Redes internas y externas',
           examples: [
-            'Informal ecosystem contacts',
-            'Alumni or inactive partners',
+            'Contactos informales del ecosistema',
+            'Alumni o socios inactivos',
           ],
         },
         {
-          name: 'Unstructured knowledge',
+          name: 'Conocimiento no estructurado',
           examples: [
-            'Scattered documents',
-            'Historical data',
-            'Unsynthesized customer insights',
+            'Documentos dispersos',
+            'Datos históricos',
+            'Insights de clientes no sintetizados',
           ],
         },
         {
-          name: 'Emerging talents',
+          name: 'Talentos emergentes',
           examples: [
-            'Self-taught skills in AI, blockchain, or low-code tools',
+            'Habilidades autodidactas en IA, blockchain o herramientas low-code',
           ],
         },
         {
-          name: 'Unoptimized processes',
+          name: 'Procesos no optimizados',
           examples: [
-            'Manual processes that could be digitized',
+            'Procesos manuales que podrían digitalizarse',
           ],
         },
         {
-          name: 'Unimplemented ideas',
+          name: 'Ideas no implementadas',
           examples: [
-            'Internal proposals',
-            'Archived prototypes',
-            'Abandoned pilots',
+            'Propuestas internas',
+            'Prototipos archivados',
+            'Pilotos abandonados',
           ],
         },
         {
-          name: 'Latent pro-innovation culture',
+          name: 'Cultura pro-innovación latente',
           examples: [
-            'Local initiatives not scaled up',
-            'Openness to change',
+            'Iniciativas locales no escaladas',
+            'Apertura al cambio',
           ],
         },
       ],
@@ -339,124 +333,124 @@ async function main() {
 
   const zoomOutForms = [
     {
-      name: 'Key Trends',
-      tag: 'Trends',
-      description: 'Global technological, social or cultural changes that directly or indirectly affect market behavior and business models.',
+      name: 'Tendencias Clave',
+      tag: 'tendencias',
+      description: 'Cambios tecnológicos, sociales o culturales globales que afectan directa o indirectamente el comportamiento del mercado y los modelos de negocio.',
       categories: [
         {
-          name: 'Technology and digitalization',
+          name: 'Tecnología y digitalización',
           examples: [
-            'Growing adoption of artificial intelligence',
-            'Digitalization of the value chain',
-            'Cloud computing expansion',
-            'Intelligent automation (RPA + AI)',
-            'Rise of low-code/no-code platforms',
+            'Creciente adopción de inteligencia artificial',
+            'Digitalización de la cadena de valor',
+            'Expansión del cómputo en la nube',
+            'Automatización inteligente (RPA + IA)',
+            'Auge de plataformas low-code/no-code',
           ],
         },
         {
-          name: 'Clients and market',
+          name: 'Clientes y mercado',
           examples: [
-            'Remote work growth',
-            'Data usage as new strategic asset',
+            'Crecimiento del trabajo remoto',
+            'Uso de datos como nuevo activo estratégico',
           ],
         },
         {
-          name: 'Talent and security',
+          name: 'Talento y seguridad',
           examples: [
-            'Demand for sustainability and circular economy',
-            'Integration of immersive technologies (AR/VR)',
+            'Demanda de sostenibilidad y economía circular',
+            'Integración de tecnologías inmersivas (AR/VR)',
           ],
         },
         {
-          name: 'Strategy and regulation',
+          name: 'Estrategia y regulación',
           examples: [
-            'Transition towards data-driven business models',
+            'Transición hacia modelos de negocio basados en datos',
           ],
         },
       ],
     },
     {
-      name: 'Market Forces',
-      tag: 'Market',
-      description: 'Changing dynamics and expectations of consumers and the competitive environment that directly influence an organization\'s value proposition.',
+      name: 'Fuerzas del Mercado',
+      tag: 'fuerzas-mercado',
+      description: 'Dinámicas cambiantes y expectativas de los consumidores y el entorno competitivo que influyen directamente en la propuesta de valor de una organización.',
       categories: [
         {
-          name: 'Clients and market',
+          name: 'Clientes y mercado',
           examples: [
-            'Change in digital customer expectations',
-            'Increased competition through digital channels',
-            'Acceleration of disruptive business models',
-            'More informed and demanding customers',
-            'Preference for personalized experiences',
-            'Growth of marketplaces',
-            'Pressure for reduced delivery times',
-            'Hyper-personalization of services',
-            'Omnichannel attention demand',
-            'Requirement for transparency and traceability',
+            'Cambio en las expectativas del cliente digital',
+            'Mayor competencia a través de canales digitales',
+            'Aceleración de modelos de negocio disruptivos',
+            'Clientes más informados y exigentes',
+            'Preferencia por experiencias personalizadas',
+            'Crecimiento de marketplaces',
+            'Presión por tiempos de entrega reducidos',
+            'Hiperpersonalización de servicios',
+            'Demanda de atención omnicanal',
+            'Exigencia de transparencia y trazabilidad',
           ],
         },
       ],
     },
     {
-      name: 'Industry Forces',
-      tag: 'Industry',
-      description: 'Technological, structural or regulatory changes that affect competition dynamics in a specific sector or that come from key agents such as competitors, suppliers or dominant platforms.',
+      name: 'Fuerzas de la Industria',
+      tag: 'fuerzas-industria',
+      description: 'Cambios tecnológicos, estructurales o regulatorios que afectan la dinámica de competencia en un sector específico o que provienen de agentes clave como competidores, proveedores o plataformas dominantes.',
       categories: [
         {
-          name: 'Technology and digitalization',
+          name: 'Tecnología y digitalización',
           examples: [
-            'Industrial process automation',
-            'Consolidation of large digital platforms',
-            'New interoperability standards',
-            'Adoption of international digital quality standards',
+            'Automatización de procesos industriales',
+            'Consolidación de grandes plataformas digitales',
+            'Nuevos estándares de interoperabilidad',
+            'Adopción de estándares internacionales de calidad digital',
           ],
         },
         {
-          name: 'Talent and security',
+          name: 'Talento y seguridad',
           examples: [
-            'Disintermediation by technological platforms',
-            'Pressure to integrate operational intelligence',
-            'Consolidation of vertical ecosystems',
-            'Competition with tech startups',
+            'Desintermediación por plataformas tecnológicas',
+            'Presión para integrar inteligencia operacional',
+            'Consolidación de ecosistemas verticales',
+            'Competencia con startups tecnológicas',
           ],
         },
         {
-          name: 'Strategy and regulation',
+          name: 'Estrategia y regulación',
           examples: [
-            'Sectoral regulatory pressure',
+            'Presión regulatoria sectorial',
           ],
         },
         {
-          name: 'Clients and market',
+          name: 'Clientes y mercado',
           examples: [
-            'Transformation of traditional logistics chains',
+            'Transformación de cadenas logísticas tradicionales',
           ],
         },
       ],
     },
     {
-      name: 'Macroeconomic Forces',
-      tag: 'Macroeconomic',
-      description: 'Global or regional political, economic or legal factors that directly or indirectly impact strategic and operational decisions of organizations.',
+      name: 'Fuerzas Macroeconómicas',
+      tag: 'fuerzas-macroeconomicas',
+      description: 'Factores políticos, económicos o legales globales o regionales que impactan directa o indirectamente las decisiones estratégicas y operativas de las organizaciones.',
       categories: [
         {
-          name: 'Strategy and regulation',
+          name: 'Estrategia y regulación',
           examples: [
-            'Data protection regulations',
-            'Digital transformation incentive policies',
-            'Currency fluctuations impacting technology',
-            'Tax policies for digital services',
-            'Government incentives for innovation',
-            'Geopolitical risks affecting supply chain',
-            'Commercial restrictions on key technologies',
-            'International digital governance frameworks',
+            'Regulaciones de protección de datos',
+            'Políticas de incentivo a la transformación digital',
+            'Fluctuaciones monetarias que impactan la tecnología',
+            'Políticas fiscales para servicios digitales',
+            'Incentivos gubernamentales para la innovación',
+            'Riesgos geopolíticos que afectan la cadena de suministro',
+            'Restricciones comerciales sobre tecnologías clave',
+            'Marcos internacionales de gobernanza digital',
           ],
         },
         {
-          name: 'Talent and security',
+          name: 'Talento y seguridad',
           examples: [
-            'Inflation and shortage of technological talent',
-            'Increase in global cyber threats',
+            'Inflación y escasez de talento tecnológico',
+            'Aumento de ciberamenazas globales',
           ],
         },
       ],
