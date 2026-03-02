@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import styles from "./reset-password.module.css";
@@ -31,6 +32,8 @@ export default function ResetPasswordPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // leer token desde window.location.search (solo en cliente)
     useEffect(() => {
@@ -90,43 +93,65 @@ export default function ResetPasswordPage() {
                 <h2 className={styles.title}>Reset Password</h2>
                 <p className={styles.subtitle}>Enter your new password below</p>
 
-                <div className={styles.inputGroup}>
+                <div className={`${styles.inputGroup} ${styles.passwordWrapper}`}>
                     <input
                         id="password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder=" "
                         className={styles.input}
                         {...register("password")}
-                        disabled={loading || !!message} // Deshabilitar si hay mensaje de éxito
+                        disabled={loading || !!message}
                     />
                     <label htmlFor="password" className={styles.label}>
                         New Password
                     </label>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={styles.eyeButton}
+                        disabled={loading || !!message}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+
                     {errors.password && (
                         <p className={styles.error}>{errors.password.message}</p>
                     )}
                 </div>
 
-                <div className={styles.inputGroup}>
+                <div className={`${styles.inputGroup} ${styles.passwordWrapper}`}>
                     <input
                         id="confirmPassword"
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder=" "
                         className={styles.input}
                         {...register("confirmPassword")}
-                        disabled={loading || !!message} // Deshabilitar si hay mensaje de éxito
+                        disabled={loading || !!message}
                     />
                     <label htmlFor="confirmPassword" className={styles.label}>
                         Confirm Password
                     </label>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className={styles.eyeButton}
+                        disabled={loading || !!message}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+
                     {errors.confirmPassword && (
                         <p className={styles.error}>{errors.confirmPassword.message}</p>
                     )}
                 </div>
 
-                <button 
-                    type="submit" 
-                    className={styles.button} 
+                <button
+                    type="submit"
+                    className={styles.button}
                     disabled={loading || !!message} // Deshabilitar si hay mensaje de éxito
                 >
                     {loading ? "Resetting..." : "Reset Password"}

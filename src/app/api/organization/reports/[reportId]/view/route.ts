@@ -88,13 +88,11 @@ export async function GET(
 
         // Separate forms by zoom type
         const zoomInForms = report.personalizedForms.filter(form => 
-            form.baseForm.tag?.toLowerCase().includes('zoom-in') || 
-            form.baseForm.module.name.toLowerCase().includes('skills')
+            form.baseForm.module.name.toLowerCase().includes('zoom in')
         );
         
         const zoomOutForms = report.personalizedForms.filter(form => 
-            form.baseForm.tag?.toLowerCase().includes('zoom-out') || 
-            form.baseForm.module.name.toLowerCase().includes('capabilities')
+            form.baseForm.module.name.toLowerCase().includes('zoom out')
         );
 
         // Process data for charts

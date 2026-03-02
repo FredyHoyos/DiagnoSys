@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import styles from "./login.module.css";
@@ -29,6 +30,7 @@ export default function LoginForm({ onSwitch, onForgot }: Props) {
     const router = useRouter();
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -68,10 +70,23 @@ export default function LoginForm({ onSwitch, onForgot }: Props) {
                     {errors.email && <p className={styles.error}>{errors.email.message}</p>}
                 </div>
 
-                <div className={styles.inputGroup}>
-                    <input id="password" type="password" placeholder=" " {...register("password")} className={styles.input} />
-                    <label htmlFor="password" className={styles.label}>Password</label>
-                    {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+                <div className={`${styles.inputGroup} ${styles.passwordWrapper}`}>
+                    <input id="password" type={showPassword ? "text" : "password"} placeholder=" " {...register("password")} className={styles.input} />
+                    <label htmlFor="password" className={styles.label}>
+                        Password
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={styles.eyeButton}
+                    >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+
+                    {errors.password && (
+                        <p className={styles.error}>{errors.password.message}</p>
+                    )}
                 </div>
 
                 <div className={styles.optionsRow}>

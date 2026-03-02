@@ -4,7 +4,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.5rem; /* Reducir padding */
+    padding: 0.5rem;
+    /* Reducir padding */
     box-sizing: border-box;
     overflow-y: auto;
     /* Permite scroll si es necesario */
@@ -50,6 +51,22 @@
     position: relative;
     display: flex;
     flex-direction: column;
+}
+
+.passwordWrapper {
+    position: relative;
+}
+
+.eyeButton {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
 }
 
 .input {
@@ -161,7 +178,7 @@
     box-shadow: 0 2px 8px rgba(18, 83, 51, 0.1);
 }
 
-.roleRadio:checked + .roleCard {
+.roleRadio:checked+.roleCard {
     border-color: #125333;
     background: #f0f9ff;
     box-shadow: 0 0 0 3px rgba(18, 83, 51, 0.1);

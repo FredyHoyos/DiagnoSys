@@ -64,7 +64,9 @@ export async function GET(
         const zoomInForms = await prisma.form.findMany({
             where: {
                 isPublished: true,
-                tag: 'zoom-in'
+                module: {
+                    name: 'Zoom In'
+                }
             },
             select: {
                 id: true,
@@ -79,7 +81,9 @@ export async function GET(
                 reportId: reportIdInt,
                 userId,
                 baseForm: {
-                    tag: 'zoom-in'
+                    module: {
+                        name: 'Zoom In'
+                    }
                 }
             },
             select: {

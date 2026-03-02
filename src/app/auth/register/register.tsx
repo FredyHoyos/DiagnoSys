@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import styles from "./register.module.css";
 
 const schema = z
@@ -33,6 +34,8 @@ export default function RegisterForm({ onSwitch }: Props) {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [successPopup, setSuccessPopup] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -128,17 +131,57 @@ export default function RegisterForm({ onSwitch }: Props) {
                 </div>
 
                 {/* Password */}
-                <div className={styles.inputGroup}>
-                    <input id="password" type="password" {...register("password")} placeholder=" " className={styles.input} />
-                    <label htmlFor="password" className={styles.label}>Password</label>
-                    {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+                <div className={`${styles.inputGroup} ${styles.passwordWrapper}`}>
+                    <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        {...register("password")}
+                        placeholder=" "
+                        className={styles.input}
+                    />
+                    <label htmlFor="password" className={styles.label}>
+                        Password
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={styles.eyeButton}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+
+                    {errors.password && (
+                        <p className={styles.error}>{errors.password.message}</p>
+                    )}
                 </div>
 
                 {/* Confirm Password */}
-                <div className={styles.inputGroup}>
-                    <input id="confirmPassword" type="password" {...register("confirmPassword")} placeholder=" " className={styles.input} />
-                    <label htmlFor="confirmPassword" className={styles.label}>Confirm Password</label>
-                    {errors.confirmPassword && <p className={styles.error}>{errors.confirmPassword.message}</p>}
+                <div className={`${styles.inputGroup} ${styles.passwordWrapper}`}>
+                    <input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        {...register("confirmPassword")}
+                        placeholder=" "
+                        className={styles.input}
+                    />
+                    <label htmlFor="confirmPassword" className={styles.label}>
+                        Confirm Password
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className={styles.eyeButton}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+
+                    {errors.confirmPassword && (
+                        <p className={styles.error}>{errors.confirmPassword.message}</p>
+                    )}
                 </div>
 
                 {error && <p className={styles.serverError}>{error}</p>}
