@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 /**
  * GET /api/consultant/organizations
@@ -30,6 +31,13 @@ export async function GET() {
 
         // Obtener organizaciones y sus auditorías relacionadas con este consultor
         const organizations = await prisma.organization.findMany({
+            where: {
+                audits: {
+                    some: {
+                        consultantId: consultantId,
+                    },
+                },
+            },
             include: {
                 _count: {
                     select: {
@@ -75,6 +83,7 @@ export async function GET() {
                 myAuditsCount: org._count.audits,
                 totalFormsCount: org.audits.reduce((sum, audit) => sum + audit._count.personalizedForms, 0)
             },
+            primaryAuditId: org.audits[0]?.id ?? null,
             recentAudits: org.audits.slice(0, 3), // Solo las 3 más recientes
             createdAt: org.createdAt,
             updatedAt: org.updatedAt
@@ -117,34 +126,108 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { name, description } = await request.json();
+        const { organizationName, name, email, password, description } = await request.json();
 
-        if (!name) {
+        if (!organizationName || !name || !email || !password) {
             return NextResponse.json(
-                { error: "Organization name is required" },
+                { error: "Organization name, user name, email and password are required" },
                 { status: 400 }
             );
         }
 
-        const organization = await prisma.organization.create({
-            data: {
-                name,
-                description: description || null
-            }
+        if (typeof password !== "string" || password.length < 8) {
+            return NextResponse.json(
+                { error: "Password must be at least 8 characters" },
+                { status: 400 }
+            );
+        }
+
+        const consultantId = parseInt(session.user.id);
+
+        const role = await prisma.role.findUnique({
+            where: { name: "organization" },
+            select: { id: true },
+        });
+
+        if (!role) {
+            return NextResponse.json(
+                { error: "Organization role not found" },
+                { status: 500 }
+            );
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true },
+        });
+
+        if (existingUser) {
+            return NextResponse.json(
+                { error: "Email already registered" },
+                { status: 409 }
+            );
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const result = await prisma.$transaction(async (tx) => {
+            const organization = await tx.organization.create({
+                data: {
+                    name: organizationName,
+                    description: description || null,
+                },
+            });
+
+            const organizationUser = await tx.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    roleId: role.id,
+                    organizationId: organization.id,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                },
+            });
+
+            const audit = await tx.audit.create({
+                data: {
+                    name: `Initial Audit - ${organization.name}`,
+                    description: "Auto-created when organization was registered by consultant",
+                    consultantId,
+                    organizationId: organization.id,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    createdAt: true,
+                },
+            });
+
+            return { organization, organizationUser, audit };
         });
 
         return NextResponse.json({
             organization: {
-                id: organization.id,
-                name: organization.name,
-                description: organization.description,
+                id: result.organization.id,
+                name: result.organization.name,
+                description: result.organization.description,
                 stats: {
-                    myAuditsCount: 0,
+                    myAuditsCount: 1,
                     totalFormsCount: 0
                 },
-                recentAudits: [],
-                createdAt: organization.createdAt,
-                updatedAt: organization.updatedAt
+                primaryAuditId: result.audit.id,
+                recentAudits: [result.audit],
+                createdAt: result.organization.createdAt,
+                updatedAt: result.organization.updatedAt
+            },
+            credentials: {
+                userName: result.organizationUser.name,
+                email: result.organizationUser.email,
+                role: "organization",
             },
             message: "Organization created successfully"
         }, { status: 201 });

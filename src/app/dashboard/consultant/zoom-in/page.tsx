@@ -1,6 +1,12 @@
+"use client";
+
 import PreviewForms from "@/app/components/preview-forms/preview-forms";
+import { useSearchParams } from "next/navigation";
 
 export default function ZoomInPage() {
+    const searchParams = useSearchParams();
+    const organizationId = searchParams.get("organizationId");
+
     return (
         <div className="max-h-screen w-full">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -9,6 +15,11 @@ export default function ZoomInPage() {
                     <p className="mt-2 text-lg  text-black">
                         Individual skills needed to operate in digital environments and adopt new technologies.
                     </p>
+                    {organizationId ? (
+                        <p className="mt-2 text-sm text-gray-600">
+                            Diagnosing selected organization ID: {organizationId}
+                        </p>
+                    ) : null}
                 </div>
 
                 <PreviewForms moduleName="Zoom In" />
