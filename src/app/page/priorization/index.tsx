@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Suspense } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -41,7 +42,7 @@ interface SavedPrioritizationResponse {
   mediumPriority2: SavedNote[];
 }
 
-export default function PriorityQuadrants() {
+function PriorityQuadrantsContent() {
   const searchParams = useSearchParams();
   const organizationId = searchParams.get("organizationId");
   const withOrganizationContext = (path: string) =>
@@ -443,5 +444,13 @@ export default function PriorityQuadrants() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PriorityQuadrants() {
+  return (
+    <Suspense fallback={<p className="text-center mt-10 text-gray-500">Loading data...</p>}>
+      <PriorityQuadrantsContent />
+    </Suspense>
   );
 }

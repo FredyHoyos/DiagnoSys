@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function ConsultantDiagnosticsPage() {
+function ConsultantDiagnosticsContent() {
   const searchParams = useSearchParams();
   const organizationId = searchParams.get("organizationId");
   const organizationName = searchParams.get("organizationName");
@@ -38,5 +39,13 @@ export default function ConsultantDiagnosticsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ConsultantDiagnosticsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-5xl mx-auto py-8 px-4 text-gray-500">Loading...</div>}>
+      <ConsultantDiagnosticsContent />
+    </Suspense>
   );
 }

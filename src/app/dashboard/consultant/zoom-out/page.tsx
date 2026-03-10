@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import PreviewForms from "@/app/components/preview-forms/preview-forms";
 import { useSearchParams } from "next/navigation";
 
-export default function ZoomOutPage() {
+function ZoomOutContent() {
     const searchParams = useSearchParams();
     const organizationId = searchParams.get("organizationId");
 
@@ -27,5 +28,13 @@ export default function ZoomOutPage() {
                 <PreviewForms moduleName="Zoom Out" />
             </div>
         </div>
+    );
+}
+
+export default function ZoomOutPage() {
+    return (
+        <Suspense fallback={<div className="max-w-7xl mx-auto py-8 px-4 text-gray-500">Loading...</div>}>
+            <ZoomOutContent />
+        </Suspense>
     );
 }

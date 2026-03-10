@@ -7,6 +7,8 @@ type OrganizationSummary = {
   id: number;
   name: string;
   description: string | null;
+  userName: string;
+  email: string;
   primaryAuditId: number | null;
   stats: {
     myAuditsCount: number;
@@ -19,8 +21,16 @@ export default function ConsultantOrganizationsPage() {
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatingOrg, setUpdatingOrg] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
+  const [editOrganizationName, setEditOrganizationName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editUserName, setEditUserName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
 
   const [organizationName, setOrganizationName] = useState("");
   const [description, setDescription] = useState("");
@@ -99,6 +109,70 @@ export default function ConsultantOrganizationsPage() {
       ? `/dashboard/consultant/diagnostics?organizationId=${org.id}&organizationName=${encodeURIComponent(org.name)}&auditId=${org.primaryAuditId}`
       : `/dashboard/consultant/diagnostics?organizationId=${org.id}&organizationName=${encodeURIComponent(org.name)}`;
     router.push(nextUrl);
+  };
+
+  const handleOpenEdit = (org: OrganizationSummary) => {
+    setEditingOrgId(org.id);
+    setEditOrganizationName(org.name);
+    setEditDescription(org.description || "");
+    setEditUserName(org.userName || "");
+    setEditEmail(org.email || "");
+    setEditPassword("");
+    setMessage(null);
+    setError(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingOrgId(null);
+    setEditOrganizationName("");
+    setEditDescription("");
+    setEditUserName("");
+    setEditEmail("");
+    setEditPassword("");
+  };
+
+  const handleSaveEdit = async (orgId: number) => {
+    if (!editOrganizationName.trim() || !editUserName.trim() || !editEmail.trim()) {
+      setError("Organization name, user name and email are required");
+      return;
+    }
+
+    if (editPassword && editPassword.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    try {
+      setUpdatingOrg(true);
+      setError(null);
+      setMessage(null);
+
+      const res = await fetch("/api/consultant/organizations", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orgId,
+          organizationName: editOrganizationName,
+          description: editDescription,
+          name: editUserName,
+          email: editEmail,
+          password: editPassword || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to update organization");
+      }
+
+      setMessage("Organization updated successfully");
+      handleCancelEdit();
+      await loadOrganizations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update organization");
+    } finally {
+      setUpdatingOrg(false);
+    }
   };
 
   return (
@@ -187,6 +261,9 @@ export default function ConsultantOrganizationsPage() {
               >
                 <h3 className="font-semibold text-lg">{org.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">{org.description || "No description"}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  User: {org.userName} | Email: {org.email}
+                </p>
                 <p className="text-sm text-gray-500 mt-2">
                   Audits: {org.stats.myAuditsCount} | Saved forms: {org.stats.totalFormsCount}
                 </p>
@@ -198,7 +275,72 @@ export default function ConsultantOrganizationsPage() {
                   >
                     Start Diagnosis
                   </button>
+                  <button
+                    onClick={() => handleOpenEdit(org)}
+                    className="border border-[#2E6347] text-[#2E6347] px-3 py-2 rounded-md"
+                  >
+                    Edit
+                  </button>
                 </div>
+
+                {editingOrgId === org.id ? (
+                  <div className="mt-4 space-y-3 border-t border-primary/20 pt-4">
+                    <input
+                      className="w-full border rounded-md px-3 py-2"
+                      value={editOrganizationName}
+                      onChange={(e) => setEditOrganizationName(e.target.value)}
+                      placeholder="Organization name"
+                      autoComplete="off"
+                    />
+                    <textarea
+                      className="w-full border rounded-md px-3 py-2"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="Description"
+                      rows={3}
+                      autoComplete="off"
+                    />
+                    <input
+                      className="w-full border rounded-md px-3 py-2"
+                      value={editUserName}
+                      onChange={(e) => setEditUserName(e.target.value)}
+                      placeholder="Organization user name"
+                      autoComplete="off"
+                    />
+                    <input
+                      className="w-full border rounded-md px-3 py-2"
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="Organization email"
+                      autoComplete="off"
+                    />
+                    <input
+                      className="w-full border rounded-md px-3 py-2"
+                      type="password"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="New password (optional)"
+                      autoComplete="new-password"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveEdit(org.id)}
+                        disabled={updatingOrg}
+                        className="bg-primary text-white px-3 py-2 rounded-md disabled:opacity-60"
+                      >
+                        {updatingOrg ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={updatingOrg}
+                        className="border border-gray-400 px-3 py-2 rounded-md disabled:opacity-60"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
 
               </article>
             ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useSearchParams } from "next/navigation";
 import styles from "@/app/components/forms/form-base.module.css";
@@ -38,7 +39,7 @@ interface SavedCategorizationResponse {
   problems: SavedNote[];
 }
 
-export default function ZoomOutCategorization() {
+function ZoomOutCategorizationContent() {
   const searchParams = useSearchParams();
   const organizationId = searchParams.get("organizationId");
   const withOrganizationContext = (path: string) =>
@@ -405,5 +406,13 @@ export default function ZoomOutCategorization() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ZoomOutCategorization() {
+  return (
+    <Suspense fallback={<p className="text-center mt-10 text-gray-500">Loading data...</p>}>
+      <ZoomOutCategorizationContent />
+    </Suspense>
   );
 }

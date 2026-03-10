@@ -39,6 +39,19 @@ export async function GET() {
                 },
             },
             include: {
+                users: {
+                    where: {
+                        role: {
+                            name: "organization"
+                        }
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                    take: 1,
+                },
                 _count: {
                     select: {
                         audits: {
@@ -79,6 +92,8 @@ export async function GET() {
             id: org.id,
             name: org.name,
             description: org.description,
+            userName: org.users[0]?.name ?? "",
+            email: org.users[0]?.email ?? "",
             stats: {
                 myAuditsCount: org._count.audits,
                 totalFormsCount: org.audits.reduce((sum, audit) => sum + audit._count.personalizedForms, 0)
@@ -242,6 +257,160 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * PUT /api/consultant/organizations
+ * Editar organización existente del consultor
+ */
+export async function PUT(request: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+
+        if (!session || !session.user) {
+            return NextResponse.json(
+                { error: "Authentication required" },
+                { status: 401 }
+            );
+        }
+
+        if (session.user.role?.name !== "consultant") {
+            return NextResponse.json(
+                { error: "Consultant access required" },
+                { status: 403 }
+            );
+        }
+
+        const consultantId = parseInt(session.user.id);
+        const { orgId, organizationName, description, name, email, password } = await request.json();
+
+        const orgIdInt = parseInt(String(orgId));
+        if (
+            isNaN(orgIdInt) ||
+            !organizationName || typeof organizationName !== "string" ||
+            !name || typeof name !== "string" ||
+            !email || typeof email !== "string"
+        ) {
+            return NextResponse.json(
+                { error: "Valid organization ID, organization name, user name and email are required" },
+                { status: 400 }
+            );
+        }
+
+        if (password && (typeof password !== "string" || password.length < 8)) {
+            return NextResponse.json(
+                { error: "Password must be at least 8 characters" },
+                { status: 400 }
+            );
+        }
+
+        const hasAccess = await prisma.organization.findFirst({
+            where: {
+                id: orgIdInt,
+                audits: {
+                    some: {
+                        consultantId,
+                    },
+                },
+            },
+            select: { id: true },
+        });
+
+        if (!hasAccess) {
+            return NextResponse.json(
+                { error: "Organization not found or access denied" },
+                { status: 404 }
+            );
+        }
+
+        const organizationUser = await prisma.user.findFirst({
+            where: {
+                organizationId: orgIdInt,
+                role: {
+                    name: "organization",
+                },
+            },
+            select: {
+                id: true,
+                email: true,
+            },
+        });
+
+        if (!organizationUser) {
+            return NextResponse.json(
+                { error: "Organization user not found" },
+                { status: 404 }
+            );
+        }
+
+        if (organizationUser.email !== email.trim()) {
+            const existingUser = await prisma.user.findUnique({
+                where: { email: email.trim() },
+                select: { id: true },
+            });
+
+            if (existingUser) {
+                return NextResponse.json(
+                    { error: "Email already registered" },
+                    { status: 409 }
+                );
+            }
+        }
+
+        const passwordData = password
+            ? { password: await bcrypt.hash(password, 10) }
+            : {};
+
+        const updatedResult = await prisma.$transaction(async (tx) => {
+            const updatedOrganization = await tx.organization.update({
+                where: { id: orgIdInt },
+                data: {
+                    name: organizationName.trim(),
+                    description: typeof description === "string" && description.trim().length > 0
+                        ? description.trim()
+                        : null,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    updatedAt: true,
+                },
+            });
+
+            const updatedOrganizationUser = await tx.user.update({
+                where: { id: organizationUser.id },
+                data: {
+                    name: name.trim(),
+                    email: email.trim(),
+                    ...passwordData,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    updatedAt: true,
+                },
+            });
+
+            return { updatedOrganization, updatedOrganizationUser };
+        });
+
+        return NextResponse.json({
+            organization: updatedResult.updatedOrganization,
+            credentials: {
+                userName: updatedResult.updatedOrganizationUser.name,
+                email: updatedResult.updatedOrganizationUser.email,
+            },
+            message: "Organization updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating organization:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
