@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
+import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
 
 interface BaseItemInput {
   name: string;
@@ -14,38 +15,120 @@ interface SaveRequestBody {
   forceUpdate?: boolean;
 }
 
-export async function POST(req: Request) {
+function getDayRange(date: Date) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
+  return { startOfDay, endOfDay };
+}
+
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email) {
+    if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    const organizationId = new URL(req.url).searchParams.get("organizationId");
+    const scopedUser = await resolveScopedUserForDiagnostics(session.user.id, organizationId);
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const [lastOpportunity, lastNeed, lastProblem] = await Promise.all([
+      prisma.opportunity.findFirst({
+        where: { userId: scopedUser.targetUserId },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.need.findFirst({
+        where: { userId: scopedUser.targetUserId },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.problem.findFirst({
+        where: { userId: scopedUser.targetUserId },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    const latestDate = [lastOpportunity?.createdAt, lastNeed?.createdAt, lastProblem?.createdAt]
+      .filter(Boolean)
+      .sort((a, b) => b!.getTime() - a!.getTime())[0];
+
+    if (!latestDate) {
+      return NextResponse.json({
+        hasData: false,
+        opportunities: [],
+        needs: [],
+        problems: [],
+      });
     }
+
+    const { startOfDay, endOfDay } = getDayRange(latestDate);
+
+    const [opportunities, needs, problems] = await Promise.all([
+      prisma.opportunity.findMany({
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+        orderBy: { id: "asc" },
+        select: { name: true },
+      }),
+      prisma.need.findMany({
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+        orderBy: { id: "asc" },
+        select: { name: true },
+      }),
+      prisma.problem.findMany({
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+        orderBy: { id: "asc" },
+        select: { name: true },
+      }),
+    ]);
+
+    return NextResponse.json({
+      hasData: true,
+      savedAt: latestDate,
+      opportunities,
+      needs,
+      problems,
+    });
+  } catch (error) {
+    if (error instanceof ScopedUserError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const organizationId = new URL(req.url).searchParams.get("organizationId");
+    const scopedUser = await resolveScopedUserForDiagnostics(session.user.id, organizationId);
 
     const body: SaveRequestBody = await req.json();
     const { opportunities, needs, problems, forceUpdate = false } = body;
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setDate(endOfDay.getDate() + 1);
+    const { startOfDay, endOfDay } = getDayRange(new Date());
 
     const [opportunitiesToday, needsToday, problemsToday] = await Promise.all([
       prisma.opportunity.count({
-        where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
       }),
       prisma.need.count({
-        where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
       }),
       prisma.problem.count({
-        where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
       }),
     ]);
 
@@ -74,13 +157,13 @@ export async function POST(req: Request) {
       if (hasTodayData) {
         await Promise.all([
           tx.opportunity.deleteMany({
-            where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
           }),
           tx.need.deleteMany({
-            where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
           }),
           tx.problem.deleteMany({
-            where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
           }),
         ]);
       }
@@ -89,7 +172,7 @@ export async function POST(req: Request) {
         await tx.opportunity.createMany({
           data: cleanOpportunities.map((o) => ({
             name: o.name,
-            userId: user.id,
+            userId: scopedUser.targetUserId,
           })),
         });
       }
@@ -98,7 +181,7 @@ export async function POST(req: Request) {
         await tx.need.createMany({
           data: cleanNeeds.map((n) => ({
             name: n.name,
-            userId: user.id,
+            userId: scopedUser.targetUserId,
           })),
         });
       }
@@ -107,7 +190,7 @@ export async function POST(req: Request) {
         await tx.problem.createMany({
           data: cleanProblems.map((p) => ({
             name: p.name,
-            userId: user.id,
+            userId: scopedUser.targetUserId,
           })),
         });
       }
@@ -120,6 +203,10 @@ export async function POST(req: Request) {
       updated: hasTodayData,
     });
   } catch (error) {
+    if (error instanceof ScopedUserError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     console.error(error);
     return NextResponse.json(
       { error: "Internal server error" },
