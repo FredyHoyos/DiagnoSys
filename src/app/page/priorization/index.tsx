@@ -135,26 +135,48 @@ export default function PriorityQuadrants() {
   const allAssigned = allNotes.length === 0 && allDestNotes.length > 0;
 
   const handleSave = async () => {
-    // Solo enviamos nombre e id (sin color)
     const stripColor = (arr: Note[]) => arr.map(({ id, name }) => ({ id, name }));
-
-    const payload = {
+    const buildPayload = (forceUpdate: boolean) => ({
       highPriority: stripColor(quadrants.q1),
       mediumPriority: stripColor(quadrants.q2),
       lowPriority: stripColor(quadrants.q3),
       mediumPriority2: stripColor(quadrants.q4),
-    };
+      forceUpdate,
+    });
 
-    console.log("Saved data:", payload);
-
-    try {
-      const res = await fetch("/api/modules/priorization/save", {
+    const saveRequest = async (forceUpdate: boolean) =>
+      fetch("/api/modules/priorization/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(buildPayload(forceUpdate)),
       });
+
+    try {
+      let res = await saveRequest(false);
+
+      if (res.status === 409) {
+        const responseBody = await res.json();
+        if (responseBody?.requiresConfirmation) {
+          const confirmed = window.confirm(
+            "You already saved prioritization today. Do you want to update today's data?"
+          );
+
+          if (!confirmed) {
+            return;
+          }
+
+          res = await saveRequest(true);
+        }
+      }
+
       if (!res.ok) throw new Error("Error saving data");
-      setErrorModal("Data saved successfully ✅");
+
+      const responseBody = await res.json();
+      setErrorModal(
+        responseBody?.updated
+          ? "Today's prioritization was updated successfully ✅"
+          : "Data saved successfully ✅"
+      );
     } catch (err) {
       console.error(err);
       setErrorModal("Error saving data ❌");
