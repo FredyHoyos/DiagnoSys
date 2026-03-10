@@ -60,7 +60,7 @@ export default function Sidebar() {
       case "admin":
         return [...links, ...roleBasedLinks.admin];
       case "consultant":
-        return [...links, ...roleBasedLinks.consultant];
+        return [...roleBasedLinks.consultant];
       case "organization":
         return [...links, ...roleBasedLinks.organization];
       default:
@@ -68,10 +68,11 @@ export default function Sidebar() {
     }
   };
 
-  const userRole =
+  const rawUserRole =
     typeof session?.user?.role === "string"
       ? session.user.role
       : session?.user?.role?.name || session?.user?.role?.displayName || undefined;
+  const userRole = rawUserRole?.toLowerCase();
   const userLinks = getLinksByRole(userRole);
 
   const diagnosticsLinks = selectedOrganizationId
@@ -106,7 +107,7 @@ export default function Sidebar() {
 
   const displayedLinks =
     userRole === "consultant" && isConsultantDiagnosticsMode
-      ? [{ href: "/dashboard", label: "Home", icon: <HomeIcon /> }, ...diagnosticsLinks]
+      ? diagnosticsLinks
       : userLinks;
 
   return (

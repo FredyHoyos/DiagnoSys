@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { useSearchParams } from "next/navigation";
 import styles from "@/app/components/forms/form-base.module.css";
 
 interface Note {
@@ -38,6 +39,11 @@ interface SavedCategorizationResponse {
 }
 
 export default function ZoomOutCategorization() {
+  const searchParams = useSearchParams();
+  const organizationId = searchParams.get("organizationId");
+  const withOrganizationContext = (path: string) =>
+    organizationId ? `${path}?organizationId=${organizationId}` : path;
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
@@ -58,7 +64,7 @@ export default function ZoomOutCategorization() {
       try {
         const [formsRes, savedRes] = await Promise.all([
           fetch("/api/modules/2/forms"),
-          fetch("/api/modules/2/save"),
+          fetch(withOrganizationContext("/api/modules/2/save")),
         ]);
 
         if (!formsRes.ok) throw new Error("Failed to fetch forms");
@@ -218,7 +224,7 @@ export default function ZoomOutCategorization() {
         forceUpdate,
       };
 
-      return fetch("/api/modules/2/save", {
+      return fetch(withOrganizationContext("/api/modules/2/save"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -259,7 +265,7 @@ export default function ZoomOutCategorization() {
         forceUpdate: true,
       };
 
-      const res = await fetch("/api/modules/2/save", {
+      const res = await fetch(withOrganizationContext("/api/modules/2/save"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

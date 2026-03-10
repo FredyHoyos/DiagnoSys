@@ -7,6 +7,7 @@ import {
   Draggable,
   DropResult,
 } from "@hello-pangea/dnd";
+import { useSearchParams } from "next/navigation";
 import styles from "@/app/components/forms/form-base.module.css";
 
 interface Note {
@@ -41,6 +42,11 @@ interface SavedPrioritizationResponse {
 }
 
 export default function PriorityQuadrants() {
+  const searchParams = useSearchParams();
+  const organizationId = searchParams.get("organizationId");
+  const withOrganizationContext = (path: string) =>
+    organizationId ? `${path}?organizationId=${organizationId}` : path;
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
@@ -63,7 +69,7 @@ export default function PriorityQuadrants() {
       try {
         const [formsRes, savedRes] = await Promise.all([
           fetch("/api/modules/2/forms"),
-          fetch("/api/modules/priorization/save"),
+          fetch(withOrganizationContext("/api/modules/priorization/save")),
         ]);
 
         if (!formsRes.ok) throw new Error("Failed to fetch forms");
@@ -215,7 +221,7 @@ export default function PriorityQuadrants() {
     });
 
     const saveRequest = async (forceUpdate: boolean) =>
-      fetch("/api/modules/priorization/save", {
+      fetch(withOrganizationContext("/api/modules/priorization/save"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildPayload(forceUpdate)),
@@ -259,7 +265,7 @@ export default function PriorityQuadrants() {
         forceUpdate: true,
       };
 
-      const res = await fetch("/api/modules/priorization/save", {
+      const res = await fetch(withOrganizationContext("/api/modules/priorization/save"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
