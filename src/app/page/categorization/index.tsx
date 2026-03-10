@@ -145,18 +145,45 @@ export default function ZoomOutCategorization() {
 
   // Función de guardar
   const handleSave = async () => {
-    const payload = destinations;
-    console.log("Saved data:", payload);
+    const saveRequest = async (forceUpdate: boolean) => {
+      const payload = {
+        ...destinations,
+        forceUpdate,
+      };
 
-    try {
-      const res = await fetch("/api/modules/2/save", {
+      return fetch("/api/modules/2/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+    };
+
+    try {
+      let res = await saveRequest(false);
+
+      if (res.status === 409) {
+        const responseBody = await res.json();
+        if (responseBody?.requiresConfirmation) {
+          const confirmed = window.confirm(
+            "You already saved categorization today. Do you want to update today's data?"
+          );
+
+          if (!confirmed) {
+            return;
+          }
+
+          res = await saveRequest(true);
+        }
+      }
 
       if (!res.ok) throw new Error("Error saving data");
-      setErrorModal("Data saved successfully ✅");
+
+      const responseBody = await res.json();
+      setErrorModal(
+        responseBody?.updated
+          ? "Today's categorization was updated successfully ✅"
+          : "Data saved successfully ✅"
+      );
     } catch (err) {
       console.error(err);
       setErrorModal("Error saving data ❌");
