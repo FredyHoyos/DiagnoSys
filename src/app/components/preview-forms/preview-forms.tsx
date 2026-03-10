@@ -173,9 +173,9 @@ export default function PreviewForms({ moduleName, moduleId }: PreviewFormsProps
     if (loading) {
         return (
             <div className={styles.container}>
-                <h2 className={styles.title}>Evaluation Forms</h2>
+                <h2 className={styles.title}>Formularios de Evaluación</h2>
                 <p className={styles.subtitle}>
-                    Loading forms, please wait...
+                    Cargando formularios, por favor espere...
                 </p>
                 <div className={styles.grid}>
                     {[...Array(4)].map((_, i) => (
@@ -208,9 +208,9 @@ export default function PreviewForms({ moduleName, moduleId }: PreviewFormsProps
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}>Evaluation Forms</h2>
+            <h2 className={styles.title}>Formularios de Evaluación</h2>
             <p className={styles.subtitle}>
-                Complete the forms to evaluate different organizational aspects
+                Completa los formularios para evaluar diferentes aspectos organizacionales
             </p>
 
             <div className={styles.grid}>
@@ -228,32 +228,32 @@ export default function PreviewForms({ moduleName, moduleId }: PreviewFormsProps
                         </div>
 
                         <p className={styles.meta}>
-                            {form.categories} categories • {form.items} items
+                            {form.categories} categorías • {form.items} ítems
                         </p>
 
                         <button
                             className={styles.button}
                             onClick={() => handleStartEvaluation(form.id)}
                         >
-                            Start Evaluation
+                            Iniciar Evaluación
                         </button>
                     </div>
                 ))}
             </div>
             <div className={styles.navigationButtons}>
                 <Button
-                    variant="default"
-                    size="lg"
-                    onClick={handleNext}
-                >
-                    Next
-                </Button>
-                <Button
                     variant="secondary"
                     size="lg"
                     onClick={() => router.back()}
                 >
-                    Back
+                    Atrás
+                </Button>
+                <Button
+                    variant="default"
+                    size="lg"
+                    onClick={handleNext}
+                >
+                    Siguiente
                 </Button>
             </div>
         </div>
