@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./form-base.module.css";
+import { useRouter } from "next/navigation";
 
 interface Item {
     id: number;
@@ -48,6 +49,7 @@ const FormBase: React.FC<FormBaseProps> = ({ formId }) => {
     const [newItemName, setNewItemName] = useState("");
     const [currentCatId, setCurrentCatId] = useState<number | null>(null);
     const [errorModal, setErrorModal] = useState<string | null>(null);
+    const router = useRouter();
 
     // Load real data from the API
     useEffect(() => {
@@ -368,9 +370,14 @@ const FormBase: React.FC<FormBaseProps> = ({ formId }) => {
                 </div>
             ))}
 
-            <button className={styles.submitButton} onClick={handleSubmit}>
-                Submit evaluation
-            </button>
+            <div className={styles.buttonGroup}>
+                <button className={styles.submitButton} onClick={handleSubmit}>
+                    Submit evaluation
+                </button> 
+                <button className={styles.backButton} onClick={() => router.back()}>
+                    Back
+                </button>
+            </div>
 
             {/* Modal for adding items */}
             {showModal && (

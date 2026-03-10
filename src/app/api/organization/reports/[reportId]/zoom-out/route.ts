@@ -50,7 +50,9 @@ export async function GET(
                 personalizedForms: {
                     where: {
                         baseForm: {
-                            tag: 'zoom-out'
+                            module: {
+                                name: 'Zoom Out'
+                            }
                         }
                     },
                     include: {

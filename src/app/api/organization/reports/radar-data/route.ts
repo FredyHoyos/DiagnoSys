@@ -162,15 +162,13 @@ export async function GET() {
         // Separate forms by zoom type
         console.log('🔍 Separating forms by zoom type...');
         const zoomInForms = latestForms.filter(form => {
-            const isZoomIn = form.baseForm.module.name.toLowerCase().includes('zoom in') || 
-                           form.baseForm.module.name.toLowerCase().includes('skills');
+            const isZoomIn = form.baseForm.module.name.toLowerCase().includes('zoom in');
             console.log(`   📋 Form "${form.name}" (Module: ${form.baseForm.module.name}, Tag: ${form.baseForm.tag}) -> ZoomIn: ${isZoomIn}`);
             return isZoomIn;
         });
         
         const zoomOutForms = latestForms.filter(form => {
-            const isZoomOut = form.baseForm.module.name.toLowerCase().includes('zoom out') || 
-                            form.baseForm.module.name.toLowerCase().includes('capabilities');
+            const isZoomOut = form.baseForm.module.name.toLowerCase().includes('zoom out');
             console.log(`   📋 Form "${form.name}" (Module: ${form.baseForm.module.name}, Tag: ${form.baseForm.tag}) -> ZoomOut: ${isZoomOut}`);
             return isZoomOut;
         });
