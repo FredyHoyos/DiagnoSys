@@ -96,8 +96,8 @@ export default function ConsultantOrganizationsPage() {
 
   const startDiagnosis = (org: OrganizationSummary) => {
     const nextUrl = org.primaryAuditId
-      ? `/dashboard/consultant/zoom-in?organizationId=${org.id}&auditId=${org.primaryAuditId}`
-      : `/dashboard/consultant/zoom-in?organizationId=${org.id}`;
+      ? `/dashboard/consultant/diagnostics?organizationId=${org.id}&organizationName=${encodeURIComponent(org.name)}&auditId=${org.primaryAuditId}`
+      : `/dashboard/consultant/diagnostics?organizationId=${org.id}&organizationName=${encodeURIComponent(org.name)}`;
     router.push(nextUrl);
   };
 
