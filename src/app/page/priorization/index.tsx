@@ -31,6 +31,7 @@ interface FormResponse {
 export default function PriorityQuadrants() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [quadrants, setQuadrants] = useState<{
     q1: Note[];
     q2: Note[];
@@ -157,15 +158,8 @@ export default function PriorityQuadrants() {
       if (res.status === 409) {
         const responseBody = await res.json();
         if (responseBody?.requiresConfirmation) {
-          const confirmed = window.confirm(
-            "You already saved prioritization today. Do you want to update today's data?"
-          );
-
-          if (!confirmed) {
-            return;
-          }
-
-          res = await saveRequest(true);
+          setShowOverwriteModal(true);
+          return;
         }
       }
 
@@ -174,12 +168,40 @@ export default function PriorityQuadrants() {
       const responseBody = await res.json();
       setErrorModal(
         responseBody?.updated
-          ? "Today's prioritization was updated successfully ✅"
-          : "Data saved successfully ✅"
+          ? "Today's prioritization was updated successfully "
+          : "Data saved successfully "
       );
     } catch (err) {
       console.error(err);
-      setErrorModal("Error saving data ❌");
+      setErrorModal("Error saving data ");
+    }
+  };
+
+  const handleConfirmOverwrite = async () => {
+    setShowOverwriteModal(false);
+
+    try {
+      const stripColor = (arr: Note[]) => arr.map(({ id, name }) => ({ id, name }));
+      const payload = {
+        highPriority: stripColor(quadrants.q1),
+        mediumPriority: stripColor(quadrants.q2),
+        lowPriority: stripColor(quadrants.q3),
+        mediumPriority2: stripColor(quadrants.q4),
+        forceUpdate: true,
+      };
+
+      const res = await fetch("/api/modules/priorization/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Error updating data");
+
+      setErrorModal("Today's prioritization was updated successfully ✅");
+    } catch (err) {
+      console.error(err);
+      setErrorModal("Error updating data ❌");
     }
   };
 
@@ -318,6 +340,30 @@ export default function PriorityQuadrants() {
             >
               OK
             </button>
+          </div>
+        </div>
+      )}
+
+      {showOverwriteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <p>
+              You already saved prioritization today. Do you want to update today's data?
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowOverwriteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmButton}
+                onClick={handleConfirmOverwrite}
+              >
+                Update
+              </button>
+            </div>
           </div>
         </div>
       )}

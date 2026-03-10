@@ -29,6 +29,7 @@ interface FormResponse {
 export default function ZoomOutCategorization() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [destinations, setDestinations] = useState<{
     opportunities: Note[];
     needs: Note[];
@@ -164,15 +165,8 @@ export default function ZoomOutCategorization() {
       if (res.status === 409) {
         const responseBody = await res.json();
         if (responseBody?.requiresConfirmation) {
-          const confirmed = window.confirm(
-            "You already saved categorization today. Do you want to update today's data?"
-          );
-
-          if (!confirmed) {
-            return;
-          }
-
-          res = await saveRequest(true);
+          setShowOverwriteModal(true);
+          return;
         }
       }
 
@@ -187,6 +181,30 @@ export default function ZoomOutCategorization() {
     } catch (err) {
       console.error(err);
       setErrorModal("Error saving data ❌");
+    }
+  };
+
+  const handleConfirmOverwrite = async () => {
+    setShowOverwriteModal(false);
+
+    try {
+      const payload = {
+        ...destinations,
+        forceUpdate: true,
+      };
+
+      const res = await fetch("/api/modules/2/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Error updating data");
+
+      setErrorModal("Today's categorization was updated successfully ✅");
+    } catch (err) {
+      console.error(err);
+      setErrorModal("Error updating data ❌");
     }
   };
 
@@ -287,6 +305,30 @@ export default function ZoomOutCategorization() {
             >
               OK
             </button>
+          </div>
+        </div>
+      )}
+
+      {showOverwriteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <p>
+              You already saved categorization today. Do you want to update today's data?
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowOverwriteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmButton}
+                onClick={handleConfirmOverwrite}
+              >
+                Update
+              </button>
+            </div>
           </div>
         </div>
       )}
