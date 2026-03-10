@@ -42,8 +42,9 @@ export default function Sidebar() {
       { href: "/dashboard/admin/users", label: "Users", icon: <PersonIcon /> },
     ],
     consultant: [
+      { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
       { href: "/dashboard/consultant/organizations", label: "Organizations", icon: <LayoutIcon /> },
-      { href: "/dashboard/consultant/diagnostics", label: "Diagnostics", icon: <ZoomOutIcon /> },
+      { href: "/dashboard/consultant/reports", label: "Report", icon: <ZoomOutIcon /> },
     ],
     organization: [
       { href: "/dashboard/organization/zoom-in", label: "Zoom-in", icon: <ZoomInIcon /> },
@@ -78,11 +79,6 @@ export default function Sidebar() {
   const diagnosticsLinks = selectedOrganizationId
     ? [
         {
-          href: `/dashboard/consultant/diagnostics?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
-          label: "Diagnostics",
-          icon: <ZoomOutIcon />,
-        },
-        {
           href: `/dashboard/consultant/zoom-in?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
           label: "Zoom-in",
           icon: <ZoomInIcon />,
@@ -101,6 +97,11 @@ export default function Sidebar() {
           href: `/dashboard/consultant/prioritization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
           label: "Prioritization",
           icon: <ListBulletIcon />,
+        },
+        {
+          href: `/dashboard/consultant/reports?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
+          label: "Report",
+          icon: <ZoomOutIcon />,
         },
       ]
     : [];

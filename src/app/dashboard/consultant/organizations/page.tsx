@@ -105,7 +105,7 @@ export default function ConsultantOrganizationsPage() {
     <div className="max-w-6xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold text-[#2E6347] mb-2">Organizations</h1>
       <p className="text-gray-600 mb-8">
-        Create organizations with their login credentials, then select one to start the diagnosis flow.
+        Create organizations with their login credentials and manage them from this panel.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -191,6 +191,7 @@ export default function ConsultantOrganizationsPage() {
                     Start Diagnosis
                   </button>
                 </div>
+
               </article>
             ))}
           </div>
