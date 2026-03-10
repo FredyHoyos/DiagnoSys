@@ -112,12 +112,13 @@ export default function ConsultantOrganizationsPage() {
         <section className="green-interactive rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition">
           <h2 className="text-xl font-semibold mb-4">Create Organization</h2>
 
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form onSubmit={handleCreate} className="space-y-4" autoComplete="off">
             <input
               className="w-full border rounded-md px-3 py-2"
               placeholder="Organization name"
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
+              autoComplete="off"
               required
             />
             <input
@@ -125,6 +126,7 @@ export default function ConsultantOrganizationsPage() {
               placeholder="Organization user name"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
+              autoComplete="off"
               required
             />
             <input
@@ -133,6 +135,7 @@ export default function ConsultantOrganizationsPage() {
               placeholder="Organization email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="off"
               required
             />
             <input
@@ -141,6 +144,7 @@ export default function ConsultantOrganizationsPage() {
               placeholder="Organization password (min 8 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               minLength={8}
               required
             />
@@ -149,6 +153,7 @@ export default function ConsultantOrganizationsPage() {
               placeholder="Description (optional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              autoComplete="off"
               rows={3}
             />
 
