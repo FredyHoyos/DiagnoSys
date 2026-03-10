@@ -15,6 +15,115 @@ interface SaveRequestBody {
   forceUpdate?: boolean;
 }
 
+function getDayRange(date: Date) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
+  return { startOfDay, endOfDay };
+}
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const [lastHigh, lastMedium, lastLow, lastMedium2] = await Promise.all([
+      prisma.highPriority.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.mediumPriority.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.lowPriority.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.mediumPriority2.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    const latestDate = [
+      lastHigh?.createdAt,
+      lastMedium?.createdAt,
+      lastLow?.createdAt,
+      lastMedium2?.createdAt,
+    ]
+      .filter(Boolean)
+      .sort((a, b) => b!.getTime() - a!.getTime())[0];
+
+    if (!latestDate) {
+      return NextResponse.json({
+        hasData: false,
+        highPriority: [],
+        mediumPriority: [],
+        lowPriority: [],
+        mediumPriority2: [],
+      });
+    }
+
+    const { startOfDay, endOfDay } = getDayRange(latestDate);
+
+    const [highPriority, mediumPriority, lowPriority, mediumPriority2] =
+      await Promise.all([
+        prisma.highPriority.findMany({
+          where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+          orderBy: { id: "asc" },
+          select: { name: true },
+        }),
+        prisma.mediumPriority.findMany({
+          where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+          orderBy: { id: "asc" },
+          select: { name: true },
+        }),
+        prisma.lowPriority.findMany({
+          where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+          orderBy: { id: "asc" },
+          select: { name: true },
+        }),
+        prisma.mediumPriority2.findMany({
+          where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+          orderBy: { id: "asc" },
+          select: { name: true },
+        }),
+      ]);
+
+    return NextResponse.json({
+      hasData: true,
+      savedAt: latestDate,
+      highPriority,
+      mediumPriority,
+      lowPriority,
+      mediumPriority2,
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,10 +148,7 @@ export async function POST(req: Request) {
       forceUpdate = false,
     } = body;
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setDate(endOfDay.getDate() + 1);
+    const { startOfDay, endOfDay } = getDayRange(new Date());
 
     const [highToday, mediumToday, lowToday, medium2Today] = await Promise.all([
       prisma.highPriority.count({

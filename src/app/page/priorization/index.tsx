@@ -28,6 +28,18 @@ interface FormResponse {
   categories: { id: number; name: string }[];
 }
 
+interface SavedNote {
+  name: string;
+}
+
+interface SavedPrioritizationResponse {
+  hasData: boolean;
+  highPriority: SavedNote[];
+  mediumPriority: SavedNote[];
+  lowPriority: SavedNote[];
+  mediumPriority2: SavedNote[];
+}
+
 export default function PriorityQuadrants() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
@@ -49,10 +61,17 @@ export default function PriorityQuadrants() {
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        const res = await fetch("/api/modules/2/forms");
-        if (!res.ok) throw new Error("Failed to fetch forms");
+        const [formsRes, savedRes] = await Promise.all([
+          fetch("/api/modules/2/forms"),
+          fetch("/api/modules/priorization/save"),
+        ]);
 
-        const data: { forms: FormResponse[] } = await res.json();
+        if (!formsRes.ok) throw new Error("Failed to fetch forms");
+
+        const data: { forms: FormResponse[] } = await formsRes.json();
+        const savedData: SavedPrioritizationResponse | null = savedRes.ok
+          ? await savedRes.json()
+          : null;
 
         // Colores solo para mostrar (no se guardan en BD)
         const colorPairs: [string, string][] = [
@@ -76,7 +95,57 @@ export default function PriorityQuadrants() {
           };
         });
 
-        setCategories(mappedCategories);
+        if (savedData?.hasData) {
+          const categoriesCopy = mappedCategories.map((category) => ({
+            ...category,
+            notes: [...category.notes],
+          }));
+
+          const notesByName = new Map<string, Note[]>();
+          categoriesCopy.forEach((category) => {
+            category.notes.forEach((note) => {
+              const current = notesByName.get(note.name) ?? [];
+              notesByName.set(note.name, [...current, note]);
+            });
+          });
+
+          const takeNotes = (items: SavedNote[]) =>
+            items
+              .map((item) => {
+                const candidates = notesByName.get(item.name);
+                if (!candidates?.length) return null;
+                const [first, ...rest] = candidates;
+                notesByName.set(item.name, rest);
+                return first;
+              })
+              .filter((note): note is Note => Boolean(note));
+
+          const restoredQuadrants = {
+            q1: takeNotes(savedData.highPriority),
+            q2: takeNotes(savedData.mediumPriority),
+            q3: takeNotes(savedData.lowPriority),
+            q4: takeNotes(savedData.mediumPriority2),
+          };
+
+          const usedIds = new Set(
+            [
+              ...restoredQuadrants.q1,
+              ...restoredQuadrants.q2,
+              ...restoredQuadrants.q3,
+              ...restoredQuadrants.q4,
+            ].map((note) => note.id)
+          );
+
+          const remainingCategories = categoriesCopy.map((category) => ({
+            ...category,
+            notes: category.notes.filter((note) => !usedIds.has(note.id)),
+          }));
+
+          setQuadrants(restoredQuadrants);
+          setCategories(remainingCategories);
+        } else {
+          setCategories(mappedCategories);
+        }
       } catch (err) {
         console.error("Error fetching forms", err);
       } finally {

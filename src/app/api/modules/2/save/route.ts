@@ -14,6 +14,97 @@ interface SaveRequestBody {
   forceUpdate?: boolean;
 }
 
+function getDayRange(date: Date) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
+  return { startOfDay, endOfDay };
+}
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const [lastOpportunity, lastNeed, lastProblem] = await Promise.all([
+      prisma.opportunity.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.need.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      prisma.problem.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    const latestDate = [lastOpportunity?.createdAt, lastNeed?.createdAt, lastProblem?.createdAt]
+      .filter(Boolean)
+      .sort((a, b) => b!.getTime() - a!.getTime())[0];
+
+    if (!latestDate) {
+      return NextResponse.json({
+        hasData: false,
+        opportunities: [],
+        needs: [],
+        problems: [],
+      });
+    }
+
+    const { startOfDay, endOfDay } = getDayRange(latestDate);
+
+    const [opportunities, needs, problems] = await Promise.all([
+      prisma.opportunity.findMany({
+        where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+        orderBy: { id: "asc" },
+        select: { name: true },
+      }),
+      prisma.need.findMany({
+        where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+        orderBy: { id: "asc" },
+        select: { name: true },
+      }),
+      prisma.problem.findMany({
+        where: { userId: user.id, createdAt: { gte: startOfDay, lt: endOfDay } },
+        orderBy: { id: "asc" },
+        select: { name: true },
+      }),
+    ]);
+
+    return NextResponse.json({
+      hasData: true,
+      savedAt: latestDate,
+      opportunities,
+      needs,
+      problems,
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -32,10 +123,7 @@ export async function POST(req: Request) {
     const body: SaveRequestBody = await req.json();
     const { opportunities, needs, problems, forceUpdate = false } = body;
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setDate(endOfDay.getDate() + 1);
+    const { startOfDay, endOfDay } = getDayRange(new Date());
 
     const [opportunitiesToday, needsToday, problemsToday] = await Promise.all([
       prisma.opportunity.count({
