@@ -109,7 +109,7 @@ export default function ConsultantOrganizationsPage() {
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="bg-white rounded-xl border p-6 shadow-sm">
+        <section className="green-interactive rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition">
           <h2 className="text-xl font-semibold mb-4">Create Organization</h2>
 
           <form onSubmit={handleCreate} className="space-y-4">
@@ -165,7 +165,7 @@ export default function ConsultantOrganizationsPage() {
           {error && <p className="mt-4 text-red-600">{error}</p>}
         </section>
 
-        <section className="bg-white rounded-xl border p-6 shadow-sm">
+        <section className="green-interactive rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition">
           <h2 className="text-xl font-semibold mb-4">My Organizations</h2>
 
           {loading ? <p>Loading...</p> : null}
@@ -176,7 +176,10 @@ export default function ConsultantOrganizationsPage() {
 
           <div className="space-y-4">
             {organizations.map((org) => (
-              <article key={org.id} className="border rounded-lg p-4">
+              <article
+                key={org.id}
+                className="green-interactive rounded-xl border border-primary/30 p-4 shadow-sm hover:shadow-md transition"
+              >
                 <h3 className="font-semibold text-lg">{org.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">{org.description || "No description"}</p>
                 <p className="text-sm text-gray-500 mt-2">
