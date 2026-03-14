@@ -233,7 +233,7 @@ function ZoomOutCategorizationContent() {
     };
 
     try {
-      let res = await saveRequest(false);
+      const res = await saveRequest(false);
 
       if (res.status === 409) {
         const responseBody = await res.json();
@@ -274,10 +274,10 @@ function ZoomOutCategorizationContent() {
 
       if (!res.ok) throw new Error("Error updating data");
 
-      setErrorModal("Today's categorization was updated successfully ✅");
+      setErrorModal("La categorización de hoy se actualizó correctamente.");
     } catch (err) {
       console.error(err);
-      setErrorModal("Error updating data ❌");
+      setErrorModal("Error al actualizar los datos");
     }
   };
 
@@ -393,7 +393,7 @@ function ZoomOutCategorizationContent() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <p>
-              You already saved categorization today. Do you want to update today's data?
+              You already saved categorization today. Do you want to update today&apos;s data?
             </p>
             <div className={styles.modalActions}>
               <button

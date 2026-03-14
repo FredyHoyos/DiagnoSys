@@ -42,9 +42,9 @@ export default function Sidebar() {
       { href: "/dashboard/admin/users", label: "Usuarios", icon: <PersonIcon /> },
     ],
     consultant: [
-      { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
-      { href: "/dashboard/consultant/organizations", label: "Organizations", icon: <LayoutIcon /> },
-      { href: "/dashboard/consultant/reports", label: "Report", icon: <ZoomOutIcon /> },
+      { href: "/dashboard", label: "Inicio", icon: <HomeIcon /> },
+      { href: "/dashboard/consultant/organizations", label: "Organizaciones", icon: <LayoutIcon /> },
+      { href: "/dashboard/consultant/reports", label: "Reportes", icon: <ZoomOutIcon /> },
     ],
     organization: [
       { href: "/dashboard/organization/zoom-in", label: "Zoom-in", icon: <ZoomInIcon /> },

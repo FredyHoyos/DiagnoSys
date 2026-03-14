@@ -229,7 +229,7 @@ function PriorityQuadrantsContent() {
       });
 
     try {
-      let res = await saveRequest(false);
+      const res = await saveRequest(false);
 
       if (res.status === 409) {
         const responseBody = await res.json();
@@ -422,7 +422,7 @@ function PriorityQuadrantsContent() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <p>
-              You already saved prioritization today. Do you want to update today's data?
+              You already saved prioritization today. Do you want to update today&apos;s data?
             </p>
             <div className={styles.modalActions}>
               <button
