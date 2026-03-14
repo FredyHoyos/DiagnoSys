@@ -14,7 +14,7 @@ function ZoomInContent() {
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-[#2E6347]">Zoom In</h1>
                     <p className="mt-2 text-lg  text-black">
-                        Individual skills needed to operate in digital environments and adopt new technologies.
+                        Habilidades individuales necesarias para operar en entornos digitales y adoptar nuevas tecnologías.
                     </p>
                     {organizationId ? (
                         <p className="mt-2 text-sm text-gray-600">

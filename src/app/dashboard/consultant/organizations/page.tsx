@@ -47,12 +47,12 @@ export default function ConsultantOrganizationsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to load organizations");
+        throw new Error(data?.error || "Error al cargar las organizaciones");
       }
 
       setOrganizations(data.organizations ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load organizations");
+      setError(err instanceof Error ? err.message : "Error al cargar las organizaciones");
     } finally {
       setLoading(false);
     }
@@ -83,11 +83,11 @@ export default function ConsultantOrganizationsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to create organization");
+        throw new Error(data?.error || "Error al crear la organización");
       }
 
       setMessage(
-        `Organization created. Credentials: ${data.credentials?.email} (${data.credentials?.role})`
+        `Organización creada. Credenciales: ${data.credentials?.email} (${data.credentials?.role})`
       );
 
       setOrganizationName("");
@@ -98,7 +98,7 @@ export default function ConsultantOrganizationsPage() {
 
       await loadOrganizations();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create organization");
+      setError(err instanceof Error ? err.message : "Error al crear la organización");
     } finally {
       setSaving(false);
     }
@@ -133,12 +133,12 @@ export default function ConsultantOrganizationsPage() {
 
   const handleSaveEdit = async (orgId: number) => {
     if (!editOrganizationName.trim() || !editUserName.trim() || !editEmail.trim()) {
-      setError("Organization name, user name and email are required");
+      setError("El nombre de la organización, nombre de usuario y email son requeridos");
       return;
     }
 
     if (editPassword && editPassword.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError("La contraseña debe tener al menos 8 caracteres");
       return;
     }
 
@@ -162,14 +162,14 @@ export default function ConsultantOrganizationsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to update organization");
+        throw new Error(data?.error || "Error al actualizar la organización");
       }
 
-      setMessage("Organization updated successfully");
+      setMessage("Organización actualizada correctamente");
       handleCancelEdit();
       await loadOrganizations();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update organization");
+      setError(err instanceof Error ? err.message : "Error al actualizar la organización");
     } finally {
       setUpdatingOrg(false);
     }
@@ -177,19 +177,19 @@ export default function ConsultantOrganizationsPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold text-[#2E6347] mb-2">Organizations</h1>
+      <h1 className="text-3xl font-bold text-[#2E6347] mb-2">Organizaciones</h1>
       <p className="text-gray-600 mb-8">
-        Create organizations with their login credentials and manage them from this panel.
+        Crea organizaciones con sus credenciales de acceso y gestiónalas desde este panel.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <section className="green-interactive rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition">
-          <h2 className="text-xl font-semibold mb-4">Create Organization</h2>
+          <h2 className="text-xl font-semibold mb-4">Crear Organización</h2>
 
           <form onSubmit={handleCreate} className="space-y-4" autoComplete="off">
             <input
               className="w-full border rounded-md px-3 py-2"
-              placeholder="Organization name"
+              placeholder="Nombre de la organización"
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
               autoComplete="off"
@@ -197,7 +197,7 @@ export default function ConsultantOrganizationsPage() {
             />
             <input
               className="w-full border rounded-md px-3 py-2"
-              placeholder="Organization user name"
+              placeholder="Nombre de usuario de la organización"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               autoComplete="off"
@@ -206,7 +206,7 @@ export default function ConsultantOrganizationsPage() {
             <input
               className="w-full border rounded-md px-3 py-2"
               type="email"
-              placeholder="Organization email"
+              placeholder="Correo electrónico de la organización"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="off"
@@ -215,7 +215,7 @@ export default function ConsultantOrganizationsPage() {
             <input
               className="w-full border rounded-md px-3 py-2"
               type="password"
-              placeholder="Organization password (min 8 chars)"
+              placeholder="Contraseña de la organización (mín. 8 caracteres)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
@@ -224,7 +224,7 @@ export default function ConsultantOrganizationsPage() {
             />
             <textarea
               className="w-full border rounded-md px-3 py-2"
-              placeholder="Description (optional)"
+              placeholder="Descripción (opcional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               autoComplete="off"
@@ -236,7 +236,7 @@ export default function ConsultantOrganizationsPage() {
               disabled={saving}
               className="bg-primary text-white px-4 py-2 rounded-md disabled:opacity-60"
             >
-              {saving ? "Creating..." : "Create Organization"}
+              {saving ? "Creando..." : "Crear Organización"}
             </button>
           </form>
 
@@ -245,12 +245,12 @@ export default function ConsultantOrganizationsPage() {
         </section>
 
         <section className="green-interactive rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition">
-          <h2 className="text-xl font-semibold mb-4">My Organizations</h2>
+          <h2 className="text-xl font-semibold mb-4">Mis Organizaciones</h2>
 
-          {loading ? <p>Loading...</p> : null}
+          {loading ? <p>Cargando...</p> : null}
 
           {!loading && organizations.length === 0 ? (
-            <p className="text-gray-600">No organizations created yet.</p>
+            <p className="text-gray-600">Aún no hay organizaciones creadas.</p>
           ) : null}
 
           <div className="space-y-4">
@@ -260,12 +260,12 @@ export default function ConsultantOrganizationsPage() {
                 className="green-interactive rounded-xl border border-primary/30 p-4 shadow-sm hover:shadow-md transition"
               >
                 <h3 className="font-semibold text-lg">{org.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">{org.description || "No description"}</p>
+                <p className="text-sm text-gray-600 mt-1">{org.description || "Sin descripción"}</p>
                 <p className="text-sm text-gray-600 mt-1">
-                  User: {org.userName} | Email: {org.email}
+                  Usuario: {org.userName} | Email: {org.email}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Audits: {org.stats.myAuditsCount} | Saved forms: {org.stats.totalFormsCount}
+                  Auditorías: {org.stats.myAuditsCount} | Formularios guardados: {org.stats.totalFormsCount}
                 </p>
 
                 <div className="mt-3 flex gap-2">
@@ -273,13 +273,13 @@ export default function ConsultantOrganizationsPage() {
                     onClick={() => startDiagnosis(org)}
                     className="bg-[#2E6347] text-white px-3 py-2 rounded-md"
                   >
-                    Start Diagnosis
+                    Iniciar Diagnóstico
                   </button>
                   <button
                     onClick={() => handleOpenEdit(org)}
                     className="border border-[#2E6347] text-[#2E6347] px-3 py-2 rounded-md"
                   >
-                    Edit
+                    Editar
                   </button>
                 </div>
 
@@ -289,14 +289,14 @@ export default function ConsultantOrganizationsPage() {
                       className="w-full border rounded-md px-3 py-2"
                       value={editOrganizationName}
                       onChange={(e) => setEditOrganizationName(e.target.value)}
-                      placeholder="Organization name"
+                      placeholder="Nombre de la organización"
                       autoComplete="off"
                     />
                     <textarea
                       className="w-full border rounded-md px-3 py-2"
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder="Description"
+                      placeholder="Descripción"
                       rows={3}
                       autoComplete="off"
                     />
@@ -304,7 +304,7 @@ export default function ConsultantOrganizationsPage() {
                       className="w-full border rounded-md px-3 py-2"
                       value={editUserName}
                       onChange={(e) => setEditUserName(e.target.value)}
-                      placeholder="Organization user name"
+                      placeholder="Nombre de usuario de la organización"
                       autoComplete="off"
                     />
                     <input
@@ -312,7 +312,7 @@ export default function ConsultantOrganizationsPage() {
                       type="email"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      placeholder="Organization email"
+                      placeholder="Correo electrónico de la organización"
                       autoComplete="off"
                     />
                     <input
@@ -320,7 +320,7 @@ export default function ConsultantOrganizationsPage() {
                       type="password"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      placeholder="New password (optional)"
+                      placeholder="Nueva contraseña (opcional)"
                       autoComplete="new-password"
                     />
                     <div className="flex gap-2">
@@ -329,14 +329,14 @@ export default function ConsultantOrganizationsPage() {
                         disabled={updatingOrg}
                         className="bg-primary text-white px-3 py-2 rounded-md disabled:opacity-60"
                       >
-                        {updatingOrg ? "Saving..." : "Save"}
+                        {updatingOrg ? "Guardando..." : "Guardar"}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         disabled={updatingOrg}
                         className="border border-gray-400 px-3 py-2 rounded-md disabled:opacity-60"
                       >
-                        Cancel
+                        Cancelar
                       </button>
                     </div>
                   </div>
