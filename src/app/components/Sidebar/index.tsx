@@ -28,7 +28,7 @@ export default function Sidebar() {
 
   // Definir los enlaces comunes para todos los roles
   const links = [
-    { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
+    { href: "/dashboard", label: "Inicio", icon: <HomeIcon /> },
   ];
 
   // Define el menú para cada rol
@@ -36,10 +36,10 @@ export default function Sidebar() {
     admin: [
       { href: "/dashboard/admin/zoom-in", label: "Zoom-in", icon: <ZoomInIcon /> },
       { href: "/dashboard/admin/zoom-out", label: "Zoom-out", icon: <ZoomOutIcon /> },
-      { href: "/dashboard/admin/categorization", label: "Categorization", icon: <LayoutIcon /> },
-      { href: "/dashboard/admin/prioritization", label: "Prioritization", icon: <ListBulletIcon /> },
-      { href: "/dashboard/admin/reports", label: "Reports", icon: <ZoomOutIcon /> },
-      { href: "/dashboard/admin/users", label: "Users", icon: <PersonIcon /> },
+      { href: "/dashboard/admin/categorization", label: "Categorización", icon: <LayoutIcon /> },
+      { href: "/dashboard/admin/prioritization", label: "Priorización", icon: <ListBulletIcon /> },
+      { href: "/dashboard/admin/reports", label: "Reportes", icon: <ZoomOutIcon /> },
+      { href: "/dashboard/admin/users", label: "Usuarios", icon: <PersonIcon /> },
     ],
     consultant: [
       { href: "/dashboard", label: "Home", icon: <HomeIcon /> },
@@ -49,9 +49,9 @@ export default function Sidebar() {
     organization: [
       { href: "/dashboard/organization/zoom-in", label: "Zoom-in", icon: <ZoomInIcon /> },
       { href: "/dashboard/organization/zoom-out", label: "Zoom-out", icon: <ZoomOutIcon /> },
-      { href: "/dashboard/organization/categorization", label: "Categorization", icon: <LayoutIcon /> },
-      { href: "/dashboard/organization/prioritization", label: "Prioritization", icon: <ListBulletIcon /> },
-      { href: "/dashboard/organization/reports", label: "Reports", icon: <ZoomOutIcon /> },
+      { href: "/dashboard/organization/categorization", label: "Categorización", icon: <LayoutIcon /> },
+      { href: "/dashboard/organization/prioritization", label: "Priorización", icon: <ListBulletIcon /> },
+      { href: "/dashboard/organization/reports", label: "Reportes", icon: <ZoomOutIcon /> },
     ],
   };
 

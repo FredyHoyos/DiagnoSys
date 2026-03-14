@@ -204,7 +204,7 @@ function ZoomOutCategorizationContent() {
     setDestinations(newDestinations);
   };
 
-  if (loading) return <p className="text-center mt-10 text-gray-500">Loading data...</p>;
+  if (loading) return <p className="text-center mt-10 text-gray-500">Cargando datos...</p>;
 
   // Calcular si ya están todos los papelitos clasificados
   const allNotes = categories.flatMap((c) => c.notes);
@@ -284,7 +284,7 @@ function ZoomOutCategorizationContent() {
   return (
     <div className="p-6 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-[#2E6347]">
-          Zoom Out: Categorization
+          Zoom Out: Categorización
       </h1>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -320,9 +320,15 @@ function ZoomOutCategorizationContent() {
           </div>
 
           <div className="flex flex-col gap-6">
-            {(["opportunities", "needs", "problems"] as const).map((key) => (
+            {(["opportunities", "needs", "problems"] as const).map((key) => {
+              const labels: Record<string, string> = {
+                opportunities: "Oportunidades",
+                needs: "Necesidades",
+                problems: "Problemas",
+              };
+              return (
               <div key={key}>
-                <h3 className="text-lg font-bold uppercase mb-2 text-[#2E6347]">{key}</h3>
+                <h3 className="text-lg font-bold uppercase mb-2 text-[#2E6347]">{labels[key]}</h3>
                 <Droppable droppableId={key}>
                   {(provided) => (
                     <div
@@ -349,7 +355,8 @@ function ZoomOutCategorizationContent() {
                   )}
                 </Droppable>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </DragDropContext>
@@ -364,7 +371,7 @@ function ZoomOutCategorizationContent() {
               : "bg-gray-400 cursor-not-allowed"
           }`}
         >
-          Save
+          Guardar
         </button>
       </div>
       {/* Modal */}
