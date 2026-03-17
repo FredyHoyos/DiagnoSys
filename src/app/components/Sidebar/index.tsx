@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import UserCard from "@/app/components/organisms/userCard";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -23,8 +23,54 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const selectedOrganizationId = searchParams.get("organizationId");
   const selectedOrganizationName = searchParams.get("organizationName");
+  const [resolvedOrganizationName, setResolvedOrganizationName] = useState<string | null>(
+    selectedOrganizationName
+  );
   const isConsultantDiagnosticsMode =
     pathname.startsWith("/dashboard/consultant") && Boolean(selectedOrganizationId);
+
+  useEffect(() => {
+    setResolvedOrganizationName(selectedOrganizationName);
+  }, [selectedOrganizationName]);
+
+  useEffect(() => {
+    if (!selectedOrganizationId || selectedOrganizationName) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const resolveOrganizationName = async () => {
+      try {
+        const response = await fetch("/api/consultant/organizations", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const organizations = Array.isArray(data?.organizations) ? data.organizations : [];
+        const selectedOrganization = organizations.find(
+          (organization: { id: number; name: string }) =>
+            String(organization.id) === selectedOrganizationId
+        );
+
+        if (isMounted && selectedOrganization?.name) {
+          setResolvedOrganizationName(selectedOrganization.name);
+        }
+      } catch {
+        // Ignore lookup failures and keep the ID fallback in the UI.
+      }
+    };
+
+    resolveOrganizationName();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedOrganizationId, selectedOrganizationName]);
 
   // Definir los enlaces comunes para todos los roles
   const links = [
@@ -75,32 +121,33 @@ export default function Sidebar() {
       : session?.user?.role?.name || session?.user?.role?.displayName || undefined;
   const userRole = rawUserRole?.toLowerCase();
   const userLinks = getLinksByRole(userRole);
+  const diagnosticsOrganizationName = resolvedOrganizationName ?? selectedOrganizationName ?? "";
 
   const diagnosticsLinks = selectedOrganizationId
     ? [
         {
-          href: `/dashboard/consultant/zoom-in?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
+          href: `/dashboard/consultant/zoom-in?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
           label: "Zoom-in",
           icon: <ZoomInIcon />,
         },
         {
-          href: `/dashboard/consultant/zoom-out?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
+          href: `/dashboard/consultant/zoom-out?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
           label: "Zoom-out",
           icon: <ZoomOutIcon />,
         },
         {
-          href: `/dashboard/consultant/categorization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
-          label: "Categorization",
+          href: `/dashboard/consultant/categorization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
+          label: "Categorización",
           icon: <LayoutIcon />,
         },
         {
-          href: `/dashboard/consultant/prioritization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
-          label: "Prioritization",
+          href: `/dashboard/consultant/prioritization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
+          label: "Priorización",
           icon: <ListBulletIcon />,
         },
         {
-          href: `/dashboard/consultant/reports?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(selectedOrganizationName ?? "")}`,
-          label: "Report",
+          href: `/dashboard/consultant/reports?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
+          label: "Reportes",
           icon: <ZoomOutIcon />,
         },
       ]
@@ -110,6 +157,18 @@ export default function Sidebar() {
     userRole === "consultant" && isConsultantDiagnosticsMode
       ? diagnosticsLinks
       : userLinks;
+
+  const getLinkPath = (href: string) => href.split("?")[0];
+
+  const isLinkActive = (href: string) => {
+    const linkPath = getLinkPath(href);
+
+    if (linkPath === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+
+    return pathname === linkPath || pathname.startsWith(`${linkPath}/`);
+  };
 
   return (
     <>
@@ -130,16 +189,16 @@ export default function Sidebar() {
 
         {userRole === "consultant" && isConsultantDiagnosticsMode ? (
           <div className="mb-4 p-3 rounded-md bg-white/60 border border-white/70">
-            <p className="text-xs uppercase tracking-wide text-gray-700">Selected Organization</p>
+            <p className="text-xs uppercase tracking-wide text-gray-700">Organización seleccionada</p>
             <p className="font-semibold text-primary truncate">
-              {selectedOrganizationName || `Organization #${selectedOrganizationId}`}
+              {resolvedOrganizationName || `Organización #${selectedOrganizationId}`}
             </p>
             <Link
               href="/dashboard/consultant/organizations"
               className="mt-2 inline-block text-sm text-blue-700 hover:underline"
               onClick={() => setIsOpen(false)}
             >
-              Back to Organizations
+              Volver a Organizaciones
             </Link>
           </div>
         ) : null}
@@ -150,7 +209,7 @@ export default function Sidebar() {
               key={link.href}
               href={link.href}
               className={`flex items-center gap-2 px-2 py-1 rounded transition ${
-                pathname === link.href
+                isLinkActive(link.href)
                   ? "text-white bg-primary font-semibold"
                   : "hover:text-blue-600"
               }`}
