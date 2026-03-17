@@ -47,7 +47,6 @@ function ZoomOutCategorizationContent() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
-  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [destinations, setDestinations] = useState<{
     opportunities: Note[];
     needs: Note[];
@@ -219,65 +218,19 @@ function ZoomOutCategorizationContent() {
 
   // Función de guardar
   const handleSave = async () => {
-    const saveRequest = async (forceUpdate: boolean) => {
-      const payload = {
-        ...destinations,
-        forceUpdate,
-      };
-
-      return fetch(withOrganizationContext("/api/modules/2/save"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    };
-
     try {
-      const res = await saveRequest(false);
-
-      if (res.status === 409) {
-        const responseBody = await res.json();
-        if (responseBody?.requiresConfirmation) {
-          setShowOverwriteModal(true);
-          return;
-        }
-      }
-
-      if (!res.ok) throw new Error("Error saving data");
-
-      const responseBody = await res.json();
-      setErrorModal(
-        responseBody?.updated
-          ? "Today's categorization was updated successfully ✅"
-          : "Data saved successfully ✅"
-      );
-    } catch (err) {
-      console.error(err);
-      setErrorModal("Error saving data ❌");
-    }
-  };
-
-  const handleConfirmOverwrite = async () => {
-    setShowOverwriteModal(false);
-
-    try {
-      const payload = {
-        ...destinations,
-        forceUpdate: true,
-      };
-
       const res = await fetch(withOrganizationContext("/api/modules/2/save"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(destinations),
       });
 
-      if (!res.ok) throw new Error("Error updating data");
+      if (!res.ok) throw new Error("Error saving data");
 
-      setErrorModal("La categorización de hoy se actualizó correctamente.");
+      setErrorModal("Datos guardados exitosamente ✅");
     } catch (err) {
       console.error(err);
-      setErrorModal("Error al actualizar los datos");
+      setErrorModal("Error saving data ❌");
     }
   };
 
@@ -385,30 +338,6 @@ function ZoomOutCategorizationContent() {
             >
               OK
             </button>
-          </div>
-        </div>
-      )}
-
-      {showOverwriteModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <p>
-              You already saved categorization today. Do you want to update today&apos;s data?
-            </p>
-            <div className={styles.modalActions}>
-              <button
-                className={styles.cancelButton}
-                onClick={() => setShowOverwriteModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.confirmButton}
-                onClick={handleConfirmOverwrite}
-              >
-                Update
-              </button>
-            </div>
           </div>
         </div>
       )}

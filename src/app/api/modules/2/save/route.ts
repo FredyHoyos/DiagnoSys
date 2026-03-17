@@ -12,16 +12,14 @@ interface SaveRequestBody {
   opportunities?: BaseItemInput[];
   needs?: BaseItemInput[];
   problems?: BaseItemInput[];
-  forceUpdate?: boolean;
 }
 
-function getDayRange(date: Date) {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(startOfDay);
-  endOfDay.setDate(endOfDay.getDate() + 1);
-
-  return { startOfDay, endOfDay };
+function getSecondRange(date: Date) {
+  const start = new Date(date);
+  start.setMilliseconds(0);
+  const end = new Date(start);
+  end.setSeconds(end.getSeconds() + 1);
+  return { start, end };
 }
 
 export async function GET(req: Request) {
@@ -65,21 +63,21 @@ export async function GET(req: Request) {
       });
     }
 
-    const { startOfDay, endOfDay } = getDayRange(latestDate);
+    const { start, end } = getSecondRange(latestDate);
 
     const [opportunities, needs, problems] = await Promise.all([
       prisma.opportunity.findMany({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: start, lt: end } },
         orderBy: { id: "asc" },
         select: { name: true },
       }),
       prisma.need.findMany({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: start, lt: end } },
         orderBy: { id: "asc" },
         select: { name: true },
       }),
       prisma.problem.findMany({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+        where: { userId: scopedUser.targetUserId, createdAt: { gte: start, lt: end } },
         orderBy: { id: "asc" },
         select: { name: true },
       }),
@@ -116,33 +114,7 @@ export async function POST(req: Request) {
     const scopedUser = await resolveScopedUserForDiagnostics(session.user.id, organizationId);
 
     const body: SaveRequestBody = await req.json();
-    const { opportunities, needs, problems, forceUpdate = false } = body;
-
-    const { startOfDay, endOfDay } = getDayRange(new Date());
-
-    const [opportunitiesToday, needsToday, problemsToday] = await Promise.all([
-      prisma.opportunity.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-      prisma.need.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-      prisma.problem.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-    ]);
-
-    const hasTodayData = opportunitiesToday + needsToday + problemsToday > 0;
-
-    if (hasTodayData && !forceUpdate) {
-      return NextResponse.json(
-        {
-          error: "You already saved categorization data today.",
-          requiresConfirmation: true,
-        },
-        { status: 409 }
-      );
-    }
+    const { opportunities, needs, problems } = body;
 
     const cleanNames = (items?: BaseItemInput[]) =>
       (items ?? [])
@@ -152,27 +124,15 @@ export async function POST(req: Request) {
     const cleanOpportunities = cleanNames(opportunities);
     const cleanNeeds = cleanNames(needs);
     const cleanProblems = cleanNames(problems);
+    const saveTimestamp = new Date();
 
     await prisma.$transaction(async (tx) => {
-      if (hasTodayData) {
-        await Promise.all([
-          tx.opportunity.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-          tx.need.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-          tx.problem.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-        ]);
-      }
-
       if (cleanOpportunities.length) {
         await tx.opportunity.createMany({
           data: cleanOpportunities.map((o) => ({
             name: o.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
@@ -182,6 +142,7 @@ export async function POST(req: Request) {
           data: cleanNeeds.map((n) => ({
             name: n.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
@@ -191,16 +152,16 @@ export async function POST(req: Request) {
           data: cleanProblems.map((p) => ({
             name: p.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
     });
 
     return NextResponse.json({
-      message: hasTodayData
-        ? "Categorization data updated successfully"
-        : "Categorization data saved successfully",
-      updated: hasTodayData,
+      message: "Categorization data saved successfully",
+      updated: false,
+      savedAt: saveTimestamp,
     });
   } catch (error) {
     if (error instanceof ScopedUserError) {

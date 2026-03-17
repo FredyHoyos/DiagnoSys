@@ -50,7 +50,6 @@ function PriorityQuadrantsContent() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [errorModal, setErrorModal] = useState<string | null>(null);
-  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [quadrants, setQuadrants] = useState<{
     q1: Note[];
     q2: Note[];
@@ -70,7 +69,9 @@ function PriorityQuadrantsContent() {
       try {
         const [formsRes, savedRes] = await Promise.all([
           fetch("/api/modules/2/forms"),
-          fetch(withOrganizationContext("/api/modules/priorization/save")),
+          fetch(withOrganizationContext("/api/modules/priorization/save"), {
+            cache: "no-store",
+          }),
         ]);
 
         if (!formsRes.ok) throw new Error("Failed to fetch forms");
@@ -213,69 +214,26 @@ function PriorityQuadrantsContent() {
 
   const handleSave = async () => {
     const stripColor = (arr: Note[]) => arr.map(({ id, name }) => ({ id, name }));
-    const buildPayload = (forceUpdate: boolean) => ({
+    const payload = {
       highPriority: stripColor(quadrants.q1),
       mediumPriority: stripColor(quadrants.q2),
       lowPriority: stripColor(quadrants.q3),
       mediumPriority2: stripColor(quadrants.q4),
-      forceUpdate,
-    });
-
-    const saveRequest = async (forceUpdate: boolean) =>
-      fetch(withOrganizationContext("/api/modules/priorization/save"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload(forceUpdate)),
-      });
+    };
 
     try {
-      const res = await saveRequest(false);
-
-      if (res.status === 409) {
-        const responseBody = await res.json();
-        if (responseBody?.requiresConfirmation) {
-          setShowOverwriteModal(true);
-          return;
-        }
-      }
-
-      if (!res.ok) throw new Error("Error saving data");
-
-      const responseBody = await res.json();
-      setErrorModal(
-        responseBody?.updated
-          ? "Today's prioritization was updated successfully "
-          : "Data saved successfully "
-      );
-    } catch (err) {
-      console.error(err);
-      setErrorModal("Error saving data ");
-    }
-  };
-
-  const handleConfirmOverwrite = async () => {
-    setShowOverwriteModal(false);
-
-    try {
-      const stripColor = (arr: Note[]) => arr.map(({ id, name }) => ({ id, name }));
-      const payload = {
-        highPriority: stripColor(quadrants.q1),
-        mediumPriority: stripColor(quadrants.q2),
-        lowPriority: stripColor(quadrants.q3),
-        mediumPriority2: stripColor(quadrants.q4),
-        forceUpdate: true,
-      };
-
       const res = await fetch(withOrganizationContext("/api/modules/priorization/save"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) throw new Error("Error saving data");
+
       setErrorModal("Datos guardados exitosamente ✅");
     } catch (err) {
       console.error(err);
-      setErrorModal("Error al guardar los datos ❌");
+      setErrorModal("Error saving data ");
     }
   };
 
@@ -414,30 +372,6 @@ function PriorityQuadrantsContent() {
             >
               OK
             </button>
-          </div>
-        </div>
-      )}
-
-      {showOverwriteModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <p>
-              You already saved prioritization today. Do you want to update today&apos;s data?
-            </p>
-            <div className={styles.modalActions}>
-              <button
-                className={styles.cancelButton}
-                onClick={() => setShowOverwriteModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.confirmButton}
-                onClick={handleConfirmOverwrite}
-              >
-                Update
-              </button>
-            </div>
           </div>
         </div>
       )}

@@ -12,17 +12,7 @@ interface SaveRequestBody {
   highPriority?: BaseItemInput[];
   mediumPriority?: BaseItemInput[];
   lowPriority?: BaseItemInput[];
-  mediumPriority2?: BaseItemInput[]; // segundo grupo "Medium priority"
-  forceUpdate?: boolean;
-}
-
-function getDayRange(date: Date) {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(startOfDay);
-  endOfDay.setDate(endOfDay.getDate() + 1);
-
-  return { startOfDay, endOfDay };
+  mediumPriority2?: BaseItemInput[];
 }
 
 export async function GET(req: Request) {
@@ -77,27 +67,25 @@ export async function GET(req: Request) {
       });
     }
 
-    const { startOfDay, endOfDay } = getDayRange(latestDate);
-
     const [highPriority, mediumPriority, lowPriority, mediumPriority2] =
       await Promise.all([
         prisma.highPriority.findMany({
-          where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+          where: { userId: scopedUser.targetUserId, createdAt: latestDate },
           orderBy: { id: "asc" },
           select: { name: true },
         }),
         prisma.mediumPriority.findMany({
-          where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+          where: { userId: scopedUser.targetUserId, createdAt: latestDate },
           orderBy: { id: "asc" },
           select: { name: true },
         }),
         prisma.lowPriority.findMany({
-          where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+          where: { userId: scopedUser.targetUserId, createdAt: latestDate },
           orderBy: { id: "asc" },
           select: { name: true },
         }),
         prisma.mediumPriority2.findMany({
-          where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
+          where: { userId: scopedUser.targetUserId, createdAt: latestDate },
           orderBy: { id: "asc" },
           select: { name: true },
         }),
@@ -140,37 +128,7 @@ export async function POST(req: Request) {
       mediumPriority,
       lowPriority,
       mediumPriority2,
-      forceUpdate = false,
     } = body;
-
-    const { startOfDay, endOfDay } = getDayRange(new Date());
-
-    const [highToday, mediumToday, lowToday, medium2Today] = await Promise.all([
-      prisma.highPriority.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-      prisma.mediumPriority.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-      prisma.lowPriority.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-      prisma.mediumPriority2.count({
-        where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-      }),
-    ]);
-
-    const hasTodayData = highToday + mediumToday + lowToday + medium2Today > 0;
-
-    if (hasTodayData && !forceUpdate) {
-      return NextResponse.json(
-        {
-          error: "You already saved prioritization data today.",
-          requiresConfirmation: true,
-        },
-        { status: 409 }
-      );
-    }
 
     const cleanNames = (items?: BaseItemInput[]) =>
       (items ?? [])
@@ -181,30 +139,15 @@ export async function POST(req: Request) {
     const cleanMediumPriority = cleanNames(mediumPriority);
     const cleanLowPriority = cleanNames(lowPriority);
     const cleanMediumPriority2 = cleanNames(mediumPriority2);
+    const saveTimestamp = new Date();
 
     await prisma.$transaction(async (tx) => {
-      if (hasTodayData) {
-        await Promise.all([
-          tx.highPriority.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-          tx.mediumPriority.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-          tx.lowPriority.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-          tx.mediumPriority2.deleteMany({
-            where: { userId: scopedUser.targetUserId, createdAt: { gte: startOfDay, lt: endOfDay } },
-          }),
-        ]);
-      }
-
       if (cleanHighPriority.length) {
         await tx.highPriority.createMany({
           data: cleanHighPriority.map((item) => ({
             name: item.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
@@ -214,6 +157,7 @@ export async function POST(req: Request) {
           data: cleanMediumPriority.map((item) => ({
             name: item.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
@@ -223,6 +167,7 @@ export async function POST(req: Request) {
           data: cleanLowPriority.map((item) => ({
             name: item.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
@@ -232,16 +177,16 @@ export async function POST(req: Request) {
           data: cleanMediumPriority2.map((item) => ({
             name: item.name,
             userId: scopedUser.targetUserId,
+            createdAt: saveTimestamp,
           })),
         });
       }
     });
 
     return NextResponse.json({
-      message: hasTodayData
-        ? "Prioritization data updated successfully"
-        : "Prioritization data saved successfully",
-      updated: hasTodayData,
+      message: "Prioritization data saved successfully",
+      updated: false,
+      savedAt: saveTimestamp,
     });
   } catch (error) {
     if (error instanceof ScopedUserError) {
