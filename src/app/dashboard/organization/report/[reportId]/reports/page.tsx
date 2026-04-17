@@ -39,8 +39,8 @@ interface ApiResponse {
 
 export default function ReportsPage() {
     const { status } = useSession();
-    const params = useParams<{ reportid: string }>();
-    const reportId = params?.reportid;
+    const params = useParams<{ reportId?: string; reportid?: string }>();
+    const reportId = params?.reportId ?? params?.reportid;
     const [loading, setLoading] = useState(true);
     const [zoomInForms, setZoomInForms] = useState<FormData[]>([]);
     const [zoomOutForms, setZoomOutForms] = useState<FormData[]>([]);
@@ -69,9 +69,14 @@ export default function ReportsPage() {
             }
         };
 
-        if (status === "authenticated" && reportId) {
-            fetchPersonalizedForms();
+        if (status === "loading") return;
+
+        if (status !== "authenticated" || !reportId) {
+            setLoading(false);
+            return;
         }
+
+        fetchPersonalizedForms();
     }, [status, reportId]);
 
     if (status === "loading" || loading) {
