@@ -26,6 +26,10 @@ interface FormResponse {
   categories: {
     id: number;
     name: string;
+    items: {
+      id: number;
+      name: string;
+    }[];
   }[];
 }
 
@@ -97,7 +101,9 @@ function ZoomOutCategorizationContent() {
           : "/api/modules/categorization/save";
 
         const [formsRes, savedRes] = await Promise.all([
-          fetch("/api/modules/2/forms"),
+          fetch(saveQuery
+            ? `/api/modules/categorization/drag-items?${saveQuery}`
+            : "/api/modules/categorization/drag-items"),
           fetch(saveEndpoint),
         ]);
 
@@ -123,11 +129,13 @@ function ZoomOutCategorizationContent() {
             id: form.id.toString(),
             title: form.name,
             color: light,
-            notes: form.categories.map((cat) => ({
-              id: cat.id.toString(),
-              name: cat.name,
-              color: dark,
-            })),
+            notes: form.categories.flatMap((cat) =>
+              cat.items.map((item) => ({
+                id: item.id.toString(),
+                name: item.name,
+                color: dark,
+              }))
+            ),
           };
         });
 
