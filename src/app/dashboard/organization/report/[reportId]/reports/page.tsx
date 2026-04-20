@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, BarChart3, Radar} from "lucide-react";
 import { FormRadarChart } from "@/app/components/shadcn-charts/radar-chart/form-radar-chart";
 import { Card, CardContent, CardHeader } from "@/app/components/shadcn-charts/card";
@@ -38,9 +38,17 @@ interface ApiResponse {
 }
 
 export default function ReportsPage() {
+    const router = useRouter();
     const { status } = useSession();
+    const searchParams = useSearchParams();
     const params = useParams<{ reportId?: string; reportid?: string }>();
     const reportId = params?.reportId ?? params?.reportid;
+    const organizationId = searchParams.get("organizationId");
+    const organizationName = searchParams.get("organizationName");
+    const consultantScopedMode = Boolean(organizationId);
+    const contextQuery = consultantScopedMode
+        ? `&organizationId=${organizationId}&organizationName=${encodeURIComponent(organizationName ?? "")}`
+        : "";
     const [loading, setLoading] = useState(true);
     const [zoomInForms, setZoomInForms] = useState<FormData[]>([]);
     const [zoomOutForms, setZoomOutForms] = useState<FormData[]>([]);
@@ -49,7 +57,7 @@ export default function ReportsPage() {
         const fetchPersonalizedForms = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`/api/organization/reports/radar-data?reportId=${reportId}`);
+                const response = await fetch(`/api/organization/reports/radar-data?reportId=${reportId}${contextQuery}`);
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch personalized forms');
@@ -242,6 +250,20 @@ export default function ReportsPage() {
     return (
         <div className="w-full">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                {consultantScopedMode && (
+                    <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3">
+                        <p className="text-sm text-blue-900">
+                            Estás visualizando reportes de {organizationName || `Organización #${organizationId}`} en modo consultor.
+                        </p>
+                        <button
+                            type="button"
+                            className="mt-2 text-sm text-blue-700 hover:underline cursor-pointer"
+                            onClick={() => router.push("/dashboard/consultant/organizations")}
+                        >
+                            Volver a mi perfil de consultor
+                        </button>
+                    </div>
+                )}
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-[#2E6347] mb-2">

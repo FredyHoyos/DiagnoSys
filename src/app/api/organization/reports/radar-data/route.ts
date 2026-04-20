@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
+import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
 
 /**
  * GET /api/organization/reports/radar-data
@@ -18,14 +19,22 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        if (session.user.role?.name !== 'organization') {
+        const organizationId = request.nextUrl.searchParams.get("organizationId");
+        const isOrganization = session.user.role?.name === 'organization';
+        const isConsultant = session.user.role?.name === 'consultant';
+
+        if (!isOrganization && !isConsultant) {
             return NextResponse.json(
                 { error: "Organization access required" },
                 { status: 403 }
             );
         }
 
-        const userId = parseInt(session.user.id);
+        let userId = parseInt(session.user.id, 10);
+        if (isConsultant) {
+            const scopedUser = await resolveScopedUserForDiagnostics(session.user.id, organizationId);
+            userId = scopedUser.targetUserId;
+        }
         const reportIdParam = request.nextUrl.searchParams.get("reportId");
         const reportIdInt = reportIdParam ? parseInt(reportIdParam, 10) : null;
 
@@ -213,6 +222,9 @@ export async function GET(request: NextRequest) {
         });
 
     } catch (error) {
+        if (error instanceof ScopedUserError) {
+            return NextResponse.json({ error: error.message }, { status: error.status });
+        }
         console.error("🚨 Error fetching radar data:", error);
         return NextResponse.json(
             { error: "Internal server error" },

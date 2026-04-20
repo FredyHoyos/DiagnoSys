@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import UserCard from "@/app/components/organisms/userCard";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { TbReport } from "react-icons/tb";
 import {
@@ -19,16 +19,23 @@ import {
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const pathname = usePathname(); //Detecta la ruta actual
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const selectedOrganizationId = searchParams.get("organizationId");
   const selectedOrganizationName = searchParams.get("organizationName");
+  const rawSidebarRole = typeof session?.user?.role === "string"
+    ? session.user.role
+    : session?.user?.role?.name;
+  const normalizedSidebarRole = rawSidebarRole?.toLowerCase();
   const [resolvedOrganizationName, setResolvedOrganizationName] = useState<string | null>(
     selectedOrganizationName
   );
   const isConsultantDiagnosticsMode =
-    pathname.startsWith("/dashboard/consultant") && Boolean(selectedOrganizationId);
+    normalizedSidebarRole === "consultant" &&
+    pathname.startsWith("/dashboard/organization") &&
+    Boolean(selectedOrganizationId);
 
   useEffect(() => {
     setResolvedOrganizationName(selectedOrganizationName);
@@ -121,33 +128,16 @@ export default function Sidebar() {
   const diagnosticsOrganizationName = resolvedOrganizationName ?? selectedOrganizationName ?? "";
 
   const diagnosticsLinks = selectedOrganizationId
-    ? [
-        {
-          href: `/dashboard/consultant/zoom-in?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
-          label: "Zoom-in",
-          icon: <ZoomInIcon />,
-        },
-        {
-          href: `/dashboard/consultant/zoom-out?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
-          label: "Zoom-out",
-          icon: <ZoomOutIcon />,
-        },
-        {
-          href: `/dashboard/consultant/categorization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
-          label: "Categorización",
-          icon: <LayoutIcon />,
-        },
-        {
-          href: `/dashboard/consultant/prioritization?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
-          label: "Priorización",
-          icon: <ListBulletIcon />,
-        },
-        {
-          href: `/dashboard/consultant/reports?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
-          label: "Reportes",
-          icon: <ZoomOutIcon />,
-        },
-      ]
+    ? [...links, ...roleBasedLinks.organization].map((link) => {
+        if (link.href === "/dashboard/organization/report") {
+          return {
+            ...link,
+            href: `${link.href}?organizationId=${selectedOrganizationId}&organizationName=${encodeURIComponent(diagnosticsOrganizationName)}`,
+          };
+        }
+
+        return link;
+      })
     : [];
 
   const displayedLinks =
@@ -190,13 +180,16 @@ export default function Sidebar() {
             <p className="font-semibold text-primary truncate">
               {resolvedOrganizationName || `Organización #${selectedOrganizationId}`}
             </p>
-            <Link
-              href="/dashboard/consultant/organizations"
-              className="mt-2 inline-block text-sm text-blue-700 hover:underline"
-              onClick={() => setIsOpen(false)}
+            <button
+              type="button"
+              className="mt-2 inline-block text-sm text-blue-700 hover:underline cursor-pointer"
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/dashboard/consultant/organizations");
+              }}
             >
-              Volver a Organizaciones
-            </Link>
+              Volver a mi perfil de consultor
+            </button>
           </div>
         ) : null}
 

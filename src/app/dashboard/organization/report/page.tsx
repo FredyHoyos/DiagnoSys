@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/shadcn-charts/card";
@@ -41,7 +41,14 @@ interface ApiResponse {
 
 export default function OrganizationDashboard() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { status } = useSession();
+    const organizationId = searchParams.get("organizationId");
+    const organizationName = searchParams.get("organizationName");
+    const consultantScopedMode = Boolean(organizationId);
+    const contextQuery = consultantScopedMode
+        ? `?organizationId=${organizationId}&organizationName=${encodeURIComponent(organizationName ?? "")}`
+        : "";
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
@@ -57,7 +64,7 @@ export default function OrganizationDashboard() {
     const fetchReports = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/organization/reports');
+            const response = await fetch(`/api/organization/reports${contextQuery}`);
             if (!response.ok) throw new Error('Failed to fetch reports');
             const data: ApiResponse = await response.json();
             setReports(data.reports);
@@ -72,7 +79,7 @@ export default function OrganizationDashboard() {
         if (!newReportName.trim()) return;
         try {
             setCreating(true);
-            const response = await fetch('/api/organization/reports', {
+            const response = await fetch(`/api/organization/reports${contextQuery}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newReportName.trim() }),
@@ -90,11 +97,11 @@ export default function OrganizationDashboard() {
     };
 
     const startReport = (reportId: number) => {
-        router.push(`/dashboard/organization/report/${reportId}/zoom-in`);
+        router.push(`/dashboard/organization/report/${reportId}/zoom-in${contextQuery}`);
     };
 
     const viewReport = (reportId: number) => {
-        router.push(`/dashboard/organization/report/${reportId}/reports`);
+        router.push(`/dashboard/organization/report/${reportId}/reports${contextQuery}`);
     };
 
     const formatDate = (dateString: string) => {
@@ -172,6 +179,20 @@ export default function OrganizationDashboard() {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            {consultantScopedMode && (
+                <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3">
+                    <p className="text-sm text-blue-900">
+                        Estás gestionando el diagnóstico de {organizationName || `Organización #${organizationId}`} en modo consultor.
+                    </p>
+                    <button
+                        type="button"
+                        className="mt-2 text-sm text-blue-700 hover:underline cursor-pointer"
+                        onClick={() => router.push("/dashboard/consultant/organizations")}
+                    >
+                        Volver a mi perfil de consultor
+                    </button>
+                </div>
+            )}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                     Reportes de Evaluación Digital
