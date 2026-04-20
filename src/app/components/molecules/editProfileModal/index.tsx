@@ -204,7 +204,7 @@ export default function EditProfileModal({
 
           {/* Tamaño empresa */}
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="companySize" className="text-right">
+            <Label htmlFor="companySize" className="text-left">
               Tamaño empresa
             </Label>
             <div className="col-span-3">
@@ -234,7 +234,7 @@ export default function EditProfileModal({
           <Button
             type="button"
             onClick={() => setChangePassword(!changePassword)}
-            className="mt-2 w-auto min-w-40 bg-blue-600 hover:bg-blue-500 cursor-pointer"
+            className="mt-2 w-auto min-w-40 bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
           >
             {changePassword ? "Ocultar cambio de contraseña" : "Cambiar contraseña"}
           </Button>
