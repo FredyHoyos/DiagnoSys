@@ -11,8 +11,7 @@ type OrganizationSummary = {
   email: string;
   primaryAuditId: number | null;
   stats: {
-    myAuditsCount: number;
-    totalFormsCount: number;
+    reportsCount: number;
   };
 };
 
@@ -263,7 +262,7 @@ export default function ConsultantOrganizationsPage() {
                   Usuario: {org.userName} | Email: {org.email}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Auditorías: {org.stats.myAuditsCount} | Formularios guardados: {org.stats.totalFormsCount}
+                  Reportes realizados: {org.stats.reportsCount}
                 </p>
 
                 <div className="mt-3 flex gap-2">

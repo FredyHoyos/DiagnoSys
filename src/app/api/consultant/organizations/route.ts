@@ -88,21 +88,33 @@ export async function GET() {
         });
 
         // Procesar datos
-        const processedOrganizations = organizations.map(org => ({
-            id: org.id,
-            name: org.name,
-            description: org.description,
-            userName: org.users[0]?.name ?? "",
-            email: org.users[0]?.email ?? "",
-            stats: {
-                myAuditsCount: org._count.audits,
-                totalFormsCount: org.audits.reduce((sum, audit) => sum + audit._count.personalizedForms, 0)
-            },
-            primaryAuditId: org.audits[0]?.id ?? null,
-            recentAudits: org.audits.slice(0, 3), // Solo las 3 más recientes
-            createdAt: org.createdAt,
-            updatedAt: org.updatedAt
-        }));
+        const processedOrganizations = await Promise.all(
+            organizations.map(async (org) => {
+                const organizationUserId = org.users[0]?.id ?? null;
+                const reportsCount = organizationUserId
+                    ? await prisma.report.count({
+                        where: {
+                            userId: organizationUserId,
+                        },
+                    })
+                    : 0;
+
+                return {
+                    id: org.id,
+                    name: org.name,
+                    description: org.description,
+                    userName: org.users[0]?.name ?? "",
+                    email: org.users[0]?.email ?? "",
+                    stats: {
+                        reportsCount,
+                    },
+                    primaryAuditId: org.audits[0]?.id ?? null,
+                    recentAudits: org.audits.slice(0, 3), // Solo las 3 más recientes
+                    createdAt: org.createdAt,
+                    updatedAt: org.updatedAt
+                };
+            })
+        );
 
         return NextResponse.json({
             organizations: processedOrganizations,
@@ -231,8 +243,7 @@ export async function POST(request: NextRequest) {
                 name: result.organization.name,
                 description: result.organization.description,
                 stats: {
-                    myAuditsCount: 1,
-                    totalFormsCount: 0
+                    reportsCount: 0,
                 },
                 primaryAuditId: result.audit.id,
                 recentAudits: [result.audit],
