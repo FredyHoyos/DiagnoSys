@@ -128,7 +128,7 @@ export default function Sidebar() {
   const diagnosticsOrganizationName = resolvedOrganizationName ?? selectedOrganizationName ?? "";
 
   const diagnosticsLinks = selectedOrganizationId
-    ? [...links, ...roleBasedLinks.organization].map((link) => {
+    ? [...roleBasedLinks.organization].map((link) => {
         if (link.href === "/dashboard/organization/report") {
           return {
             ...link,

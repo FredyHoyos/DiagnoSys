@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/app/components/shadcn-charts/card";
-import { Calendar, ChevronRight, Eye, Loader2, TrendingUp } from "lucide-react";
+import { Calendar, ChevronRight, Eye, Loader2, TrendingUp, BarChart3 } from "lucide-react";
 
 interface ReportSummary {
     id: number;
@@ -14,6 +14,7 @@ interface ReportSummary {
     version: number;
     isCompleted: boolean;
     completedAt: string | null;
+    createdAt: string;
     stats: {
         totalForms: number;
         completedForms: number;
