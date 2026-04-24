@@ -91,8 +91,46 @@ function PriorityQuadrantsContent() {
     q3: [],
     q4: [],
   });
+  const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
+  const [noteCategoryMap, setNoteCategoryMap] = useState<Record<string, string>>({});
 
   const [loading, setLoading] = useState(true);
+  const scrollAreaClass = "max-h-[260px] overflow-y-auto overflow-x-visible px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [scrollbar-gutter:stable_both-edges] [&::-webkit-scrollbar]:hidden";
+  const hiddenScrollbarClass = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
+
+  const quadrantKeys = ["q1", "q2", "q3", "q4"] as const;
+
+  const isQuadrantKey = (value: string): value is keyof typeof quadrants =>
+    quadrantKeys.includes(value as keyof typeof quadrants);
+
+  const getSourceList = (
+    sourceId: string,
+    localCategories: Category[],
+    localQuadrants: typeof quadrants
+  ): Note[] | null => {
+    if (sourceId.startsWith("category-")) {
+      const sourceCategoryId = sourceId.split("-")[1];
+      return localCategories.find((c) => c.id === sourceCategoryId)?.notes ?? null;
+    }
+
+    if (isQuadrantKey(sourceId)) {
+      return localQuadrants[sourceId];
+    }
+
+    return null;
+  };
+
+  const toggleNoteSelection = (noteId: string) => {
+    setSelectedNoteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(noteId)) {
+        next.delete(noteId);
+      } else {
+        next.add(noteId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchForms = async () => {
@@ -129,10 +167,12 @@ function PriorityQuadrantsContent() {
           ["green-interactive border border-2 border-blue-300", "bg-blue-300"],
         ];
 
+        const nextNoteCategoryMap: Record<string, string> = {};
         const mappedCategories: Category[] = data.forms.map((form, index) => {
           const [light, dark] = colorPairs[index % colorPairs.length];
+          const formIdAsString = form.id.toString();
           return {
-            id: form.id.toString(),
+            id: formIdAsString,
             title: form.name,
             color: light,
             notes: form.categories.flatMap((cat) =>
@@ -143,6 +183,12 @@ function PriorityQuadrantsContent() {
               }))
             ),
           };
+        });
+
+        mappedCategories.forEach((category) => {
+          category.notes.forEach((note) => {
+            nextNoteCategoryMap[note.id] = category.id;
+          });
         });
 
         if (savedData?.hasData) {
@@ -193,8 +239,12 @@ function PriorityQuadrantsContent() {
 
           setQuadrants(restoredQuadrants);
           setCategories(remainingCategories);
+          setSelectedNoteIds(new Set());
+          setNoteCategoryMap(nextNoteCategoryMap);
         } else {
           setCategories(mappedCategories);
+          setSelectedNoteIds(new Set());
+          setNoteCategoryMap(nextNoteCategoryMap);
         }
       } catch (err) {
         console.error("Error fetching forms", err);
@@ -209,37 +259,125 @@ function PriorityQuadrantsContent() {
   const handleDragEnd = (result: DropResult) => {
     const { source, destination } = result;
     if (!destination) return;
+
+    const sourceIsCategory = source.droppableId.startsWith("category-");
+    const destinationIsCategory = destination.droppableId.startsWith("category-");
+
+    // Evitar mover notas entre categorias distintas (ej: Industria -> Macroeconomicas)
+    if (sourceIsCategory && destinationIsCategory && source.droppableId !== destination.droppableId) {
+      return;
+    }
+
     if (source.droppableId === destination.droppableId && source.index === destination.index)
       return;
 
-    const newCategories = [...categories];
-    const newQuadrants = { ...quadrants };
-    let draggedNote: Note | null = null;
+    const newCategories = categories.map((category) => ({
+      ...category,
+      notes: [...category.notes],
+    }));
+    const newQuadrants = {
+      q1: [...quadrants.q1],
+      q2: [...quadrants.q2],
+      q3: [...quadrants.q3],
+      q4: [...quadrants.q4],
+    };
 
-    if (source.droppableId.startsWith("category-")) {
-      const sourceCategoryId = source.droppableId.split("-")[1];
-      const sourceCategory = newCategories.find((c) => c.id === sourceCategoryId);
-      if (!sourceCategory) return;
-      [draggedNote] = sourceCategory.notes.splice(source.index, 1);
-    } else if (source.droppableId.startsWith("q")) {
-      const key = source.droppableId as keyof typeof quadrants;
-      [draggedNote] = newQuadrants[key].splice(source.index, 1);
-    }
+    const sourceList = getSourceList(source.droppableId, newCategories, newQuadrants);
+    const destinationList = getSourceList(destination.droppableId, newCategories, newQuadrants);
 
+    if (!sourceList || !destinationList) return;
+
+    const draggedNote = sourceList[source.index];
     if (!draggedNote) return;
 
-    if (destination.droppableId.startsWith("category-")) {
-      const destCategoryId = destination.droppableId.split("-")[1];
-      const destCategory = newCategories.find((c) => c.id === destCategoryId);
-      if (!destCategory) return;
-      destCategory.notes.splice(destination.index, 0, draggedNote);
-    } else if (destination.droppableId.startsWith("q")) {
-      const key = destination.droppableId as keyof typeof quadrants;
-      newQuadrants[key].splice(destination.index, 0, draggedNote);
+    const moveSelectedGroup = selectedNoteIds.has(draggedNote.id);
+
+    // Si el destino es un cuadrante y se arrastra un item seleccionado,
+    // mover todos los seleccionados aunque provengan de categorias distintas.
+    if (moveSelectedGroup && isQuadrantKey(destination.droppableId)) {
+      const destinationKey = destination.droppableId;
+      const selectedAcrossBoard = [
+        ...newCategories.flatMap((category) => category.notes),
+        ...quadrantKeys.flatMap((key) => newQuadrants[key]),
+      ].filter((note) => selectedNoteIds.has(note.id));
+
+      const movingNotes = selectedAcrossBoard.length ? selectedAcrossBoard : [draggedNote];
+      const movingIds = new Set(movingNotes.map((note) => note.id));
+
+      const destinationBefore = newQuadrants[destinationKey];
+      const removedBeforeDestination = destinationBefore
+        .slice(0, destination.index)
+        .filter((note) => movingIds.has(note.id)).length;
+
+      const destinationIndex = destination.index - removedBeforeDestination;
+
+      newCategories.forEach((category) => {
+        category.notes = category.notes.filter((note) => !movingIds.has(note.id));
+      });
+
+      quadrantKeys.forEach((key) => {
+        newQuadrants[key] = newQuadrants[key].filter((note) => !movingIds.has(note.id));
+      });
+
+      const insertAt = Math.max(0, Math.min(destinationIndex, newQuadrants[destinationKey].length));
+      newQuadrants[destinationKey].splice(insertAt, 0, ...movingNotes);
+
+      setCategories(newCategories);
+      setQuadrants(newQuadrants);
+      setSelectedNoteIds((prev) => {
+        const next = new Set(prev);
+        movingNotes.forEach((note) => next.delete(note.id));
+        return next;
+      });
+      return;
     }
+
+    const selectedInSource = sourceList.filter((note) => selectedNoteIds.has(note.id));
+    const movingNotes = moveSelectedGroup && selectedInSource.length ? selectedInSource : [draggedNote];
+    const movingIds = new Set(movingNotes.map((note) => note.id));
+
+    // Si se regresa desde cuadrante a categoria, solo permitir volver a su categoria original.
+    if (!sourceIsCategory && destinationIsCategory) {
+      const destinationCategoryId = destination.droppableId.split("-")[1];
+      const allBelongToDestinationCategory = movingNotes.every(
+        (note) => noteCategoryMap[note.id] === destinationCategoryId
+      );
+      if (!allBelongToDestinationCategory) {
+        return;
+      }
+    }
+
+    const removedBeforeDestination =
+      source.droppableId === destination.droppableId
+        ? sourceList.slice(0, destination.index).filter((note) => movingIds.has(note.id)).length
+        : 0;
+
+    const destinationIndex =
+      source.droppableId === destination.droppableId
+        ? destination.index - removedBeforeDestination
+        : destination.index;
+
+    const remainingSource = sourceList.filter((note) => !movingIds.has(note.id));
+    sourceList.splice(0, sourceList.length, ...remainingSource);
+
+    const insertAt = Math.max(0, Math.min(destinationIndex, destinationList.length));
+    destinationList.splice(insertAt, 0, ...movingNotes);
 
     setCategories(newCategories);
     setQuadrants(newQuadrants);
+
+    if (isQuadrantKey(destination.droppableId)) {
+      setSelectedNoteIds((prev) => {
+        const next = new Set(prev);
+        movingNotes.forEach((note) => next.delete(note.id));
+        return next;
+      });
+      return;
+    }
+
+    if (!moveSelectedGroup) {
+      setSelectedNoteIds(new Set([draggedNote.id]));
+    }
   };
 
   if (loading)
@@ -312,7 +450,7 @@ function PriorityQuadrantsContent() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex flex-wrap gap-2"
+                    className={`flex flex-col gap-2 ${scrollAreaClass}`}
                   >
                     {category.notes.map((note, index) => (
                       <Draggable
@@ -325,7 +463,12 @@ function PriorityQuadrantsContent() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`px-3 py-2 ${note.color} text-gray-700 rounded-md shadow cursor-pointer`}
+                            className={`px-2.5 py-1.5 text-sm box-border ${note.color} text-gray-700 rounded-md shadow cursor-pointer transition ${
+                              selectedNoteIds.has(note.id)
+                                ? "ring-2 ring-[#2E6347]"
+                                : ""
+                            }`}
+                            onClick={() => toggleNoteSelection(note.id)}
                           >
                             {note.name}
                           </div>
@@ -365,12 +508,18 @@ function PriorityQuadrantsContent() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`green-interactive border-4 ${q.border} min-h-[200px] flex flex-col items-center justify-center p-4 relative`}
+                    className={`green-interactive border-4 ${q.border} min-h-[200px] flex flex-col p-4 relative`}
                   >
                     <h3 className="text-lg font-bold text-gray-800 mb-2">
                       {q.title}
                     </h3>
-                    <div className="flex flex-wrap gap-2 justify-center">
+                    <div
+                      className={`flex flex-col gap-2 px-1 py-1 ${hiddenScrollbarClass} ${
+                        quadrants[q.id as keyof typeof quadrants].length > 5
+                          ? "max-h-[230px] overflow-y-auto overflow-x-visible"
+                          : "overflow-visible"
+                      }`}
+                    >
                       {quadrants[q.id as keyof typeof quadrants].map((note, index) => (
                         <Draggable
                           key={note.id}
@@ -382,7 +531,12 @@ function PriorityQuadrantsContent() {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`px-3 py-2 ${note.color} rounded-md shadow text-gray-700`}
+                              className={`px-2.5 py-1.5 text-sm box-border ${note.color} rounded-md shadow text-gray-700 cursor-pointer transition ${
+                                selectedNoteIds.has(note.id)
+                                  ? "ring-2 ring-inset ring-[#2E6347]"
+                                  : ""
+                              }`}
+                              onClick={() => toggleNoteSelection(note.id)}
                             >
                               {note.name}
                             </div>
