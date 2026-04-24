@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -55,13 +55,7 @@ export default function OrganizationDashboardContent() {
     const [newReportName, setNewReportName] = useState("");
     const [dialogOpen, setDialogOpen] = useState(false);
 
-    useEffect(() => {
-        if (status === "authenticated") {
-            fetchReports();
-        }
-    }, [status]);
-
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch(`/api/organization/reports${contextQuery}`);
@@ -73,7 +67,13 @@ export default function OrganizationDashboardContent() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [contextQuery]);
+
+    useEffect(() => {
+        if (status === "authenticated") {
+            fetchReports();
+        }
+    }, [status, fetchReports]);
 
     const createReport = async () => {
         if (!newReportName.trim()) return;
@@ -140,7 +140,7 @@ export default function OrganizationDashboardContent() {
             return (
                 <Badge
                     variant="outline"
-                    className="bg-green-100 text-green-800 border-green-300 hover:bg-green-100 cursor-default"
+                    className="bg-green-200 text-black border-green-800 whitespace-nowrap"
                 >
                     Completado
                 </Badge>
@@ -149,7 +149,7 @@ export default function OrganizationDashboardContent() {
             return (
                 <Badge
                     variant="outline"
-                    className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100 cursor-default"
+                    className="bg-orange-200 text-black border-orange-800 whitespace-nowrap"
                 >
                     En progreso
                 </Badge>
@@ -158,9 +158,9 @@ export default function OrganizationDashboardContent() {
             return (
                 <Badge
                     variant="outline"
-                    className="bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-100 cursor-default"
+                    className="bg-yellow-200 text-black border-yellow-500 whitespace-nowrap"
                 >
-                    No iniciado
+                    No iniciado 
                 </Badge>
             );
         }
@@ -194,7 +194,7 @@ export default function OrganizationDashboardContent() {
                 </div>
             )}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold text-primary mb-2">
                     Reportes de Evaluación Digital
                 </h1>
                 <p className="text-gray-600">
@@ -264,21 +264,21 @@ export default function OrganizationDashboardContent() {
                     {reports.map((report) => (
                         <Card key={report.id} className="green-interactive hover:shadow-lg transition-shadow">
                             <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg mb-2">{report.name}</CardTitle>
-                                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                            <div className="flex items-center">
-                                                <Hash className="h-3 w-3 mr-1" />
-                                                v{report.version}
-                                            </div>
-                                            <div className="flex items-center">
-                                                <Calendar className="h-3 w-3 mr-1" />
-                                                {formatDate(report.createdAt)}
-                                            </div>
+                                <div className="space-y-3">
+                                    <div className="flex justify-end">{getStatusBadge(report)}</div>
+                                    <CardTitle className="text-lg text-primary whitespace-nowrap overflow-hidden text-ellipsis">
+                                        {report.name}
+                                    </CardTitle>
+                                    <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
+                                        <div className="flex items-center justify-start whitespace-nowrap">
+                                            <Hash className="h-4 w-4 mr-1" />
+                                            V{report.version}
+                                        </div>
+                                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap pl-2">
+                                            <Calendar className="h-4 w-4" />
+                                            <span>{formatDate(report.createdAt)}</span>
                                         </div>
                                     </div>
-                                    {getStatusBadge(report)}
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -289,7 +289,7 @@ export default function OrganizationDashboardContent() {
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2">
                                         <div
-                                            className="green-interactive h-2 rounded-full"
+                                            className="bg-green-800 h-2 rounded-full"
                                             style={{ width: `${report.stats.completionRate}%` }}
                                         />
                                     </div>
@@ -310,13 +310,13 @@ export default function OrganizationDashboardContent() {
                                     <div className="grid grid-cols-1 gap-2 text-sm">
                                         <div className="flex items-center justify-between">
                                             <span className="text-gray-600">Categorización</span>
-                                            <span className={`font-medium ${report.stats.categorizationCompleted ? "text-green-700" : "text-amber-700"}`}>
+                                            <span className={`font-medium ${report.stats.categorizationCompleted ? "text-green-800" : "text-amber-700"}`}>
                                                 {report.stats.categorizationCompleted ? "Completado" : "Pendiente"}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-gray-600">Priorización</span>
-                                            <span className={`font-medium ${report.stats.prioritizationCompleted ? "text-green-700" : "text-amber-700"}`}>
+                                            <span className={`font-medium ${report.stats.prioritizationCompleted ? "text-green-800" : "text-amber-700"}`}>
                                                 {report.stats.prioritizationCompleted ? "Completado" : "Pendiente"}
                                             </span>
                                         </div>
@@ -336,7 +336,7 @@ export default function OrganizationDashboardContent() {
                                             onClick={() => viewReport(report.id)}
                                             variant="outline"
                                             size="sm"
-                                            className="w-full sm:flex-1 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 transition-colors"
+                                            className="w-full sm:flex-1 hover:bg-green-50 hover:text-green-800 border-gray-400 hover:border-green-800 transition-colors"
                                         >
                                             <Eye className="h-4 w-4 mr-2" />
                                             Ver
