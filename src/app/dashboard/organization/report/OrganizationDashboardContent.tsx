@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -55,13 +55,7 @@ export default function OrganizationDashboardContent() {
     const [newReportName, setNewReportName] = useState("");
     const [dialogOpen, setDialogOpen] = useState(false);
 
-    useEffect(() => {
-        if (status === "authenticated") {
-            fetchReports();
-        }
-    }, [status]);
-
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch(`/api/organization/reports${contextQuery}`);
@@ -73,7 +67,13 @@ export default function OrganizationDashboardContent() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [contextQuery]);
+
+    useEffect(() => {
+        if (status === "authenticated") {
+            fetchReports();
+        }
+    }, [status, fetchReports]);
 
     const createReport = async () => {
         if (!newReportName.trim()) return;
