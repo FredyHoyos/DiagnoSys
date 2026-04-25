@@ -4,6 +4,14 @@ import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
 
+function getSecondRange(date: Date) {
+    const start = new Date(date);
+    start.setMilliseconds(0);
+    const end = new Date(start);
+    end.setSeconds(end.getSeconds() + 1);
+    return { start, end };
+}
+
 /**
  * GET /api/organization/reports/radar-data
  * Get the latest personalized forms for radar charts
@@ -215,9 +223,158 @@ export async function GET(request: NextRequest) {
         const zoomInData = processFormsForRadar(zoomInForms);
         const zoomOutData = processFormsForRadar(zoomOutForms);
 
+        const [lastOpportunity, lastNeed, lastProblem] = await Promise.all([
+            prisma.opportunity.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+            prisma.need.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+            prisma.problem.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+        ]);
+
+        const latestCategorizationDate = [
+            lastOpportunity?.createdAt,
+            lastNeed?.createdAt,
+            lastProblem?.createdAt,
+        ]
+            .filter(Boolean)
+            .sort((a, b) => b!.getTime() - a!.getTime())[0];
+
+        let categorizationSummary = {
+            hasData: false,
+            savedAt: null as Date | null,
+            opportunities: [] as { name: string }[],
+            needs: [] as { name: string }[],
+            problems: [] as { name: string }[],
+            totalItems: 0,
+        };
+
+        if (latestCategorizationDate) {
+            const { start, end } = getSecondRange(latestCategorizationDate);
+            const [opportunities, needs, problems] = await Promise.all([
+                prisma.opportunity.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+                prisma.need.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+                prisma.problem.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+            ]);
+
+            categorizationSummary = {
+                hasData: true,
+                savedAt: latestCategorizationDate,
+                opportunities,
+                needs,
+                problems,
+                totalItems: opportunities.length + needs.length + problems.length,
+            };
+        }
+
+        const [lastHigh, lastMedium, lastLow, lastMedium2] = await Promise.all([
+            prisma.highPriority.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+            prisma.mediumPriority.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+            prisma.lowPriority.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+            prisma.mediumPriority2.findFirst({
+                where: { userId, reportId: reportIdInt },
+                orderBy: { createdAt: "desc" },
+                select: { createdAt: true },
+            }),
+        ]);
+
+        const latestPrioritizationDate = [
+            lastHigh?.createdAt,
+            lastMedium?.createdAt,
+            lastLow?.createdAt,
+            lastMedium2?.createdAt,
+        ]
+            .filter(Boolean)
+            .sort((a, b) => b!.getTime() - a!.getTime())[0];
+
+        let prioritizationSummary = {
+            hasData: false,
+            savedAt: null as Date | null,
+            highPriority: [] as { name: string }[],
+            mediumPriority: [] as { name: string }[],
+            lowPriority: [] as { name: string }[],
+            mediumPriority2: [] as { name: string }[],
+            totalItems: 0,
+        };
+
+        if (latestPrioritizationDate) {
+            const { start, end } = getSecondRange(latestPrioritizationDate);
+            const [highPriority, mediumPriority, lowPriority, mediumPriority2] = await Promise.all([
+                prisma.highPriority.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+                prisma.mediumPriority.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+                prisma.lowPriority.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+                prisma.mediumPriority2.findMany({
+                    where: { userId, reportId: reportIdInt, createdAt: { gte: start, lt: end } },
+                    orderBy: { id: "asc" },
+                    select: { name: true },
+                }),
+            ]);
+
+            prioritizationSummary = {
+                hasData: true,
+                savedAt: latestPrioritizationDate,
+                highPriority,
+                mediumPriority,
+                lowPriority,
+                mediumPriority2,
+                totalItems:
+                    highPriority.length +
+                    mediumPriority.length +
+                    lowPriority.length +
+                    mediumPriority2.length,
+            };
+        }
+
         return NextResponse.json({
             zoomInForms: zoomInData,
             zoomOutForms: zoomOutData,
+            categorizationSummary,
+            prioritizationSummary,
             message: "Radar data retrieved successfully"
         });
 

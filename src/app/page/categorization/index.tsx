@@ -409,7 +409,7 @@ function ZoomOutCategorizationContent() {
           <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             {categories.map((category) => (
               <div key={category.id} className={`${category.color} rounded-xl p-4 shadow-md flex flex-col`}>
-                <h2 className="font-semibold text-gray-800 mb-2 text-lg">{category.title}</h2>
+                <h2 className="font-semibold text-green-800 mb-2 text-lg">{category.title}</h2>
 
                 <Droppable droppableId={`category-${category.id}`}>
                   {(provided) => (

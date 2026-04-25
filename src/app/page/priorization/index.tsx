@@ -442,7 +442,7 @@ function PriorityQuadrantsContent() {
               key={category.id}
               className={`${category.color} rounded-xl p-4 shadow-md`}
             >
-              <h2 className="font-semibold text-gray-800 mb-2 text-lg">
+              <h2 className="font-semibold text-green-800 mb-2 text-lg">
                 {category.title}
               </h2>
               <Droppable droppableId={`category-${category.id}`}>
@@ -484,23 +484,77 @@ function PriorityQuadrantsContent() {
         </div>
 
         {/* MATRIZ DE 4 CUADRANTES */}
-        <div className="relative w-full md:w-[800px] mx-auto">
-          {/* Ejes */}
-          <div className="absolute -left-32 top-1/2 -translate-y-1/2 -rotate-90 text-gray-700 font-bold">
-            Bajo Impacto - Alto Impacto
+        <div className="relative mx-auto w-full max-w-[900px] pl-14 pb-16 sm:pl-24 sm:pb-20">
+          {/* Ejes unidos en L */}
+          <div className="absolute left-10 top-5 bottom-12 w-0.5 bg-sky-600 sm:left-20 sm:top-6 sm:bottom-16 sm:w-1" />
+          <div className="absolute left-10 right-1 bottom-12 h-0.5 bg-sky-600 sm:left-20 sm:bottom-16 sm:h-1" />
+          <svg
+            className="absolute left-9 top-2 text-sky-600 sm:left-[72px] sm:top-3"
+            width="20"
+            height="20"
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+          >
+            <polygon points="6,0 12,10 0,10" fill="currentColor" />
+          </svg>
+          <svg
+            className="absolute -right-1 bottom-[42px] text-sky-600 sm:-right-2 sm:bottom-[55px]"
+            width="20"
+            height="20"
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+          >
+            <polygon points="12,6 0,0 0,12" fill="currentColor" />
+          </svg>
+
+          {/* Etiquetas de ejes */}
+          <div className="absolute left-0 top-1/4 -translate-y-1/2 w-9 text-right text-sm font-semibold leading-4 text-gray-900 sm:-left-2 sm:w-16 sm:text-xl sm:leading-6">
+            Alto
+            <br />
+            Impacto
           </div>
-          <div className="absolute bottom-0 left-1/2 translate-x-[-50%] translate-y-8 text-gray-700 font-bold min-w-max">
-            Baja urgencia - Alta urgencia
+          <div className="absolute left-0 top-[70%] -translate-y-1/2 w-9 text-right text-sm font-semibold leading-4 text-gray-900 sm:-left-2 sm:top-[68%] sm:w-16 sm:text-xl sm:leading-6">
+            Bajo
+            <br />
+            Impacto
+          </div>
+          <div className="absolute bottom-0 left-10 right-2 grid grid-cols-2 sm:left-20">
+            <div className="text-center text-lg font-semibold leading-5 text-gray-900 sm:text-xl sm:leading-6">
+              Baja
+              <br />
+              Urgencia
+            </div>
+            <div className="text-center text-lg font-semibold leading-5 text-gray-900 sm:text-xl sm:leading-6">
+              Alta
+              <br />
+              Urgencia
+            </div>
           </div>
 
           {/* Cuadrantes */}
-          <div className="grid grid-cols-2 grid-rows-2 border border-gray-500">
+          <div className="grid grid-cols-2 grid-rows-2 gap-1 sm:gap-2 p-1 sm:p-2">
             {(
               [
-                { id: "q2", title: "Prioridad media", border: "border-yellow-300" },
-                { id: "q1", title: "Alta prioridad", border: "border-green-400" },
-                { id: "q3", title: "Baja prioridad", border: "border-red-500" },
-                { id: "q4", title: "Prioridad media", border: "border-yellow-300" },
+                {
+                  id: "q2",
+                  title: "Prioridad media",
+                  border: "border-yellow-300",
+                },
+                {
+                  id: "q1",
+                  title: "Alta prioridad",
+                  border: "border-green-400",
+                },
+                {
+                  id: "q3",
+                  title: "Baja prioridad",
+                  border: "border-red-500",
+                },
+                {
+                  id: "q4",
+                  title: "Prioridad media",
+                  border: "border-yellow-300",
+                },
               ] as const
             ).map((q) => (
               <Droppable key={q.id} droppableId={q.id}>
@@ -508,15 +562,15 @@ function PriorityQuadrantsContent() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`green-interactive border-4 ${q.border} min-h-[200px] flex flex-col p-4 relative`}
+                    className={`green-interactive border-2 sm:border-4 ${q.border} min-h-40 sm:min-h-[200px] flex flex-col p-2.5 sm:p-4 relative`}
                   >
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">
+                    <h3 className="text-xl sm:text-3xl font-semibold text-green-800 mb-2 sm:mb-3">
                       {q.title}
                     </h3>
                     <div
                       className={`flex flex-col gap-2 px-1 py-1 ${hiddenScrollbarClass} ${
                         quadrants[q.id as keyof typeof quadrants].length > 5
-                          ? "max-h-[230px] overflow-y-auto overflow-x-visible"
+                          ? "max-h-[170px] sm:max-h-[230px] overflow-y-auto overflow-x-visible"
                           : "overflow-visible"
                       }`}
                     >
@@ -531,7 +585,7 @@ function PriorityQuadrantsContent() {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`px-2.5 py-1.5 text-sm box-border ${note.color} rounded-md shadow text-gray-700 cursor-pointer transition ${
+                              className={`px-2 py-1 text-xs sm:px-2.5 sm:py-1.5 sm:text-sm box-border ${note.color} rounded-md shadow text-gray-700 cursor-pointer transition ${
                                 selectedNoteIds.has(note.id)
                                   ? "ring-2 ring-inset ring-[#2E6347]"
                                   : ""
