@@ -161,10 +161,10 @@ function PriorityQuadrantsContent() {
 
         // Colores solo para mostrar (no se guardan en BD)
         const colorPairs: [string, string][] = [
-          ["green-interactive border border-2 border-red-300", "bg-red-300"],
-          ["green-interactive border border-2 border-green-300", "bg-green-300"],
-          ["green-interactive border border-2 border-yellow-200", "bg-yellow-200"],
-          ["green-interactive border border-2 border-blue-300", "bg-blue-300"],
+          ["green-interactive border border-4 border-teal-200", "bg-teal-200"],
+          ["green-interactive border border-4 border-orange-200", "bg-orange-200"],
+          ["green-interactive border border-4 border-lime-200", "bg-lime-200"],
+          ["green-interactive border border-4 border-red-200", "bg-red-200"],
         ];
 
         const nextNoteCategoryMap: Record<string, string> = {};
@@ -484,12 +484,12 @@ function PriorityQuadrantsContent() {
         </div>
 
         {/* MATRIZ DE 4 CUADRANTES */}
-        <div className="relative mx-auto w-full max-w-[900px] pl-14 pb-16 sm:pl-24 sm:pb-20">
+        <div className="relative mx-auto w-full max-w-[800px] pl-14 pb-16 sm:pl-24 sm:pb-20">
           {/* Ejes unidos en L */}
-          <div className="absolute left-10 top-5 bottom-12 w-0.5 bg-sky-600 sm:left-20 sm:top-6 sm:bottom-16 sm:w-1" />
-          <div className="absolute left-10 right-1 bottom-12 h-0.5 bg-sky-600 sm:left-20 sm:bottom-16 sm:h-1" />
+          <div className="absolute left-10 top-5 bottom-12 w-0.5 bg-blue-500 sm:left-20 sm:top-6 sm:bottom-16 sm:w-1" />
+          <div className="absolute left-10 right-1 bottom-12 h-0.5 bg-blue-500 sm:left-20 sm:bottom-16 sm:h-1" />
           <svg
-            className="absolute left-9 top-2 text-sky-600 sm:left-[72px] sm:top-3"
+            className="absolute left-9 top-2 text-blue-500 sm:left-[72px] sm:top-3"
             width="20"
             height="20"
             viewBox="0 0 12 12"
@@ -498,7 +498,7 @@ function PriorityQuadrantsContent() {
             <polygon points="6,0 12,10 0,10" fill="currentColor" />
           </svg>
           <svg
-            className="absolute -right-1 bottom-[42px] text-sky-600 sm:-right-2 sm:bottom-[55px]"
+            className="absolute -right-1 bottom-[42px] text-blue-500 sm:-right-2 sm:bottom-[55px]"
             width="20"
             height="20"
             viewBox="0 0 12 12"
@@ -508,23 +508,23 @@ function PriorityQuadrantsContent() {
           </svg>
 
           {/* Etiquetas de ejes */}
-          <div className="absolute left-0 top-1/4 -translate-y-1/2 w-9 text-right text-sm font-semibold leading-4 text-gray-900 sm:-left-2 sm:w-16 sm:text-xl sm:leading-6">
+          <div className="absolute left-0 top-1/4 -translate-y-1/2 w-9 text-right text-sm font-semibold leading-4 text-green-800 sm:-left-2 sm:w-16 sm:text-xl sm:leading-6">
             Alto
             <br />
             Impacto
           </div>
-          <div className="absolute left-0 top-[70%] -translate-y-1/2 w-9 text-right text-sm font-semibold leading-4 text-gray-900 sm:-left-2 sm:top-[68%] sm:w-16 sm:text-xl sm:leading-6">
+          <div className="absolute left-0 top-[70%] -translate-y-1/2 w-8 text-right text-sm font-semibold leading-4 text-green-800 sm:-left-2 sm:top-[68%] sm:w-16 sm:text-xl sm:leading-6">
             Bajo
             <br />
             Impacto
           </div>
           <div className="absolute bottom-0 left-10 right-2 grid grid-cols-2 sm:left-20">
-            <div className="text-center text-lg font-semibold leading-5 text-gray-900 sm:text-xl sm:leading-6">
+            <div className="text-center text-lg font-semibold leading-5 text-green-800 sm:text-xl sm:leading-6">
               Baja
               <br />
               Urgencia
             </div>
-            <div className="text-center text-lg font-semibold leading-5 text-gray-900 sm:text-xl sm:leading-6">
+            <div className="text-center text-lg font-semibold leading-5 text-green-800 sm:text-xl sm:leading-6">
               Alta
               <br />
               Urgencia
@@ -538,22 +538,22 @@ function PriorityQuadrantsContent() {
                 {
                   id: "q2",
                   title: "Prioridad media",
-                  border: "border-yellow-300",
+                  border: "border-yellow-200",
                 },
                 {
                   id: "q1",
                   title: "Alta prioridad",
-                  border: "border-green-400",
+                  border: "border-emerald-600",
                 },
                 {
                   id: "q3",
                   title: "Baja prioridad",
-                  border: "border-red-500",
+                  border: "border-red-400",
                 },
                 {
                   id: "q4",
                   title: "Prioridad media",
-                  border: "border-yellow-300",
+                  border: "border-yellow-200",
                 },
               ] as const
             ).map((q) => (
@@ -564,7 +564,7 @@ function PriorityQuadrantsContent() {
                     {...provided.droppableProps}
                     className={`green-interactive border-2 sm:border-4 ${q.border} min-h-40 sm:min-h-[200px] flex flex-col p-2.5 sm:p-4 relative`}
                   >
-                    <h3 className="text-xl sm:text-3xl font-semibold text-green-800 mb-2 sm:mb-3">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-green-800 mb-2 sm:mb-3">
                       {q.title}
                     </h3>
                     <div
