@@ -154,10 +154,10 @@ function ZoomOutCategorizationContent() {
         console.log("API response:", data);
 
         const colorPairs: [string, string][] = [
-          ["green-interactive border border-2 border-red-300", "bg-red-300"],
-          ["green-interactive border border-2 border-green-300", "bg-green-300"],
-          ["green-interactive border border-2 border-yellow-200", "bg-yellow-200"],
-          ["green-interactive border border-2 border-blue-300", "bg-blue-300"],
+          ["green-interactive border border-3 border-teal-200", "bg-teal-200"],
+          ["green-interactive border border-3 border-orange-200", "bg-orange-200"],
+          ["green-interactive border border-3 border-lime-200", "bg-lime-200"],
+          ["green-interactive border border-3 border-red-200", "bg-red-200"],
         ];
 
         const nextNoteCategoryMap: Record<string, string> = {};
