@@ -183,7 +183,7 @@ export default function OrganizationDashboardContent() {
                 <h1 className="text-3xl font-bold text-primary mb-2">
                     Reportes de Evaluación Digital
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-black mt-5">
                     Crea y gestiona tus reportes de evaluación de madurez digital
                 </p>
             </div>
@@ -255,12 +255,12 @@ export default function OrganizationDashboardContent() {
                                     <CardTitle className="text-lg text-primary whitespace-nowrap overflow-hidden text-ellipsis">
                                         {report.name}
                                     </CardTitle>
-                                    <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
+                                    <div className="flex items-center justify-between gap-4 text-sm text-gray-800">
                                         <div className="flex items-center justify-start whitespace-nowrap">
                                             <Hash className="h-4 w-4 mr-1" />
                                             V{report.version}
                                         </div>
-                                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap pl-2">
+                                        <div className="flex items-center justify-end gap-1.5 text-gray-800 whitespace-nowrap pl-2">
                                             <Calendar className="h-4 w-4" />
                                             <span>{formatDate(report.createdAt)}</span>
                                         </div>
@@ -270,7 +270,7 @@ export default function OrganizationDashboardContent() {
                             <CardContent>
                                 <div className="space-y-3 mb-4">
                                     <div className="flex justify-between text-sm">
-                                        <span>Progreso general</span>
+                                        <span className="font-normal">Progreso general</span>
                                         <span className="font-medium">{report.stats.completionRate}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -281,13 +281,13 @@ export default function OrganizationDashboardContent() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
-                                            <div className="text-gray-600">Zoom In</div>
+                                            <div className="text-gray-800">Zoom In</div>
                                             <div className="font-medium">
                                                 {report.stats.zoomInCompleted}/{report.stats.zoomInTotal}
                                             </div>
                                         </div>
                                         <div>
-                                            <div className="text-gray-600">Zoom Out</div>
+                                            <div className="text-gray-800">Zoom Out</div>
                                             <div className="font-medium">
                                                 {report.stats.zoomOutCompleted}/{report.stats.zoomOutTotal}
                                             </div>
@@ -295,13 +295,13 @@ export default function OrganizationDashboardContent() {
                                     </div>
                                     <div className="grid grid-cols-1 gap-2 text-sm">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-600">Categorización</span>
+                                            <span className="text-gray-800">Categorización</span>
                                             <span className={`font-medium ${report.stats.categorizationCompleted ? "text-green-800" : "text-amber-700"}`}>
                                                 {report.stats.categorizationCompleted ? "Completado" : "Pendiente"}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-600">Priorización</span>
+                                            <span className="text-gray-800">Priorización</span>
                                             <span className={`font-medium ${report.stats.prioritizationCompleted ? "text-green-800" : "text-amber-700"}`}>
                                                 {report.stats.prioritizationCompleted ? "Completado" : "Pendiente"}
                                             </span>
