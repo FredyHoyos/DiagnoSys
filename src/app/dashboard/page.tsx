@@ -87,7 +87,7 @@ export default function Page() {
                     <div className="text-sm font-medium text-primary">{s.step}</div>
                   </div>
                   <h3 id={`step-${s.id}-title`} className="mt-2 text-xl font-semibold text-primary">{s.title}</h3>
-                  <p className="mt-2 text-base text-gray-700">{s.desc}</p>
+                  <p className="mt-2 text-sm text-gray-700">{s.desc}</p>
                 </div>
               </div>
 
