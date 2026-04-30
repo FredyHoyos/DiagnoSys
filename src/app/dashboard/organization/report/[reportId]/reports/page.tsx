@@ -165,25 +165,33 @@ export default function ReportsPage() {
 
     const SummaryColumn = ({
         title,
+        subtitle,
         items,
         emptyLabel,
         titleClass,
         chipClass,
+        containerClass,
     }: {
         title: string;
+        subtitle?: string;
         items: { name: string }[];
         emptyLabel: string;
         titleClass: string;
         chipClass: string;
+        containerClass?: string;
     }) => (
-        <div className="rounded-xl border border-green-100 bg-white/70 p-4">
+        <div className={`rounded-xl border bg-white/70 p-4 ${containerClass ?? "border-green-100"}`}>
             <h3 className={`mb-3 text-sm font-semibold ${titleClass}`}>{title}</h3>
+            {subtitle && <p className="mb-3 text-xs text-gray-600">{subtitle}</p>}
             {items.length === 0 ? (
                 <p className="text-sm text-gray-500">{emptyLabel}</p>
             ) : (
                 <div className="max-h-64 space-y-2 overflow-auto pr-1">
                     {items.map((item, index) => (
-                        <div key={`${item.name}-${index}`} className={`rounded-lg px-3 py-2 text-sm ${chipClass}`}>
+                        <div
+                            key={`${item.name}-${index}`}
+                            className={`rounded-lg px-3 py-2 text-sm text-black ${chipClass}`}
+                        >
                             {item.name}
                         </div>
                     ))}
@@ -271,7 +279,7 @@ export default function ReportsPage() {
                                 <Button
                                     size="sm"
                                     variant={activeView === "charts" ? "default" : "outline"}
-                                    className={activeView === "charts" ? "bg-[#2E6347] text-white" : ""}
+                                    className={`${activeView === "charts" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
                                     onClick={() => setActiveView("charts")}
                                 >
                                     <Radar className="h-4 w-4 mr-2" />
@@ -280,7 +288,7 @@ export default function ReportsPage() {
                                 <Button
                                     size="sm"
                                     variant={activeView === "categorization" ? "default" : "outline"}
-                                    className={activeView === "categorization" ? "bg-[#2E6347] text-white" : ""}
+                                    className={`${activeView === "categorization" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
                                     onClick={() => setActiveView("categorization")}
                                 >
                                     <Sparkles className="h-4 w-4 mr-2" />
@@ -289,7 +297,7 @@ export default function ReportsPage() {
                                 <Button
                                     size="sm"
                                     variant={activeView === "prioritization" ? "default" : "outline"}
-                                    className={activeView === "prioritization" ? "bg-[#2E6347] text-white" : ""}
+                                    className={`${activeView === "prioritization" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
                                     onClick={() => setActiveView("prioritization")}
                                 >
                                     <ListChecks className="h-4 w-4 mr-2" />
@@ -310,7 +318,7 @@ export default function ReportsPage() {
                             <Button
                                 size="sm"
                                 variant={chartFilter === "all" ? "default" : "outline"}
-                                className={chartFilter === "all" ? "bg-[#2E6347] text-white" : ""}
+                                className={`${chartFilter === "all" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
                                 onClick={() => setChartFilter("all")}
                             >
                                 Zoom In + Zoom Out
@@ -318,7 +326,7 @@ export default function ReportsPage() {
                             <Button
                                 size="sm"
                                 variant={chartFilter === "zoom-in" ? "default" : "outline"}
-                                className={chartFilter === "zoom-in" ? "bg-[#2E6347] text-white" : ""}
+                                className={`${chartFilter === "zoom-in" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
                                 onClick={() => setChartFilter("zoom-in")}
                             >
                                 Solo Zoom In
@@ -326,7 +334,7 @@ export default function ReportsPage() {
                             <Button
                                 size="sm"
                                 variant={chartFilter === "zoom-out" ? "default" : "outline"}
-                                className={chartFilter === "zoom-out" ? "bg-[#2E6347] text-white" : ""}
+                                className={`${chartFilter === "zoom-out" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
                                 onClick={() => setChartFilter("zoom-out")}
                             >
                                 Solo Zoom Out
@@ -410,17 +418,17 @@ export default function ReportsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-100">
-                                    <p className="text-sm text-emerald-800">Oportunidades</p>
-                                    <p className="text-2xl font-bold text-emerald-900">{categorizationSummary.opportunities.length}</p>
+                                <div className="rounded-xl bg-teal-50 p-4 border border-green-600">
+                                    <p className="text-sm text-green-800">Oportunidades</p>
+                                    <p className="text-2xl font-bold text-green-900">{categorizationSummary.opportunities.length}</p>
                                 </div>
-                                <div className="rounded-xl bg-sky-50 p-4 border border-sky-100">
-                                    <p className="text-sm text-sky-800">Necesidades</p>
-                                    <p className="text-2xl font-bold text-sky-900">{categorizationSummary.needs.length}</p>
+                                <div className="rounded-xl bg-orange-50 p-4 border border-orange-300">
+                                    <p className="text-sm text-orange-400">Necesidades</p>
+                                    <p className="text-2xl font-bold text-orange-700">{categorizationSummary.needs.length}</p>
                                 </div>
-                                <div className="rounded-xl bg-rose-50 p-4 border border-rose-100">
-                                    <p className="text-sm text-rose-800">Problemas</p>
-                                    <p className="text-2xl font-bold text-rose-900">{categorizationSummary.problems.length}</p>
+                                <div className="rounded-xl bg-red-50 p-4 border border-red-700">
+                                    <p className="text-sm text-red-700">Problemas</p>
+                                    <p className="text-2xl font-bold text-red-900">{categorizationSummary.problems.length}</p>
                                 </div>
                             </div>
 
@@ -432,22 +440,25 @@ export default function ReportsPage() {
                                         title="Oportunidades"
                                         items={categorizationSummary.opportunities}
                                         emptyLabel="Sin oportunidades registradas"
-                                        titleClass="text-emerald-900"
-                                        chipClass="bg-emerald-100 text-emerald-900"
+                                        titleClass="text-green-800"
+                                        chipClass="bg-green-100 border border-green-600"
+                                        containerClass="border-green-600"
                                     />
                                     <SummaryColumn
                                         title="Necesidades"
                                         items={categorizationSummary.needs}
                                         emptyLabel="Sin necesidades registradas"
-                                        titleClass="text-sky-900"
-                                        chipClass="bg-sky-100 text-sky-900"
+                                        titleClass="text-orange-400"
+                                        chipClass="bg-orange-100 border border-orange-300"
+                                        containerClass="border-orange-300"
                                     />
                                     <SummaryColumn
                                         title="Problemas"
                                         items={categorizationSummary.problems}
                                         emptyLabel="Sin problemas registrados"
-                                        titleClass="text-rose-900"
-                                        chipClass="bg-rose-100 text-rose-900"
+                                        titleClass="text-red-700"
+                                        chipClass="bg-red-100 border border-red-700"
+                                        containerClass="border-red-700"
                                     />
                                 </div>
                             )}
@@ -470,21 +481,25 @@ export default function ReportsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div className="rounded-xl bg-red-50 p-4 border border-red-100">
-                                    <p className="text-sm text-red-800">Alta</p>
-                                    <p className="text-2xl font-bold text-red-900">{prioritizationSummary.highPriority.length}</p>
+                                <div className="rounded-xl bg-yellow-50 p-4 border border-yellow-400">
+                                    <p className="text-xs uppercase tracking-wide text-yellow-700">Alto impacto</p>
+                                    <p className="text-xs uppercase text-yellow-700">Baja urgencia</p>
+                                    <p className="text-2xl font-bold text-yellow-800">{prioritizationSummary.mediumPriority.length}</p>
                                 </div>
-                                <div className="rounded-xl bg-amber-50 p-4 border border-amber-100">
-                                    <p className="text-sm text-amber-800">Media 1</p>
-                                    <p className="text-2xl font-bold text-amber-900">{prioritizationSummary.mediumPriority.length}</p>
+                                <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-600">
+                                    <p className="text-xs uppercase tracking-wide text-emerald-800">Alto impacto</p>
+                                    <p className="text-xs uppercase text-emerald-800">Alta urgencia</p>
+                                    <p className="text-2xl font-bold text-emerald-900">{prioritizationSummary.highPriority.length}</p>
                                 </div>
-                                <div className="rounded-xl bg-lime-50 p-4 border border-lime-100">
-                                    <p className="text-sm text-lime-800">Baja</p>
-                                    <p className="text-2xl font-bold text-lime-900">{prioritizationSummary.lowPriority.length}</p>
+                                <div className="rounded-xl bg-red-50 p-4 border border-red-400">
+                                    <p className="text-xs uppercase tracking-wide text-red-800">Bajo impacto</p>
+                                    <p className="text-xs uppercase text-red-800">Baja urgencia</p>
+                                    <p className="text-2xl font-bold text-red-900">{prioritizationSummary.lowPriority.length}</p>
                                 </div>
-                                <div className="rounded-xl bg-orange-50 p-4 border border-orange-100">
-                                    <p className="text-sm text-orange-800">Media 2</p>
-                                    <p className="text-2xl font-bold text-orange-900">{prioritizationSummary.mediumPriority2.length}</p>
+                                <div className="rounded-xl bg-yellow-50 p-4 border border-yellow-400">
+                                    <p className="text-xs uppercase tracking-wide text-yellow-700">Bajo impacto</p>
+                                    <p className="text-xs uppercase text-yellow-700">Alta urgencia</p>
+                                    <p className="text-2xl font-bold text-yellow-800">{prioritizationSummary.mediumPriority2.length}</p>
                                 </div>
                             </div>
 
@@ -493,32 +508,40 @@ export default function ReportsPage() {
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <SummaryColumn
-                                        title="Alta prioridad"
-                                        items={prioritizationSummary.highPriority}
-                                        emptyLabel="Sin elementos"
-                                        titleClass="text-red-900"
-                                        chipClass="bg-red-100 text-red-900"
-                                    />
-                                    <SummaryColumn
-                                        title="Media prioridad 1"
+                                        title="Prioridad media"
+                                        subtitle="Alto impacto · Baja urgencia"
                                         items={prioritizationSummary.mediumPriority}
                                         emptyLabel="Sin elementos"
-                                        titleClass="text-amber-900"
-                                        chipClass="bg-amber-100 text-amber-900"
+                                        titleClass="text-yellow-700"
+                                        chipClass="bg-yellow-100 border border-yellow-400"
+                                        containerClass="border-yellow-400"
+                                    />
+                                    <SummaryColumn
+                                        title="Alta prioridad"
+                                        subtitle="Alto impacto · Alta urgencia"
+                                        items={prioritizationSummary.highPriority}
+                                        emptyLabel="Sin elementos"
+                                        titleClass="text-emerald-800"
+                                        chipClass="bg-emerald-100 border border-emerald-600"
+                                        containerClass="border-emerald-600"
                                     />
                                     <SummaryColumn
                                         title="Baja prioridad"
+                                        subtitle="Bajo impacto · Baja urgencia"
                                         items={prioritizationSummary.lowPriority}
                                         emptyLabel="Sin elementos"
-                                        titleClass="text-lime-900"
-                                        chipClass="bg-lime-100 text-lime-900"
+                                        titleClass="text-red-800"
+                                        chipClass="bg-red-100 border border-red-400"
+                                        containerClass="border-red-400"
                                     />
                                     <SummaryColumn
-                                        title="Media prioridad 2"
+                                        title="Prioridad media"
+                                        subtitle="Bajo impacto · Alta urgencia"
                                         items={prioritizationSummary.mediumPriority2}
                                         emptyLabel="Sin elementos"
-                                        titleClass="text-orange-900"
-                                        chipClass="bg-orange-100 text-orange-900"
+                                        titleClass="text-yellow-700"
+                                        chipClass="bg-yellow-100 border border-yellow-400"
+                                        containerClass="border-yellow-400"
                                     />
                                 </div>
                             )}
