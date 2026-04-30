@@ -179,20 +179,6 @@ export default function OrganizationDashboardContent() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            {consultantScopedMode && (
-                <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-sm text-emerald-900">
-                        Estás gestionando el diagnóstico de {organizationName || `Organización #${organizationId}`} en modo consultor.
-                    </p>
-                    <button
-                        type="button"
-                        className="mt-2 text-sm text-emerald-700 hover:underline cursor-pointer"
-                        onClick={() => router.push("/dashboard/consultant/organizations")}
-                    >
-                        Volver a mi perfil de consultor
-                    </button>
-                </div>
-            )}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-primary mb-2">
                     Reportes de Evaluación Digital
