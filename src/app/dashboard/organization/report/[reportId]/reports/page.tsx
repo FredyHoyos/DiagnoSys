@@ -208,7 +208,7 @@ export default function ReportsPage() {
                     <h1 className="text-3xl font-bold text-[#2E6347] mb-2">
                         Reportes de Evaluación Digital
                     </h1>
-                    <p className="text-black">
+                    <p className="text-black mt-5 text-lg">
                         Visualiza gráficas de radar y resúmenes ejecutivos de categorización y priorización
                     </p>
                 </div>
@@ -255,17 +255,17 @@ export default function ReportsPage() {
                 </div>
 
                 <Card className="green-interactive mb-8 border border-emerald-200">
-                    <CardContent className="pt-6">
+                    <CardContent className="p-6">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-center gap-2 text-[#2E6347] font-semibold">
+                            <div className="flex items-center gap-2 text-sm text-[#2E6347] font-semibold">
                                 <Layers3 className="h-5 w-5" />
                                 Cambiar vista de resultados
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 justify-end">
                                 <Button
                                     size="sm"
                                     variant={activeView === "charts" ? "default" : "outline"}
-                                    className={`${activeView === "charts" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
+                                    className={`${activeView === "charts" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
                                     onClick={() => setActiveView("charts")}
                                 >
                                     <Radar className="h-4 w-4 mr-2" />
@@ -274,7 +274,7 @@ export default function ReportsPage() {
                                 <Button
                                     size="sm"
                                     variant={activeView === "categorization" ? "default" : "outline"}
-                                    className={`${activeView === "categorization" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
+                                    className={`${activeView === "categorization" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
                                     onClick={() => setActiveView("categorization")}
                                 >
                                     <Sparkles className="h-4 w-4 mr-2" />
@@ -283,7 +283,7 @@ export default function ReportsPage() {
                                 <Button
                                     size="sm"
                                     variant={activeView === "prioritization" ? "default" : "outline"}
-                                    className={`${activeView === "prioritization" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
+                                    className={`${activeView === "prioritization" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
                                     onClick={() => setActiveView("prioritization")}
                                 >
                                     <ListChecks className="h-4 w-4 mr-2" />
@@ -295,16 +295,16 @@ export default function ReportsPage() {
                 </Card>
 
                 {activeView === "charts" && (
-                    <div className="green-interactive mb-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-xl border border-emerald-100 px-4 py-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <div className="green-interactive mb-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-xl border border-emerald-100 px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-[#2E6347]  font-semibold">
                             <ListFilter className="h-4 w-4" />
                             Filtrar radar por módulo
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 justify-end">
                             <Button
                                 size="sm"
                                 variant={chartFilter === "all" ? "default" : "outline"}
-                                className={`${chartFilter === "all" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
+                                className={`${chartFilter === "all" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
                                 onClick={() => setChartFilter("all")}
                             >
                                 Zoom In + Zoom Out
@@ -312,7 +312,7 @@ export default function ReportsPage() {
                             <Button
                                 size="sm"
                                 variant={chartFilter === "zoom-in" ? "default" : "outline"}
-                                className={`${chartFilter === "zoom-in" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
+                                className={`${chartFilter === "zoom-in" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
                                 onClick={() => setChartFilter("zoom-in")}
                             >
                                 Solo Zoom In
@@ -320,7 +320,7 @@ export default function ReportsPage() {
                             <Button
                                 size="sm"
                                 variant={chartFilter === "zoom-out" ? "default" : "outline"}
-                                className={`${chartFilter === "zoom-out" ? "bg-[#2E6347] text-white" : ""} hover:bg-[#24533b] hover:text-white`}
+                                className={`${chartFilter === "zoom-out" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
                                 onClick={() => setChartFilter("zoom-out")}
                             >
                                 Solo Zoom Out
