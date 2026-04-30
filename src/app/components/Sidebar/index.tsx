@@ -175,14 +175,14 @@ export default function Sidebar() {
         <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
 
         {userRole === "consultant" && isConsultantDiagnosticsMode ? (
-          <div className="mb-4 p-3 rounded-md bg-white/60 border border-white/70">
-            <p className="text-xs uppercase tracking-wide text-gray-700">Organización seleccionada</p>
-            <p className="font-semibold text-primary truncate">
+          <div className="mb-4 p-3 rounded-md green-interactive  border-2 border-white">
+            <p className="text-xs uppercase tracking-wide text-gray-900">Organización seleccionada</p>
+            <p className="mt-1 font-bold text-primary truncate">
               {resolvedOrganizationName || `Organización #${selectedOrganizationId}`}
             </p>
             <button
               type="button"
-              className="mt-2 inline-block text-sm text-blue-700 hover:underline cursor-pointer"
+              className="mt-2 inline-block text-sm text-green-800 underline cursor-pointer"
               onClick={() => {
                 setIsOpen(false);
                 router.push("/dashboard/consultant/organizations");

@@ -203,20 +203,6 @@ export default function ReportsPage() {
     return (
         <div className="w-full">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                {consultantScopedMode && (
-                    <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3">
-                        <p className="text-sm text-blue-900">
-                            Estás visualizando reportes de {organizationName || `Organización #${organizationId}`} en modo consultor.
-                        </p>
-                        <button
-                            type="button"
-                            className="mt-2 text-sm text-blue-700 hover:underline cursor-pointer"
-                            onClick={() => router.push("/dashboard/consultant/organizations")}
-                        >
-                            Volver a mi perfil de consultor
-                        </button>
-                    </div>
-                )}
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-[#2E6347] mb-2">
