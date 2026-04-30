@@ -270,7 +270,7 @@
     background: radial-gradient(
       ellipse at right top,
       #9ebbb4 0%, 
-      #c0dfb0 47%, 
+      #c0dfb0 47%,  
       #ffffff42 100%   
     );
     /* Sin z-index para mantener la interactividad */
