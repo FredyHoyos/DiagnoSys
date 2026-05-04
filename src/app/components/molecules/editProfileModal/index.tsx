@@ -23,7 +23,6 @@ type EditProfileModalProps = {
   role: string;
   sector?: string | null;
   companySize?: string | null;
-  showSectorAndCompanySize?: boolean;
 };
 
 // Zod schema
@@ -71,7 +70,6 @@ export default function EditProfileModal({
   role,
   sector,
   companySize,
-  showSectorAndCompanySize = true,
 }: EditProfileModalProps) {
   const [open, setOpen] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
@@ -230,7 +228,6 @@ export default function EditProfileModal({
           </div>
 
           {/* Sector */}
-          {showSectorAndCompanySize && (
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="sector" className="text-right">
               Sector
@@ -247,10 +244,8 @@ export default function EditProfileModal({
               </select>
             </div>
           </div>
-          )}
 
           {/* Tamaño empresa */}
-          {showSectorAndCompanySize && (
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="companySize" className="text-left">
               Tamaño empresa
@@ -265,7 +260,6 @@ export default function EditProfileModal({
               </select>
             </div>
           </div>
-          )}
 
           {/* Rol (solo lectura) */}
           <div className="grid grid-cols-4 items-center gap-4">
