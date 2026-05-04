@@ -11,6 +11,8 @@ type OrganizationSummary = {
   description: string | null;
   userName: string;
   email: string;
+  sector?: string | null;
+  companySize?: string | null;
   primaryAuditId: number | null;
   stats: {
     reportsCount: number;
@@ -33,12 +35,16 @@ export default function ConsultantOrganizationsPage() {
   const [editUserName, setEditUserName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPassword, setEditPassword] = useState("");
+  const [editSector, setEditSector] = useState("");
+  const [editCompanySize, setEditCompanySize] = useState("");
 
   const [organizationName, setOrganizationName] = useState("");
   const [description, setDescription] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [sector, setSector] = useState("");
+  const [companySize, setCompanySize] = useState("");
 
   const loadOrganizations = async () => {
     try {
@@ -80,6 +86,8 @@ export default function ConsultantOrganizationsPage() {
           name: userName,
           email,
           password,
+          sector: sector || undefined,
+          companySize: companySize || undefined,
         }),
       });
 
@@ -99,6 +107,8 @@ export default function ConsultantOrganizationsPage() {
       setUserName("");
       setEmail("");
       setPassword("");
+      setSector("");
+      setCompanySize("");
 
       await loadOrganizations();
     } catch (err) {
@@ -120,6 +130,8 @@ export default function ConsultantOrganizationsPage() {
     setEditUserName(org.userName || "");
     setEditEmail(org.email || "");
     setEditPassword("");
+    setEditSector(org.sector || "");
+    setEditCompanySize(org.companySize || "");
     setMessage(null);
     setError(null);
   };
@@ -131,6 +143,8 @@ export default function ConsultantOrganizationsPage() {
     setEditUserName("");
     setEditEmail("");
     setEditPassword("");
+    setEditSector("");
+    setEditCompanySize("");
   };
 
   const handleSaveEdit = async (orgId: number) => {
@@ -159,6 +173,8 @@ export default function ConsultantOrganizationsPage() {
           name: editUserName,
           email: editEmail,
           password: editPassword || undefined,
+          sector: editSector || undefined,
+          companySize: editCompanySize || undefined,
         }),
       });
 
@@ -242,6 +258,30 @@ export default function ConsultantOrganizationsPage() {
                 autoComplete="off"
                 rows={3}
               />
+              <select
+                className="w-full border rounded-md px-3 py-2"
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+              >
+                <option value="">Seleccionar Sector (opcional)</option>
+                <option value="Gobierno">Gobierno</option>
+                <option value="Salud">Salud</option>
+                <option value="Educación">Educación</option>
+                <option value="Informática">Informática</option>
+                <option value="Telecomunicaciones">Telecomunicaciones</option>
+                <option value="Otros">Otros</option>
+              </select>
+              <select
+                className="w-full border rounded-md px-3 py-2"
+                value={companySize}
+                onChange={(e) => setCompanySize(e.target.value)}
+              >
+                <option value="">Seleccionar Tamaño de Empresa (opcional)</option>
+                <option value="0-10">0-10 empleados</option>
+                <option value="11-50">11-50 empleados</option>
+                <option value="51-250">51 a 250 empleados</option>
+                <option value="250+">Más de 250 empleados</option>
+              </select>
 
               <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2">
                 <Button
@@ -379,6 +419,30 @@ export default function ConsultantOrganizationsPage() {
                     placeholder="Nueva contraseña (opcional)"
                     autoComplete="new-password"
                   />
+                  <select
+                    className="w-full border rounded-md px-3 py-2"
+                    value={editSector}
+                    onChange={(e) => setEditSector(e.target.value)}
+                  >
+                    <option value="">Seleccionar Sector</option>
+                    <option value="Gobierno">Gobierno</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Educación">Educación</option>
+                    <option value="Informática">Informática</option>
+                    <option value="Telecomunicaciones">Telecomunicaciones</option>
+                    <option value="Otros">Otros</option>
+                  </select>
+                  <select
+                    className="w-full border rounded-md px-3 py-2"
+                    value={editCompanySize}
+                    onChange={(e) => setEditCompanySize(e.target.value)}
+                  >
+                    <option value="">Seleccionar Tamaño de Empresa</option>
+                    <option value="0-10">0-10 empleados</option>
+                    <option value="11-50">11-50 empleados</option>
+                    <option value="51-250">51 a 250 empleados</option>
+                    <option value="250+">Más de 250 empleados</option>
+                  </select>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleSaveEdit(org.id)}

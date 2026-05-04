@@ -101,6 +101,8 @@ model Organization {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
+  sector      String?
+  companySize String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

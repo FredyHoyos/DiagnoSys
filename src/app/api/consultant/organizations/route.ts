@@ -103,6 +103,8 @@ export async function GET() {
                     id: org.id,
                     name: org.name,
                     description: org.description,
+                    sector: org.sector,
+                    companySize: org.companySize,
                     userName: org.users[0]?.name ?? "",
                     email: org.users[0]?.email ?? "",
                     stats: {
@@ -153,7 +155,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { organizationName, name, email, password, description } = await request.json();
+        const { organizationName, name, email, password, description, sector, companySize } = await request.json();
 
         if (!organizationName || !name || !email || !password) {
             return NextResponse.json(
@@ -202,6 +204,8 @@ export async function POST(request: NextRequest) {
                 data: {
                     name: organizationName,
                     description: description || null,
+                    sector: sector || null,
+                    companySize: companySize || null,
                 },
             });
 
@@ -242,6 +246,8 @@ export async function POST(request: NextRequest) {
                 id: result.organization.id,
                 name: result.organization.name,
                 description: result.organization.description,
+                sector: result.organization.sector,
+                companySize: result.organization.companySize,
                 stats: {
                     reportsCount: 0,
                 },
@@ -298,7 +304,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const consultantId = parseInt(session.user.id);
-        const { orgId, organizationName, description, name, email, password } = await request.json();
+        const { orgId, organizationName, description, name, email, password, sector, companySize } = await request.json();
 
         const orgIdInt = parseInt(String(orgId));
         if (
@@ -385,11 +391,15 @@ export async function PUT(request: NextRequest) {
                     description: typeof description === "string" && description.trim().length > 0
                         ? description.trim()
                         : null,
+                    sector: sector || null,
+                    companySize: companySize || null,
                 },
                 select: {
                     id: true,
                     name: true,
                     description: true,
+                    sector: true,
+                    companySize: true,
                     updatedAt: true,
                 },
             });

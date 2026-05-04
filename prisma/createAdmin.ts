@@ -110,7 +110,7 @@ async function main() {
       },
     })
 
-    console.log('✅ Existing user updated as admin')
+    console.log(' Existing user updated as admin')
     console.log(updated)
     return
   }
@@ -136,13 +136,13 @@ async function main() {
     },
   })
 
-  console.log('✅ Admin user created successfully')
+  console.log(' Admin user created successfully')
   console.log(created)
 }
 
 main()
   .catch((error) => {
-    console.error('❌ createAdmin failed:', error)
+    console.error(' createAdmin failed:', error)
     process.exit(1)
   })
   .finally(async () => {
