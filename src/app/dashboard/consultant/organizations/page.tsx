@@ -21,6 +21,7 @@ type OrganizationSummary = {
 
 export default function ConsultantOrganizationsPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,6 +69,10 @@ export default function ConsultantOrganizationsPage() {
 
   useEffect(() => {
     loadOrganizations();
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -203,6 +208,7 @@ export default function ConsultantOrganizationsPage() {
           </p>
         </div>
 
+        {mounted && (
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="w-fit bg-[#2E6347] hover:bg-[#265239] text-white">
@@ -307,6 +313,7 @@ export default function ConsultantOrganizationsPage() {
             {error && <p className="text-red-600">{error}</p>}
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
