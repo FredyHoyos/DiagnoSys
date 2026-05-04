@@ -38,12 +38,7 @@ export default function UserInfo({ name, gmail, role, avatar }: UserInfoProps) {
 
       {/* Modal de edición */}
       <div className="flex justify-end">
-        <EditProfileModal 
-          name={name} 
-          gmail={gmail} 
-          role={roleLabel}
-          showSectorAndCompanySize={role === "consultant" || role === "Consultant"}
-        />
+        <EditProfileModal name={name} gmail={gmail} role={roleLabel}/>
       </div>
     </div>
   );

@@ -71,7 +71,7 @@ export default function EditProfileModal({
   role,
   sector,
   companySize,
-  showSectorAndCompanySize = true,
+  showSectorAndCompanySize = false,
 }: EditProfileModalProps) {
   const [open, setOpen] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
