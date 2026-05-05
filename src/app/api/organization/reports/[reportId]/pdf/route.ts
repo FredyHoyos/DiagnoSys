@@ -111,6 +111,88 @@ export async function GET(
       }),
     ]);
 
+    // Also fetch personalized forms to render zoom-in / zoom-out charts like radar-data route
+    const personalizedForms = await prisma.personalizedForm.findMany({
+      where: {
+        userId: userId,
+        auditId: null,
+        reportId: reportIdInt,
+      },
+      include: {
+        baseForm: {
+          select: {
+            id: true,
+            name: true,
+            tag: true,
+            module: { select: { id: true, name: true } },
+          },
+        },
+        personalizedCategories: {
+          include: { personalizedItems: { select: { id: true, name: true, score: true, isCustom: true } } },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // group latest forms by module+baseForm
+    const latestFormsByModule = new Map();
+    personalizedForms.forEach((form) => {
+      const moduleId = form.baseForm.module.id;
+      const baseFormId = form.baseFormId;
+      const key = `${moduleId}-${baseFormId}`;
+      if (!latestFormsByModule.has(key) || new Date(form.updatedAt) > new Date(latestFormsByModule.get(key).updatedAt)) {
+        latestFormsByModule.set(key, form);
+      }
+    });
+
+    const latestForms = Array.from(latestFormsByModule.values());
+
+    const processFormsForRadar = (forms: any[]) => {
+      return forms.map((form) => {
+        const categoryData = form.personalizedCategories.map((category: any) => {
+          const items: any[] = category.personalizedItems || [];
+          const totalScore = items.reduce((s: number, it: any) => s + (it.score || 0), 0);
+          const avgScore = items.length > 0 ? totalScore / items.length : 0;
+          return {
+            name: category.name,
+            score: Math.round(avgScore * 100) / 100,
+            maxScore: 5,
+            itemCount: items.length,
+            totalScore,
+          };
+        });
+
+        const totalItems = form.personalizedCategories.reduce((s: number, c: any) => s + (c.personalizedItems?.length || 0), 0);
+        const totalScore = form.personalizedCategories.reduce(
+          (s: number, c: any) => s + (c.personalizedItems?.reduce((ss: number, it: any) => ss + (it.score || 0), 0) || 0),
+          0
+        );
+        const avgScore = totalItems > 0 ? totalScore / totalItems : 0;
+
+        return {
+          id: form.id,
+          name: form.name,
+          module: form.baseForm.module.name,
+          isCompleted: form.isCompleted,
+          completedAt: form.completedAt,
+          categoryData,
+          stats: {
+            totalItems,
+            totalScore,
+            avgScore: Math.round(avgScore * 100) / 100,
+            maxPossibleScore: totalItems * 5,
+            completionPercentage: totalItems > 0 ? Math.round((avgScore / 5) * 100) : 0,
+          },
+        };
+      });
+    };
+
+    const zoomInForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom in"));
+    const zoomOutForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom out"));
+
+    const zoomInData = processFormsForRadar(zoomInForms);
+    const zoomOutData = processFormsForRadar(zoomOutForms);
+
     const config = withDefaultReportConfig(
       configRaw
         ? {
@@ -182,6 +264,79 @@ export async function GET(
         y -= 8;
       } catch (err) {
         console.error("Error rendering radar chart:", err);
+      }
+    }
+    // Render individual zoom-in charts
+    const ensureSpace = (needed: number): any => {
+      if (y - needed < 60) {
+        const newPage = pdf.addPage([595, 842]);
+        y = 800;
+        return newPage;
+      }
+      return page;
+    };
+
+    if (config.showRadar) {
+      // Render zoom-in forms charts
+      if (zoomInData.length > 0) {
+        page.drawText("Gráficas Zoom In", { x: 40, y, size: 14, font: fontBold, color: titleColor });
+        y -= 20;
+        for (const form of zoomInData) {
+          const labels = form.categoryData.map((c: any) => c.name);
+          const values = form.categoryData.map((c: any) => c.score);
+          try {
+            const imgBuf = await renderRadarChart(labels, values, 520, 240);
+            const pngImage = await pdf.embedPng(imgBuf);
+            const imgWidth = 480;
+            const imgHeight = (240 / 520) * imgWidth;
+            if (y - imgHeight < 80) {
+              const newPg = pdf.addPage([595, 842]);
+              y = 800;
+              newPg.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
+              y -= 18;
+              newPg.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
+              y -= imgHeight + 12;
+            } else {
+              page.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
+              y -= 18;
+              page.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
+              y -= imgHeight + 12;
+            }
+          } catch (err) {
+            console.error("Error rendering zoom-in chart for form:", form.name, err);
+          }
+        }
+      }
+
+      // Render zoom-out forms charts
+      if (zoomOutData.length > 0) {
+        page.drawText("Gráficas Zoom Out", { x: 40, y, size: 14, font: fontBold, color: titleColor });
+        y -= 20;
+        for (const form of zoomOutData) {
+          const labels = form.categoryData.map((c: any) => c.name);
+          const values = form.categoryData.map((c: any) => c.score);
+          try {
+            const imgBuf = await renderRadarChart(labels, values, 520, 240);
+            const pngImage = await pdf.embedPng(imgBuf);
+            const imgWidth = 480;
+            const imgHeight = (240 / 520) * imgWidth;
+            if (y - imgHeight < 80) {
+              const newPg = pdf.addPage([595, 842]);
+              y = 800;
+              newPg.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
+              y -= 18;
+              newPg.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
+              y -= imgHeight + 12;
+            } else {
+              page.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
+              y -= 18;
+              page.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
+              y -= imgHeight + 12;
+            }
+          } catch (err) {
+            console.error("Error rendering zoom-out chart for form:", form.name, err);
+          }
+        }
       }
     }
 
