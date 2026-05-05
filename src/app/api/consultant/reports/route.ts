@@ -67,27 +67,15 @@ export async function GET() {
       }),
     ]);
 
-    const organizations = await prisma.organization.findMany({
+    const organizations = await prisma.user.findMany({
       where: {
-        audits: {
+        role: {
+          name: "organization",
+        },
+        organizationAudits: {
           some: {
             consultantId,
           },
-        },
-      },
-      include: {
-        users: {
-          where: {
-            role: {
-              name: "organization",
-            },
-          },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-          take: 1,
         },
       },
       orderBy: {
@@ -96,20 +84,8 @@ export async function GET() {
     });
 
     const processedOrganizations: OrganizationReportsSummary[] = await Promise.all(
-      organizations.map(async (org) => {
-        const organizationUserId = org.users[0]?.id ?? null;
-
-        if (!organizationUserId) {
-          return {
-            id: org.id,
-            name: org.name,
-            description: org.description,
-            userName: org.users[0]?.name ?? "",
-            email: org.users[0]?.email ?? "",
-            stats: { reportsCount: 0 },
-            reports: [],
-          };
-        }
+      organizations.map(async (organizationUser) => {
+        const organizationUserId = organizationUser.id;
 
         const reports = await prisma.report.findMany({
           where: {
@@ -157,11 +133,11 @@ export async function GET() {
         });
 
         return {
-          id: org.id,
-          name: org.name,
-          description: org.description,
-          userName: org.users[0]?.name ?? "",
-          email: org.users[0]?.email ?? "",
+          id: organizationUser.id,
+          name: organizationUser.name,
+          description: null,
+          userName: organizationUser.name,
+          email: organizationUser.email,
           stats: {
             reportsCount: reportsSummary.length,
           },

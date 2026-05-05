@@ -374,8 +374,8 @@ export default function ConsultantOrganizationsPage() {
                 <div className="mt-4 space-y-3 border-t border-primary/20 pt-4">
                   <input
                     className="w-full border rounded-md px-3 py-2"
-                    value={editOrganizationName}
-                    onChange={(e) => setEditOrganizationName(e.target.value)}
+                    value={editUserName}
+                    onChange={(e) => setEditUserName(e.target.value)}
                     placeholder="Nombre de la organización"
                     autoComplete="off"
                   />

@@ -52,10 +52,7 @@ export async function GET() {
                     select: {
                         id: true,
                         name: true,
-                        email: true,
-                        organization: {
-                            select: { id: true }
-                        }
+                        email: true
                     }
                 },
                 personalizedCategories: {
@@ -138,7 +135,7 @@ export async function GET() {
                     user: {
                         name: form.user.name,
                         email: form.user.email,
-                        organizationId: form.user.organization?.id || null
+                        organizationUserId: form.user.id
                     },
                     categoryData,
                     stats: {

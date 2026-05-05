@@ -55,14 +55,13 @@ export async function POST(
                     userId: true,
                     user: {
                         select: {
-                            organizationId: true,
                             role: { select: { name: true } },
                         },
                     },
                 },
             });
 
-            if (!reportOwner || reportOwner.user.role.name !== "organization" || !reportOwner.user.organizationId) {
+            if (!reportOwner || reportOwner.user.role.name !== "organization") {
                 return NextResponse.json(
                     { error: "Report not found for an organization user" },
                     { status: 404 }
@@ -72,7 +71,7 @@ export async function POST(
             const hasAccessToOrganization = await prisma.audit.findFirst({
                 where: {
                     consultantId: sessionUserIdInt,
-                    organizationId: reportOwner.user.organizationId,
+                    organizationUserId: reportOwner.userId,
                 },
                 select: { id: true },
             });

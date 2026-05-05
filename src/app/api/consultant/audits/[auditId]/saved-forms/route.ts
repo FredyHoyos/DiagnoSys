@@ -46,7 +46,7 @@ export async function GET(
                 consultantId: consultantId
             },
             include: {
-                organization: {
+                organizationUser: {
                     select: {
                         id: true
                     }
@@ -136,7 +136,7 @@ export async function GET(
             audit: {
                 id: audit.id,
                 name: audit.name,
-                organization: audit.organization
+                organizationUser: audit.organizationUser
             },
             forms: processedForms,
             stats: {

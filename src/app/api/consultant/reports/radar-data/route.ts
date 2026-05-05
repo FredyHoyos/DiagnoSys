@@ -64,7 +64,7 @@ export async function GET() {
                     select: {
                         id: true,
                         name: true,
-                        organization: {
+                        organizationUser: {
                             select: { id: true }
                         }
                     }
@@ -160,7 +160,7 @@ export async function GET() {
                     completedAt: form.completedAt,
                     audit: {
                         name: form.audit?.name || 'Independent Assessment',
-                        organizationId: form.audit?.organization?.id || null
+                        organizationUserId: form.audit?.organizationUser?.id || null
                     },
                     categoryData,
                     stats: {
