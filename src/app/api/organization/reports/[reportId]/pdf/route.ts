@@ -221,6 +221,37 @@ export async function GET(
 
     let y = 800;
 
+    // Try to embed logo at top-right if provided
+    if (config.logoUrl) {
+      try {
+        const logoSource = config.logoUrl.startsWith("/") ? `${request.nextUrl.origin}${config.logoUrl}` : config.logoUrl;
+        const logoResp = await fetch(logoSource);
+        if (logoResp.ok) {
+          const contentType = logoResp.headers.get("content-type") || "image/png";
+          const logoBuffer = await logoResp.arrayBuffer();
+          let logoImage: import("pdf-lib").PDFFont | any = null;
+          if (contentType.includes("png")) {
+            logoImage = await pdf.embedPng(logoBuffer as any);
+          } else if (contentType.includes("jpeg") || contentType.includes("jpg")) {
+            logoImage = await pdf.embedJpg(logoBuffer as any);
+          }
+
+          if (logoImage) {
+            const logoWidth = 96;
+            const ratio = (logoImage.height || 32) / (logoImage.width || 96);
+            const logoHeight = Math.round(logoWidth * ratio);
+            const logoX = 595 - 40 - logoWidth; // right margin
+            const logoY = y - logoHeight;
+            page.drawImage(logoImage, { x: logoX, y: logoY, width: logoWidth, height: logoHeight });
+          }
+        } else {
+          console.warn("Logo fetch failed with status", logoResp.status, logoSource);
+        }
+      } catch (err) {
+        console.error("Error fetching or embedding logo:", err, config.logoUrl);
+      }
+    }
+
     page.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
     y -= 24;
 
@@ -251,7 +282,7 @@ export async function GET(
       y -= 8;
     }
     // Insert radar chart image if requested
-    if (config.showRadar && y > 150) {
+        if (config.showRadar && y > 150) {
       try {
         const labels = ["Alta","Media(Impacto)","Media(Urgencia)","Baja","Oportunidades"];
         const values = [high.length, medium.length, medium2.length, low.length, categorization.length];
@@ -259,11 +290,28 @@ export async function GET(
         const pngImage = await pdf.embedPng(imgBuffer);
         const imgWidth = 480;
         const imgHeight = (240 / 520) * imgWidth;
-        y -= imgHeight + 8;
-        page.drawImage(pngImage, { x: 56, y, width: imgWidth, height: imgHeight });
-        y -= 8;
+        const imgTopY = y - imgHeight;
+        page.drawImage(pngImage, { x: 56, y: imgTopY, width: imgWidth, height: imgHeight });
+        y = imgTopY - 8;
       } catch (err) {
-        console.error("Error rendering radar chart:", err);
+        console.error("Error rendering radar chart (ChartJS failed), falling back to simple bars:", err);
+        // Fallback: draw simple horizontal bars representing values
+        const labels = ["Alta","Media(Impacto)","Media(Urgencia)","Baja","Oportunidades"];
+        const values = [high.length, medium.length, medium2.length, low.length, categorization.length];
+        const barX = 56;
+        let barY = y - 12;
+        const barWidth = 480;
+        const barHeight = 16;
+        const maxVal = Math.max(5, ...values);
+        for (let i = 0; i < labels.length; i++) {
+          const lv = values[i] ?? 0;
+          const w = (lv / maxVal) * barWidth;
+          page.drawText(labels[i], { x: barX, y: barY + 4, size: 10, font, color: dark });
+          page.drawRectangle({ x: barX + 120, y: barY, width: w, height: barHeight, color: rgb(0.18, 0.39, 0.28) });
+          page.drawText(String(lv), { x: barX + 120 + w + 6, y: barY + 4, size: 9, font, color: dark });
+          barY -= barHeight + 8;
+        }
+        y = barY - 8;
       }
     }
     // Render individual zoom-in charts
