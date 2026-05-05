@@ -33,12 +33,11 @@ model User {
   updatedAt DateTime     @updatedAt
   tokens    ResetToken[]
 
-  // Para consultores: empresas que auditan
-  audits Audit[]
+  // Para consultores: auditorías que realizan
+  consultantAudits Audit[] @relation("ConsultantAudits")
 
-  // Para organizaciones: empresa que representan
-  organizationId Int?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  // Para organizaciones: auditorías donde son la organización auditada
+  organizationAudits Audit[] @relation("OrganizationAudits")
 
   // Formularios personalizados creados por este usuario
   personalizedForms PersonalizedForm[] @relation("PersonalizedFormOwner")
@@ -94,36 +93,23 @@ model Form {
 }
 
 // =============================
-// Empresas y Auditorías
+// Auditorías
 // =============================
 
-model Organization {
-  id          Int      @id @default(autoincrement())
-  description String?
-  sector      String?
-  companySize String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  users  User[]
-  audits Audit[]
-}
-
 model Audit {
-  id             Int      @id @default(autoincrement())
-  name           String
-  description    String?
-  consultantId   Int
-  organizationId Int
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  name              String
+  description       String?
+  consultantId      Int
+  organizationUserId Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  consultant   User         @relation(fields: [consultantId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
-
+  consultant       User                @relation("ConsultantAudits", fields: [consultantId], references: [id])
+  organizationUser User                @relation("OrganizationAudits", fields: [organizationUserId], references: [id])
   personalizedForms PersonalizedForm[]
 
-  @@unique([consultantId, organizationId, name])
+  @@unique([consultantId, organizationUserId, name])
 }
 
 // =============================

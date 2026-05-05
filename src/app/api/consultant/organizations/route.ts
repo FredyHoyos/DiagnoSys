@@ -56,98 +56,82 @@ export async function GET() {
                     select: {
                         audits: {
                             where: {
-                                consultantId: consultantId
                             }
                         }
-                    }
-                },
-                audits: {
-                    where: {
-                        consultantId: consultantId
-                    },
-                    select: {
-                        id: true,
-                        name: true,
-                        description: true,
-                        createdAt: true,
-                        updatedAt: true,
-                        _count: {
-                            select: {
-                                personalizedForms: true
-                            }
-                        }
-                    },
-                    orderBy: {
-                        createdAt: 'desc'
-                    }
-                }
-            },
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
-
-        // Procesar datos
-        const processedOrganizations = await Promise.all(
-            organizations.map(async (org) => {
-                const organizationUserId = org.users[0]?.id ?? null;
-                const reportsCount = organizationUserId
-                    ? await prisma.report.count({
-                        where: {
-                            userId: organizationUserId,
-                        },
-                    })
-                    : 0;
-
-                return {
-                    id: org.id,
-                    description: org.description,
-                    sector: org.sector,
-                    companySize: org.companySize,
-                    userName: org.users[0]?.name ?? "",
-                    email: org.users[0]?.email ?? "",
-                    stats: {
-                        reportsCount,
-                    },
-                    primaryAuditId: org.audits[0]?.id ?? null,
-                    recentAudits: org.audits.slice(0, 3), // Solo las 3 más recientes
-                    createdAt: org.createdAt,
-                    updatedAt: org.updatedAt
-                };
-            })
         );
-
-        return NextResponse.json({
-            organizations: processedOrganizations,
-            message: "Organizations retrieved successfully"
-        });
-
-    } catch (error) {
-        console.error("Error fetching consultant organizations:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
         );
-    }
-}
-
-/**
- * POST /api/consultant/organizations
- * Crear nueva organización para auditar (solo consultant)
- */
-export async function POST(request: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
-        
-        if (!session || !session.user) {
-            return NextResponse.json(
-                { error: "Authentication required" },
-                { status: 401 }
-            );
-        }
+                                const consultantId = parseInt(session.user.id);
 
         // Solo consultores pueden crear organizaciones
+                                const organizationUsers = await prisma.user.findMany({
+                                    where: {
+                                        role: {
+                                            name: "organization"
+                                        },
+                                        organizationAudits: {
+                                            some: {
+                                                consultantId: consultantId,
+                                            },
+                                        },
+                                    },
+                                    include: {
+                                        _count: {
+                                            select: {
+                                                organizationAudits: {
+                                                    where: {
+                                                        consultantId: consultantId
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        organizationAudits: {
+                                            where: {
+                                                consultantId: consultantId
+                                            },
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                description: true,
+                                                createdAt: true,
+                                                updatedAt: true,
+                                                _count: {
+                                                    select: {
+                                                        personalizedForms: true
+                                                    }
+                                                }
+                                            },
+                                            orderBy: {
+                                                createdAt: 'desc'
+                                            }
+                                        },
+                                        reports: {
+                                            select: {
+                                                id: true
+                                            }
+                                        }
+                                    },
+                                    orderBy: {
+                                        createdAt: 'desc'
+                                    }
+                                });
         if (session.user.role?.name !== 'consultant') {
+                                // Procesar datos
+                                const processedOrganizations = organizationUsers.map((user) => {
+                                    return {
+                                        id: user.id,
+                                        sector: user.sector,
+                                        companySize: user.companySize,
+                                        userName: user.name,
+                                        email: user.email,
+                                        stats: {
+                                            reportsCount: user.reports.length,
+                                        },
+                                        primaryAuditId: user.organizationAudits[0]?.id ?? null,
+                                        recentAudits: user.organizationAudits.slice(0, 3),
+                                        createdAt: user.createdAt,
+                                        updatedAt: user.updatedAt
+                                    };
+                                });
             return NextResponse.json(
                 { error: "Consultant access required" },
                 { status: 403 }
@@ -198,36 +182,36 @@ export async function POST(request: NextRequest) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const result = await prisma.$transaction(async (tx) => {
-            const organization = await tx.organization.create({
-                data: {
-                    description: description || null,
-                    sector: sector || null,
-                    companySize: companySize || null,
-                },
-            });
 
+
+
+        const result = await prisma.$transaction(async (tx) => {
             const organizationUser = await tx.user.create({
                 data: {
                     name,
                     email,
                     password: hashedPassword,
                     roleId: role.id,
-                    organizationId: organization.id,
+                    sector: sector || null,
+                    companySize: companySize || null,
                 },
                 select: {
                     id: true,
                     name: true,
                     email: true,
+                    sector: true,
+                    companySize: true,
+                    createdAt: true,
+                    updatedAt: true,
                 },
             });
-
+        });
             const audit = await tx.audit.create({
                 data: {
                     name: `Initial Audit - ${name}`,
                     description: "Auto-created when organization was registered by consultant",
                     consultantId,
-                    organizationId: organization.id,
+                    organizationUserId: organizationUser.id,
                 },
                 select: {
                     id: true,
@@ -236,29 +220,26 @@ export async function POST(request: NextRequest) {
                 },
             });
 
-            return { organization, organizationUser, audit };
-        });
-
+            return { organizationUser, audit };
         return NextResponse.json({
             organization: {
-                id: result.organization.id,
-                description: result.organization.description,
-                sector: result.organization.sector,
-                companySize: result.organization.companySize,
+                id: result.organizationUser.id,
+                sector: result.organizationUser.sector,
+                companySize: result.organizationUser.companySize,
                 stats: {
                     reportsCount: 0,
                 },
                 primaryAuditId: result.audit.id,
                 recentAudits: [result.audit],
-                createdAt: result.organization.createdAt,
-                updatedAt: result.organization.updatedAt
+                createdAt: result.organizationUser.createdAt,
+                updatedAt: result.organizationUser.updatedAt
             },
             credentials: {
                 userName: result.organizationUser.name,
                 email: result.organizationUser.email,
                 role: "organization",
             },
-            message: "Organization created successfully"
+            message: "Organization user created successfully"
         }, { status: 201 });
 
     } catch (error) {
@@ -322,30 +303,19 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        const hasAccess = await prisma.organization.findFirst({
+
+
+        // Verificar que el usuario existe, tiene role "organization" y que el consultor tiene audits con él
+        const organizationUser = await prisma.user.findFirst({
             where: {
                 id: orgIdInt,
-                audits: {
+                role: {
+                    name: "organization",
+                },
+                organizationAudits: {
                     some: {
                         consultantId,
                     },
-                },
-            },
-            select: { id: true },
-        });
-
-        if (!hasAccess) {
-            return NextResponse.json(
-                { error: "Organization not found or access denied" },
-                { status: 404 }
-            );
-        }
-
-        const organizationUser = await prisma.user.findFirst({
-            where: {
-                organizationId: orgIdInt,
-                role: {
-                    name: "organization",
                 },
             },
             select: {
@@ -379,51 +349,42 @@ export async function PUT(request: NextRequest) {
             ? { password: await bcrypt.hash(password, 10) }
             : {};
 
-        const updatedResult = await prisma.$transaction(async (tx) => {
-            const updatedOrganization = await tx.organization.update({
-                where: { id: orgIdInt },
-                data: {
-                    description: typeof description === "string" && description.trim().length > 0
-                        ? description.trim()
-                        : null,
-                    sector: sector || null,
-                    companySize: companySize || null,
-                },
-                select: {
-                    id: true,
-                    name: true,
-                    description: true,
-                    sector: true,
-                    companySize: true,
-                    updatedAt: true,
-                },
-            });
 
-            const updatedOrganizationUser = await tx.user.update({
+        const updatedOrganizationUser = await prisma.user.update({
                 where: { id: organizationUser.id },
                 data: {
                     name: name.trim(),
                     email: email.trim(),
+                    sector: sector || null,
+                    companySize: companySize || null,
                     ...passwordData,
                 },
                 select: {
                     id: true,
                     name: true,
                     email: true,
+                    sector: true,
+                    companySize: true,
                     updatedAt: true,
                 },
-            });
 
-            return { updatedOrganization, updatedOrganizationUser };
+
         });
 
         return NextResponse.json({
-            organization: updatedResult.updatedOrganization,
-            credentials: {
-                userName: updatedResult.updatedOrganizationUser.name,
-                email: updatedResult.updatedOrganizationUser.email,
+            organization: {
+                id: updatedOrganizationUser.id,
+                sector: updatedOrganizationUser.sector,
+                companySize: updatedOrganizationUser.companySize,
+                userName: updatedOrganizationUser.name,
+                email: updatedOrganizationUser.email,
+                updatedAt: updatedOrganizationUser.updatedAt,
             },
-            message: "Organization updated successfully",
+            credentials: {
+                userName: updatedOrganizationUser.name,
+                email: updatedOrganizationUser.email,
+            },
+            message: "Organization user updated successfully",
         });
     } catch (error) {
         console.error("Error updating organization:", error);

@@ -45,7 +45,6 @@ export async function GET(
             where: { id: orgIdInt },
             select: {
                 id: true,
-                name: true,
                 description: true
             }
         });
@@ -115,12 +114,12 @@ export async function GET(
                     completedAt: form.completedAt,
                     updatedAt: form.updatedAt
                 })),
-                createdAt: audit.createdAt,
+                    const userIdInt = parseInt(orgId);
                 updatedAt: audit.updatedAt
             };
-        });
+                    if (isNaN(userIdInt)) {
 
-        return NextResponse.json({
+                            { error: "Invalid user ID" },
             organization: organization,
             audits: processedAudits,
             message: "Audits retrieved successfully"
@@ -148,7 +147,7 @@ export async function POST(
         const session = await getServerSession(authOptions);
         
         if (!session || !session.user) {
-            return NextResponse.json(
+                            organizationId: userIdInt,
                 { error: "Authentication required" },
                 { status: 401 }
             );
@@ -204,7 +203,6 @@ export async function POST(
                 organization: {
                     select: {
                         id: true,
-                        name: true,
                         description: true
                     }
                 }

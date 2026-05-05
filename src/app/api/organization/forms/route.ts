@@ -134,7 +134,6 @@ export async function GET() {
         return NextResponse.json({
             organization: {
                 id: user.organization.id,
-                name: user.organization.name,
                 description: user.organization.description
             },
             modules: Object.values(moduleGroups),

@@ -160,7 +160,7 @@ export async function GET() {
                     completedAt: form.completedAt,
                     audit: {
                         name: form.audit?.name || 'Independent Assessment',
-                        organization: form.audit?.organization?.name || 'Self Assessment'
+                        organizationId: form.audit?.organization?.id || null
                     },
                     categoryData,
                     stats: {
