@@ -89,7 +89,6 @@ export async function GET(
                 organization: {
                     select: {
                         id: true,
-                        name: true,
                         description: true
                     }
                 },

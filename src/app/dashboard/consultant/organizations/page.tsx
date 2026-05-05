@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 
 type OrganizationSummary = {
   id: number;
-  name: string;
   description: string | null;
   userName: string;
   email: string;
@@ -31,7 +30,6 @@ export default function ConsultantOrganizationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
-  const [editOrganizationName, setEditOrganizationName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editUserName, setEditUserName] = useState("");
   const [editEmail, setEditEmail] = useState("");
@@ -39,7 +37,6 @@ export default function ConsultantOrganizationsPage() {
   const [editSector, setEditSector] = useState("");
   const [editCompanySize, setEditCompanySize] = useState("");
 
-  const [organizationName, setOrganizationName] = useState("");
   const [description, setDescription] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
@@ -86,7 +83,6 @@ export default function ConsultantOrganizationsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          organizationName,
           description,
           name: userName,
           email,
@@ -107,7 +103,6 @@ export default function ConsultantOrganizationsPage() {
 
       setCreateDialogOpen(false);
 
-      setOrganizationName("");
       setDescription("");
       setUserName("");
       setEmail("");
@@ -124,13 +119,12 @@ export default function ConsultantOrganizationsPage() {
   };
 
   const startDiagnosis = (org: OrganizationSummary) => {
-    const nextUrl = `/dashboard/organization/report?organizationId=${org.id}&organizationName=${encodeURIComponent(org.name)}`;
+    const nextUrl = `/dashboard/organization/report?organizationId=${org.id}&organizationName=${encodeURIComponent(org.userName)}`;
     router.push(nextUrl);
   };
 
   const handleOpenEdit = (org: OrganizationSummary) => {
     setEditingOrgId(org.id);
-    setEditOrganizationName(org.name);
     setEditDescription(org.description || "");
     setEditUserName(org.userName || "");
     setEditEmail(org.email || "");
@@ -143,7 +137,6 @@ export default function ConsultantOrganizationsPage() {
 
   const handleCancelEdit = () => {
     setEditingOrgId(null);
-    setEditOrganizationName("");
     setEditDescription("");
     setEditUserName("");
     setEditEmail("");
@@ -153,8 +146,8 @@ export default function ConsultantOrganizationsPage() {
   };
 
   const handleSaveEdit = async (orgId: number) => {
-    if (!editOrganizationName.trim() || !editUserName.trim() || !editEmail.trim()) {
-      setError("El nombre de la organización, nombre de usuario y email son requeridos");
+    if (!editUserName.trim() || !editEmail.trim()) {
+      setError("El nombre de usuario y email son requeridos");
       return;
     }
 
@@ -173,7 +166,6 @@ export default function ConsultantOrganizationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orgId,
-          organizationName: editOrganizationName,
           description: editDescription,
           name: editUserName,
           email: editEmail,
@@ -221,14 +213,6 @@ export default function ConsultantOrganizationsPage() {
             </DialogHeader>
 
             <form onSubmit={handleCreate} className="space-y-4" autoComplete="off">
-              <input
-                className="w-full border rounded-md px-3 py-2"
-                placeholder="Nombre de la organización"
-                value={organizationName}
-                onChange={(e) => setOrganizationName(e.target.value)}
-                autoComplete="off"
-                required
-              />
               <input
                 className="w-full border rounded-md px-3 py-2"
                 placeholder="Nombre de usuario de la organización"
@@ -358,7 +342,7 @@ export default function ConsultantOrganizationsPage() {
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg text-[#2E6347]">{org.name}</h3>
+                  <h3 className="font-semibold text-lg text-[#2E6347]">{org.userName}</h3>
                   <p className="text-sm text-gray-600">{org.description || "Sin descripción"}</p>
                   <p className="text-sm text-gray-600">
                     Usuario: {org.userName} | Email: {org.email}

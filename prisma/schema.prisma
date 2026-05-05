@@ -99,7 +99,6 @@ model Form {
 
 model Organization {
   id          Int      @id @default(autoincrement())
-  name        String
   description String?
   sector      String?
   companySize String?

@@ -54,7 +54,7 @@ export async function GET() {
                         name: true,
                         email: true,
                         organization: {
-                            select: { name: true }
+                            select: { id: true }
                         }
                     }
                 },
@@ -138,7 +138,7 @@ export async function GET() {
                     user: {
                         name: form.user.name,
                         email: form.user.email,
-                        organization: form.user.organization?.name || 'No Organization'
+                        organizationId: form.user.organization?.id || null
                     },
                     categoryData,
                     stats: {

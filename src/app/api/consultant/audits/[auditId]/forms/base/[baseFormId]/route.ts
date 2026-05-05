@@ -68,8 +68,7 @@ export async function GET(
             include: {
                 organization: {
                     select: {
-                        id: true,
-                        name: true
+                        id: true
                     }
                 }
             }

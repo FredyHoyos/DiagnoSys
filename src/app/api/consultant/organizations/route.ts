@@ -83,7 +83,7 @@ export async function GET() {
                 }
             },
             orderBy: {
-                name: 'asc'
+                createdAt: 'desc'
             }
         });
 
@@ -101,7 +101,6 @@ export async function GET() {
 
                 return {
                     id: org.id,
-                    name: org.name,
                     description: org.description,
                     sector: org.sector,
                     companySize: org.companySize,
@@ -155,11 +154,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { organizationName, name, email, password, description, sector, companySize } = await request.json();
+        const { name, email, password, description, sector, companySize } = await request.json();
 
-        if (!organizationName || !name || !email || !password) {
+        if (!name || !email || !password) {
             return NextResponse.json(
-                { error: "Organization name, user name, email and password are required" },
+                { error: "User name, email and password are required" },
                 { status: 400 }
             );
         }
@@ -202,7 +201,6 @@ export async function POST(request: NextRequest) {
         const result = await prisma.$transaction(async (tx) => {
             const organization = await tx.organization.create({
                 data: {
-                    name: organizationName,
                     description: description || null,
                     sector: sector || null,
                     companySize: companySize || null,
@@ -226,7 +224,7 @@ export async function POST(request: NextRequest) {
 
             const audit = await tx.audit.create({
                 data: {
-                    name: `Initial Audit - ${organization.name}`,
+                    name: `Initial Audit - ${name}`,
                     description: "Auto-created when organization was registered by consultant",
                     consultantId,
                     organizationId: organization.id,
@@ -244,7 +242,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             organization: {
                 id: result.organization.id,
-                name: result.organization.name,
                 description: result.organization.description,
                 sector: result.organization.sector,
                 companySize: result.organization.companySize,
@@ -304,17 +301,16 @@ export async function PUT(request: NextRequest) {
         }
 
         const consultantId = parseInt(session.user.id);
-        const { orgId, organizationName, description, name, email, password, sector, companySize } = await request.json();
+        const { orgId, description, name, email, password, sector, companySize } = await request.json();
 
         const orgIdInt = parseInt(String(orgId));
         if (
             isNaN(orgIdInt) ||
-            !organizationName || typeof organizationName !== "string" ||
             !name || typeof name !== "string" ||
             !email || typeof email !== "string"
         ) {
             return NextResponse.json(
-                { error: "Valid organization ID, organization name, user name and email are required" },
+                { error: "Valid organization ID, user name and email are required" },
                 { status: 400 }
             );
         }
@@ -387,7 +383,6 @@ export async function PUT(request: NextRequest) {
             const updatedOrganization = await tx.organization.update({
                 where: { id: orgIdInt },
                 data: {
-                    name: organizationName.trim(),
                     description: typeof description === "string" && description.trim().length > 0
                         ? description.trim()
                         : null,
