@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
+import { withDefaultReportConfig } from "@/lib/report-config";
 
 function getSecondRange(date: Date) {
     const start = new Date(date);
@@ -370,11 +371,83 @@ export async function GET(request: NextRequest) {
             };
         }
 
+        const actionPlanSummary = {
+            hasData: prioritizationSummary.totalItems > 0,
+            items: [
+                ...prioritizationSummary.highPriority.map((item, index) => ({
+                    order: index + 1,
+                    name: item.name,
+                    level: "Alta prioridad",
+                })),
+                ...prioritizationSummary.mediumPriority.map((item, index) => ({
+                    order: prioritizationSummary.highPriority.length + index + 1,
+                    name: item.name,
+                    level: "Prioridad media (alto impacto)",
+                })),
+                ...prioritizationSummary.mediumPriority2.map((item, index) => ({
+                    order:
+                        prioritizationSummary.highPriority.length +
+                        prioritizationSummary.mediumPriority.length +
+                        index +
+                        1,
+                    name: item.name,
+                    level: "Prioridad media (alta urgencia)",
+                })),
+                ...prioritizationSummary.lowPriority.map((item, index) => ({
+                    order:
+                        prioritizationSummary.highPriority.length +
+                        prioritizationSummary.mediumPriority.length +
+                        prioritizationSummary.mediumPriority2.length +
+                        index +
+                        1,
+                    name: item.name,
+                    level: "Baja prioridad",
+                })),
+            ],
+        };
+
+        const reportDisplayConfigRaw = await prisma.reportDisplayConfig.findUnique({
+                where: { organizationUserId: userId },
+                select: {
+                    showExecutiveSummary: true,
+                    showRadar: true,
+                    showCategorization: true,
+                    showPrioritization: true,
+                    showActionPlan: true,
+                    showScaleLegend: true,
+                    logoUrl: true,
+                    primaryColor: true,
+                    secondaryColor: true,
+                    headerTitle: true,
+                    headerSubtitle: true,
+                },
+            });
+
+        const reportDisplayConfig = withDefaultReportConfig(
+            reportDisplayConfigRaw
+                ? {
+                      showExecutiveSummary: reportDisplayConfigRaw.showExecutiveSummary,
+                      showRadar: reportDisplayConfigRaw.showRadar,
+                      showCategorization: reportDisplayConfigRaw.showCategorization,
+                      showPrioritization: reportDisplayConfigRaw.showPrioritization,
+                      showActionPlan: reportDisplayConfigRaw.showActionPlan,
+                      showScaleLegend: reportDisplayConfigRaw.showScaleLegend,
+                      logoUrl: reportDisplayConfigRaw.logoUrl,
+                      primaryColor: reportDisplayConfigRaw.primaryColor ?? undefined,
+                      secondaryColor: reportDisplayConfigRaw.secondaryColor ?? undefined,
+                      headerTitle: reportDisplayConfigRaw.headerTitle ?? undefined,
+                      headerSubtitle: reportDisplayConfigRaw.headerSubtitle,
+                  }
+                : null
+        );
+
         return NextResponse.json({
             zoomInForms: zoomInData,
             zoomOutForms: zoomOutData,
             categorizationSummary,
             prioritizationSummary,
+            actionPlanSummary,
+            reportDisplayConfig,
             message: "Radar data retrieved successfully"
         });
 

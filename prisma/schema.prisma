@@ -54,6 +54,12 @@ model User {
   mediumPriorities   MediumPriority[]
   lowPriorities      LowPriority[]
   mediumPriorities2  MediumPriority2[]
+
+  // Configuración de visualización/formato del informe para este usuario organización
+  organizationReportConfig ReportDisplayConfig? @relation("OrgReportConfig")
+
+  // Configuraciones actualizadas por este admin
+  updatedReportConfigs ReportDisplayConfig[] @relation("AdminUpdatedReportConfig")
 }
 
 model ResetToken {
@@ -136,6 +142,32 @@ model Report {
   mediumPriorities2 MediumPriority2[]
 
   @@unique([userId, name, version])
+}
+
+model ReportDisplayConfig {
+  id Int @id @default(autoincrement())
+
+  organizationUserId Int @unique
+  organizationUser User @relation("OrgReportConfig", fields: [organizationUserId], references: [id], onDelete: Cascade)
+
+  showExecutiveSummary Boolean @default(true)
+  showRadar Boolean @default(true)
+  showCategorization Boolean @default(true)
+  showPrioritization Boolean @default(true)
+  showActionPlan Boolean @default(true)
+  showScaleLegend Boolean @default(true)
+
+  logoUrl String?
+  primaryColor String? @default("#2E6347")
+  secondaryColor String? @default("#24533b")
+  headerTitle String? @default("Reporte de Evaluación Digital")
+  headerSubtitle String?
+
+  updatedByAdminId Int?
+  updatedByAdmin User? @relation("AdminUpdatedReportConfig", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // =============================

@@ -1,0 +1,256 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { authOptions } from "@/lib/auth-config";
+import { prisma } from "@/lib/prisma";
+import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
+import { withDefaultReportConfig } from "@/lib/report-config";
+import { renderRadarChart } from "@/lib/report-charts";
+
+function drawWrappedText(
+  page: import("pdf-lib").PDFPage,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  size: number,
+  color = rgb(0, 0, 0)
+) {
+  const words = text.split(" ");
+  let line = "";
+  let cursorY = y;
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    const width = page.getWidth() * 0.001 * testLine.length * size;
+    if (width > maxWidth && line) {
+      page.drawText(line, { x, y: cursorY, size, color });
+      line = word;
+      cursorY -= lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (line) {
+    page.drawText(line, { x, y: cursorY, size, color });
+    cursorY -= lineHeight;
+  }
+
+  return cursorY;
+}
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ reportId: string }> }
+) {
+  try {
+    const { reportId } = await context.params;
+    const reportIdInt = parseInt(reportId, 10);
+
+    if (Number.isNaN(reportIdInt)) {
+      return NextResponse.json({ error: "Invalid report ID" }, { status: 400 });
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const isOrganization = session.user.role?.name === "organization";
+    const isConsultant = session.user.role?.name === "consultant";
+
+    if (!isOrganization && !isConsultant) {
+      return NextResponse.json({ error: "Organization access required" }, { status: 403 });
+    }
+
+    let userId = parseInt(session.user.id, 10);
+    if (isConsultant) {
+      const organizationId = request.nextUrl.searchParams.get("organizationId");
+      const scopedUser = await resolveScopedUserForDiagnostics(session.user.id, organizationId);
+      userId = scopedUser.targetUserId;
+    }
+
+    const report = await prisma.report.findFirst({
+      where: { id: reportIdInt, userId },
+      select: {
+        id: true,
+        name: true,
+        version: true,
+        createdAt: true,
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    if (!report) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
+    const [categorization, high, medium, low, medium2, configRaw] = await Promise.all([
+      prisma.opportunity.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.highPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.mediumPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.lowPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.mediumPriority2.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.reportDisplayConfig.findUnique({
+        where: { organizationUserId: userId },
+        select: {
+          showExecutiveSummary: true,
+          showRadar: true,
+          showCategorization: true,
+          showPrioritization: true,
+          showActionPlan: true,
+          showScaleLegend: true,
+          logoUrl: true,
+          primaryColor: true,
+          secondaryColor: true,
+          headerTitle: true,
+          headerSubtitle: true,
+        },
+      }),
+    ]);
+
+    const config = withDefaultReportConfig(
+      configRaw
+        ? {
+            showExecutiveSummary: configRaw.showExecutiveSummary,
+            showRadar: configRaw.showRadar,
+            showCategorization: configRaw.showCategorization,
+            showPrioritization: configRaw.showPrioritization,
+            showActionPlan: configRaw.showActionPlan,
+            showScaleLegend: configRaw.showScaleLegend,
+            logoUrl: configRaw.logoUrl,
+            primaryColor: configRaw.primaryColor ?? undefined,
+            secondaryColor: configRaw.secondaryColor ?? undefined,
+            headerTitle: configRaw.headerTitle ?? undefined,
+            headerSubtitle: configRaw.headerSubtitle,
+          }
+        : null
+    );
+
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([595, 842]);
+    const titleColor = rgb(0.18, 0.39, 0.28);
+    const dark = rgb(0.12, 0.12, 0.12);
+
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
+
+    let y = 800;
+
+    page.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
+    y -= 24;
+
+    if (config.headerSubtitle) {
+      page.drawText(config.headerSubtitle, { x: 40, y, size: 11, font, color: dark });
+      y -= 22;
+    }
+
+    page.drawText(`Reporte: ${report.name} (v${report.version})`, { x: 40, y, size: 11, font, color: dark });
+    y -= 16;
+    page.drawText(`Organización: ${report.user.name} - ${report.user.email}`, { x: 40, y, size: 11, font, color: dark });
+    y -= 16;
+    page.drawText(`Fecha: ${new Date(report.createdAt).toLocaleString("es-CO")}`, { x: 40, y, size: 11, font, color: dark });
+    y -= 28;
+
+    if (config.showExecutiveSummary) {
+      page.drawText("Resumen Ejecutivo", { x: 40, y, size: 14, font: fontBold, color: titleColor });
+      y -= 18;
+      y = drawWrappedText(
+        page,
+        "Este informe consolida los resultados del diagnóstico digital, incluyendo categorización de hallazgos y priorización de acciones.",
+        40,
+        y,
+        500,
+        14,
+        10
+      );
+      y -= 8;
+    }
+    // Insert radar chart image if requested
+    if (config.showRadar && y > 150) {
+      try {
+        const labels = ["Alta","Media(Impacto)","Media(Urgencia)","Baja","Oportunidades"];
+        const values = [high.length, medium.length, medium2.length, low.length, categorization.length];
+        const imgBuffer = await renderRadarChart(labels, values, 520, 240);
+        const pngImage = await pdf.embedPng(imgBuffer);
+        const imgWidth = 480;
+        const imgHeight = (240 / 520) * imgWidth;
+        y -= imgHeight + 8;
+        page.drawImage(pngImage, { x: 56, y, width: imgWidth, height: imgHeight });
+        y -= 8;
+      } catch (err) {
+        console.error("Error rendering radar chart:", err);
+      }
+    }
+
+    if (config.showCategorization) {
+      page.drawText("Categorización", { x: 40, y, size: 14, font: fontBold, color: titleColor });
+      y -= 16;
+      page.drawText(`Oportunidades: ${categorization.length}`, { x: 44, y, size: 10, font, color: dark });
+      y -= 16;
+    }
+
+    if (config.showPrioritization) {
+      page.drawText("Priorización", { x: 40, y, size: 14, font: fontBold, color: titleColor });
+      y -= 16;
+      page.drawText(`Alta prioridad: ${high.length}`, { x: 44, y, size: 10, font, color: dark });
+      y -= 14;
+      page.drawText(`Media (alto impacto): ${medium.length}`, { x: 44, y, size: 10, font, color: dark });
+      y -= 14;
+      page.drawText(`Media (alta urgencia): ${medium2.length}`, { x: 44, y, size: 10, font, color: dark });
+      y -= 14;
+      page.drawText(`Baja prioridad: ${low.length}`, { x: 44, y, size: 10, font, color: dark });
+      y -= 18;
+    }
+
+    if (config.showActionPlan) {
+      page.drawText("Plan de Acción", { x: 40, y, size: 14, font: fontBold, color: titleColor });
+      y -= 16;
+      const actions = [
+        ...high.map((item) => ({ name: item.name, level: "Alta prioridad" })),
+        ...medium.map((item) => ({ name: item.name, level: "Media (alto impacto)" })),
+        ...medium2.map((item) => ({ name: item.name, level: "Media (alta urgencia)" })),
+        ...low.map((item) => ({ name: item.name, level: "Baja prioridad" })),
+      ];
+
+      if (actions.length === 0) {
+        page.drawText("Sin acciones priorizadas para este reporte.", { x: 44, y, size: 10, font, color: dark });
+      } else {
+        for (let i = 0; i < actions.length && y > 80; i++) {
+          const item = actions[i];
+          y = drawWrappedText(page, `${i + 1}. ${item.name} (${item.level})`, 44, y, 500, 13, 10);
+        }
+      }
+    }
+
+    if (config.showScaleLegend && y > 70) {
+      y -= 18;
+      page.drawText("Escala de referencia: 1 (muy bajo) a 5 (muy alto)", {
+        x: 40,
+        y,
+        size: 10,
+        font,
+        color: dark,
+      });
+    }
+
+    const bytes = await pdf.save();
+
+    return new NextResponse(Buffer.from(bytes), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="reporte-${report.id}.pdf"`,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ScopedUserError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    console.error("Error creating report PDF:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

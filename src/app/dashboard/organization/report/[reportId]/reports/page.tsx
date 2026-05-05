@@ -52,6 +52,23 @@ interface ApiResponse {
         mediumPriority2: { name: string }[];
         totalItems: number;
     };
+    actionPlanSummary: {
+        hasData: boolean;
+        items: { order: number; name: string; level: string }[];
+    };
+    reportDisplayConfig: {
+        showExecutiveSummary: boolean;
+        showRadar: boolean;
+        showCategorization: boolean;
+        showPrioritization: boolean;
+        showActionPlan: boolean;
+        showScaleLegend: boolean;
+        logoUrl: string | null;
+        primaryColor: string;
+        secondaryColor: string;
+        headerTitle: string;
+        headerSubtitle: string | null;
+    };
     message: string;
 }
 
@@ -92,6 +109,23 @@ export default function ReportsPage() {
         mediumPriority2: [],
         totalItems: 0,
     });
+    const [actionPlanSummary, setActionPlanSummary] = useState<ApiResponse["actionPlanSummary"]>({
+        hasData: false,
+        items: [],
+    });
+    const [reportDisplayConfig, setReportDisplayConfig] = useState<ApiResponse["reportDisplayConfig"]>({
+        showExecutiveSummary: true,
+        showRadar: true,
+        showCategorization: true,
+        showPrioritization: true,
+        showActionPlan: true,
+        showScaleLegend: true,
+        logoUrl: null,
+        primaryColor: "#2E6347",
+        secondaryColor: "#24533b",
+        headerTitle: "Reporte de Evaluación Digital",
+        headerSubtitle: "Resultados consolidados del diagnóstico",
+    });
 
     const formatSavedAt = (date: string | null) => {
         if (!date) return "Sin fecha";
@@ -116,6 +150,8 @@ export default function ReportsPage() {
                 setZoomOutForms(data.zoomOutForms || []);
                 setCategorizationSummary(data.categorizationSummary);
                 setPrioritizationSummary(data.prioritizationSummary);
+                setActionPlanSummary(data.actionPlanSummary || { hasData: false, items: [] });
+                setReportDisplayConfig(data.reportDisplayConfig || reportDisplayConfig);
             } catch (error) {
                 console.error('🚨 Error fetching personalized forms:', error);
             } finally {
@@ -163,6 +199,27 @@ export default function ReportsPage() {
         (categorizationSummary.hasData ? 1 : 0) +
         (prioritizationSummary.hasData ? 1 : 0);
 
+    const handleDownloadPdf = async () => {
+        try {
+            const sep = contextQuery ? `?${contextQuery.slice(1)}` : "";
+            const response = await fetch(`/api/organization/reports/${reportId}/pdf${sep}`);
+            if (!response.ok) {
+                throw new Error("No se pudo generar el PDF");
+            }
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = blobUrl;
+            anchor.download = `reporte-${reportId}.pdf`;
+            anchor.click();
+            URL.revokeObjectURL(blobUrl);
+        } catch (downloadError) {
+            console.error("Error downloading PDF", downloadError);
+            alert("No se pudo descargar el informe en PDF");
+        }
+    };
+
     const SummaryColumn = ({
         title,
         subtitle,
@@ -205,13 +262,44 @@ export default function ReportsPage() {
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-[#2E6347] mb-2">
-                        Reportes de Evaluación Digital
-                    </h1>
-                    <p className="text-black mt-5 text-lg">
-                        Visualiza gráficas de radar y resúmenes ejecutivos de categorización y priorización
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h1 className="text-3xl font-bold mb-2" style={{ color: reportDisplayConfig.primaryColor }}>
+                                {reportDisplayConfig.headerTitle}
+                            </h1>
+                            <p className="text-black mt-5 text-lg">
+                                {reportDisplayConfig.headerSubtitle || "Visualiza gráficas de radar y resúmenes ejecutivos"}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {reportDisplayConfig.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={reportDisplayConfig.logoUrl} alt="Logo institucional" className="h-12 w-auto rounded bg-white p-1" />
+                            ) : null}
+                            <Button
+                                className="text-white"
+                                style={{ backgroundColor: reportDisplayConfig.secondaryColor }}
+                                onClick={handleDownloadPdf}
+                            >
+                                Descargar en PDF
+                            </Button>
+                        </div>
+                    </div>
                 </div>
+
+                {reportDisplayConfig.showExecutiveSummary && (
+                    <Card className="green-interactive mb-8 border" style={{ borderColor: reportDisplayConfig.primaryColor }}>
+                        <CardContent className="p-5">
+                            <h2 className="text-xl font-semibold mb-2" style={{ color: reportDisplayConfig.primaryColor }}>
+                                Resumen Ejecutivo
+                            </h2>
+                            <p className="text-sm text-gray-700">
+                                Este informe consolida el estado del diagnóstico digital con resultados por módulo,
+                                categorización, priorización y plan de acción recomendado.
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Overview Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 ">
@@ -262,7 +350,7 @@ export default function ReportsPage() {
                                 Cambiar vista de resultados
                             </div>
                             <div className="flex flex-wrap gap-2 justify-end">
-                                <Button
+                                {reportDisplayConfig.showRadar && <Button
                                     size="sm"
                                     variant={activeView === "charts" ? "default" : "outline"}
                                     className={`${activeView === "charts" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
@@ -270,8 +358,8 @@ export default function ReportsPage() {
                                 >
                                     <Radar className="h-4 w-4 mr-2" />
                                     Gráficas
-                                </Button>
-                                <Button
+                                </Button>}
+                                {reportDisplayConfig.showCategorization && <Button
                                     size="sm"
                                     variant={activeView === "categorization" ? "default" : "outline"}
                                     className={`${activeView === "categorization" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
@@ -279,8 +367,8 @@ export default function ReportsPage() {
                                 >
                                     <Sparkles className="h-4 w-4 mr-2" />
                                     Categorización
-                                </Button>
-                                <Button
+                                </Button>}
+                                {reportDisplayConfig.showPrioritization && <Button
                                     size="sm"
                                     variant={activeView === "prioritization" ? "default" : "outline"}
                                     className={`${activeView === "prioritization" ? "bg-[#2E6347] text-white" : ""} h-9 w-48 text-sm hover:bg-[#24533b] hover:text-white`}
@@ -288,13 +376,13 @@ export default function ReportsPage() {
                                 >
                                     <ListChecks className="h-4 w-4 mr-2" />
                                     Priorización
-                                </Button>
+                                </Button>}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {activeView === "charts" && (
+                {reportDisplayConfig.showRadar && activeView === "charts" && (
                     <div className="green-interactive mb-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-xl border border-emerald-100 px-6 py-4">
                         <div className="flex items-center gap-2 text-sm text-[#2E6347]  font-semibold">
                             <ListFilter className="h-4 w-4" />
@@ -389,7 +477,7 @@ export default function ReportsPage() {
                     </>
                 )}
 
-                {activeView === "categorization" && (
+                {reportDisplayConfig.showCategorization && activeView === "categorization" && (
                     <Card className="green-interactive border border-emerald-100">
                         <CardHeader>
                             <div className="flex flex-col gap-1">
@@ -452,7 +540,7 @@ export default function ReportsPage() {
                     </Card>
                 )}
 
-                {activeView === "prioritization" && (
+                {reportDisplayConfig.showPrioritization && activeView === "prioritization" && (
                     <Card className="green-interactive border border-emerald-100">
                         <CardHeader>
                             <div className="flex flex-col gap-1">
@@ -529,6 +617,28 @@ export default function ReportsPage() {
                                         chipClass="bg-yellow-100 border border-yellow-400"
                                         containerClass="border-yellow-400"
                                     />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {reportDisplayConfig.showActionPlan && (
+                    <Card className="green-interactive border border-emerald-100 mt-8">
+                        <CardHeader>
+                            <h2 className="text-2xl font-bold text-[#2E6347]">Plan de acción recomendado</h2>
+                        </CardHeader>
+                        <CardContent>
+                            {!actionPlanSummary.hasData ? (
+                                <p className="text-sm text-gray-600">No hay insumos de priorización para construir el plan de acción.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {actionPlanSummary.items.map((item) => (
+                                        <div key={`${item.order}-${item.name}`} className="rounded-lg border border-emerald-200 bg-white/70 px-4 py-3">
+                                            <p className="text-xs text-gray-500">Paso {item.order} · {item.level}</p>
+                                            <p className="text-sm font-medium text-[#2E6347]">{item.name}</p>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </CardContent>
