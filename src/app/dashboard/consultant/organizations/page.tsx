@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 
 type OrganizationSummary = {
   id: number;
-  description: string | null;
   userName: string;
   email: string;
   sector?: string | null;
@@ -30,14 +29,12 @@ export default function ConsultantOrganizationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
-  const [editDescription, setEditDescription] = useState("");
   const [editUserName, setEditUserName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editSector, setEditSector] = useState("");
   const [editCompanySize, setEditCompanySize] = useState("");
 
-  const [description, setDescription] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -83,7 +80,6 @@ export default function ConsultantOrganizationsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description,
           name: userName,
           email,
           password,
@@ -103,7 +99,6 @@ export default function ConsultantOrganizationsPage() {
 
       setCreateDialogOpen(false);
 
-      setDescription("");
       setUserName("");
       setEmail("");
       setPassword("");
@@ -125,7 +120,6 @@ export default function ConsultantOrganizationsPage() {
 
   const handleOpenEdit = (org: OrganizationSummary) => {
     setEditingOrgId(org.id);
-    setEditDescription(org.description || "");
     setEditUserName(org.userName || "");
     setEditEmail(org.email || "");
     setEditPassword("");
@@ -137,7 +131,6 @@ export default function ConsultantOrganizationsPage() {
 
   const handleCancelEdit = () => {
     setEditingOrgId(null);
-    setEditDescription("");
     setEditUserName("");
     setEditEmail("");
     setEditPassword("");
@@ -166,7 +159,6 @@ export default function ConsultantOrganizationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orgId,
-          description: editDescription,
           name: editUserName,
           email: editEmail,
           password: editPassword || undefined,
@@ -239,14 +231,6 @@ export default function ConsultantOrganizationsPage() {
                 autoComplete="new-password"
                 minLength={8}
                 required
-              />
-              <textarea
-                className="w-full border rounded-md px-3 py-2"
-                placeholder="Descripción (opcional)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                autoComplete="off"
-                rows={3}
               />
               <select
                 className="w-full border rounded-md px-3 py-2"
@@ -343,7 +327,6 @@ export default function ConsultantOrganizationsPage() {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-1">
                   <h3 className="font-semibold text-lg text-[#2E6347]">{org.userName}</h3>
-                  <p className="text-sm text-gray-600">{org.description || "Sin descripción"}</p>
                   <p className="text-sm text-gray-600">
                     Usuario: {org.userName} | Email: {org.email}
                   </p>
@@ -360,7 +343,7 @@ export default function ConsultantOrganizationsPage() {
                   onClick={() => startDiagnosis(org)}
                   className="bg-[#2E6347] text-white px-3 py-2 rounded-md"
                 >
-                  Iniciar Diagnóstico
+                  Entrar al diagnóstico
                 </button>
                 <button
                   onClick={() => handleOpenEdit(org)}
@@ -379,14 +362,7 @@ export default function ConsultantOrganizationsPage() {
                     placeholder="Nombre de la organización"
                     autoComplete="off"
                   />
-                  <textarea
-                    className="w-full border rounded-md px-3 py-2"
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="Descripción"
-                    rows={3}
-                    autoComplete="off"
-                  />
+                  
                   <input
                     className="w-full border rounded-md px-3 py-2"
                     value={editUserName}
