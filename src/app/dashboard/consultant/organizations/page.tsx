@@ -322,7 +322,7 @@ export default function ConsultantOrganizationsPage() {
           {organizations.map((org) => (
             <article
               key={org.id}
-              className="rounded-xl border border-primary/20 bg-white/70 p-5 shadow-sm hover:shadow-md transition"
+              className=" green-interactive rounded-xl border border-primary/20 bg-white/70 p-5 shadow-sm hover:shadow-md transition"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-1">
