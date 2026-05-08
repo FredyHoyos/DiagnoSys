@@ -283,7 +283,7 @@ export default function EditProfileModal({
           <Button
             type="button"
             onClick={() => setChangePassword(!changePassword)}
-            className="mt-2 w-auto min-w-40 bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+            className="mt-2 w-auto min-w-40 cursor-pointer"
           >
             {changePassword ? "Ocultar cambio de contraseña" : "Cambiar contraseña"}
           </Button>
