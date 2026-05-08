@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { execFileSync } from "child_process";
+import path from "path";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
@@ -315,36 +317,65 @@ export async function GET(
       drawHeader(title, subtitle);
 
       for (const form of forms) {
-        const labels = form.categoryData.map((category) => category.name);
-        const values = form.categoryData.map((category) => category.score);
-        const chartHeight = 252;
-        ensureSpace(chartHeight + 28);
+        const rawLabels = form.categoryData.map((category) => category.name);
+        const rawValues = form.categoryData.map((category) => category.score);
 
-        currentPage.drawRectangle({ x: 36, y: y - chartHeight, width: 523, height: chartHeight, color: white, borderColor: rgb(0.85, 0.9, 0.86), borderWidth: 1 });
-        currentPage.drawText(`${form.module} - ${form.name}`, { x: 46, y: y - 20, size: 11, font: fontBold, color: dark });
-        currentPage.drawText(`Puntaje prom: ${form.stats.avgScore}/5.0`, { x: 46, y: y - 34, size: 9, font, color: dark });
+        // Ensure a minimum number of points so radar charts render properly
+        const minPoints = 3;
+        const labels = rawLabels.length >= minPoints ? rawLabels : [...rawLabels, ...Array(minPoints - rawLabels.length).fill('')];
+        const values = rawValues.length >= minPoints ? rawValues : [...rawValues, ...Array(minPoints - rawValues.length).fill(0)];
+
+        const chartPlotHeight = 200; // area for the chart image
+        const headerHeight = 48; // space for title + meta (increased to avoid overlap)
+        const chartTotalHeight = chartPlotHeight + headerHeight;
+
+        ensureSpace(chartTotalHeight + 12);
+
+        const rectLowerY = y - chartTotalHeight;
+        // Draw the containing rectangle (includes header area)
+        currentPage.drawRectangle({ x: 36, y: rectLowerY, width: 523, height: chartTotalHeight, color: white, borderColor: rgb(0.85, 0.9, 0.86), borderWidth: 1 });
+
+        // Draw title and meta inside the top area of the rectangle
+        const titleY = rectLowerY + chartTotalHeight - 12;
+        const metaY = rectLowerY + chartTotalHeight - 28;
+        currentPage.drawText(`${form.module} - ${form.name}`, { x: 46, y: titleY, size: 11, font: fontBold, color: dark });
+        currentPage.drawText(`Puntaje prom: ${form.stats.avgScore}/5.0`, { x: 46, y: metaY, size: 9, font, color: dark });
 
         try {
-          const imgBuffer = await renderRadarChart(labels, values, 520, 240);
+          const imgBuffer = await renderRadarChart(labels, values, 520, chartPlotHeight);
           const pngImage = await pdf.embedPng(imgBuffer);
-          currentPage.drawImage(pngImage, { x: 48, y: y - 230, width: 490, height: 220 });
+          // place the image inside the rectangle with padding
+          const imgY = rectLowerY + 8;
+          currentPage.drawImage(pngImage, { x: 48, y: imgY, width: 490, height: chartPlotHeight });
         } catch (err) {
           console.error("Error rendering chart for form:", form.name, { labelsCount: labels.length, valuesCount: values.length, labels, valuesSample: values.slice(0,5), err });
 
-          // Fallback: try rendering a minimal placeholder chart to ensure PDF contains an image
+          // Fallback: attempt child process renderer
           try {
-            const safeLabels = labels && labels.length ? labels : ["Sin datos"];
-            const safeValues = values && values.length ? values : [0];
-            const fallbackBuf = await renderRadarChart(safeLabels, safeValues, 520, 240);
-            const fallbackPng = await pdf.embedPng(fallbackBuf);
-            currentPage.drawImage(fallbackPng, { x: 48, y: y - 230, width: 490, height: 220 });
+            const scriptPath = path.join(process.cwd(), "src", "scripts", "render-chart-child.cjs");
+            const input = JSON.stringify({ labels, values, width: 520, height: chartPlotHeight });
+            const out = execFileSync(process.execPath, [scriptPath], { input, encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
+            const pngBuf = Buffer.from(out, "base64");
+            const pngImage = await pdf.embedPng(pngBuf);
+            const imgY = rectLowerY + 8;
+            currentPage.drawImage(pngImage, { x: 48, y: imgY, width: 490, height: chartPlotHeight });
           } catch (fallbackErr) {
-            console.error("Fallback render failed for form:", form.name, fallbackErr);
-            currentPage.drawText("No se pudo renderizar la gráfica.", { x: 48, y: y - 100, size: 10, font, color: dark });
+            console.error("Child fallback render failed for form:", form.name, fallbackErr);
+            try {
+              const safeLabels = labels && labels.length ? labels : ["Sin datos", "", ""];
+              const safeValues = values && values.length ? values : [0, 0, 0];
+              const fallbackBuf = await renderRadarChart(safeLabels, safeValues, 520, chartPlotHeight);
+              const fallbackPng = await pdf.embedPng(fallbackBuf);
+              const imgY = rectLowerY + 8;
+              currentPage.drawImage(fallbackPng, { x: 48, y: imgY, width: 490, height: chartPlotHeight });
+            } catch (fallbackErr2) {
+              console.error("Fallback render failed for form:", form.name, fallbackErr2);
+              currentPage.drawText("No se pudo renderizar la gráfica.", { x: 48, y: rectLowerY + (chartTotalHeight / 2), size: 10, font, color: dark });
+            }
           }
         }
 
-        y -= chartHeight + 10;
+        y = rectLowerY - 18;
       }
     };
 
