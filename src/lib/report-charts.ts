@@ -1,11 +1,13 @@
-import { ChartJSNodeCanvas } from "chartjs-node-canvas";
-
 export async function renderRadarChart(
   labels: string[],
   values: number[],
   width = 600,
   height = 360
 ) {
+  // Import dynamically to avoid Next.js bundling issues on the server
+  const mod = await import("chartjs-node-canvas");
+  const ChartJSNodeCanvas = (mod as any).ChartJSNodeCanvas;
+
   const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: "white" });
 
   const configuration = {

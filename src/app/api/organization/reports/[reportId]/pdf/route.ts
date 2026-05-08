@@ -7,16 +7,97 @@ import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consulta
 import { withDefaultReportConfig } from "@/lib/report-config";
 import { renderRadarChart } from "@/lib/report-charts";
 
+type RadarCategoryItem = { score: number };
+type RadarCategory = { name: string; personalizedItems: RadarCategoryItem[] };
+type RadarFormSource = {
+  id: number;
+  name: string;
+  isCompleted: boolean;
+  completedAt: Date | null;
+  updatedAt: Date;
+  baseFormId: number;
+  baseForm: { module: { id: number; name: string } };
+  personalizedCategories: RadarCategory[];
+};
+
+type RadarChartCategory = {
+  name: string;
+  score: number;
+  maxScore: number;
+  itemCount: number;
+  totalScore: number;
+};
+
+type RadarForm = {
+  id: number;
+  name: string;
+  module: string;
+  isCompleted: boolean;
+  completedAt: Date | null;
+  categoryData: RadarChartCategory[];
+  stats: {
+    totalItems: number;
+    totalScore: number;
+    avgScore: number;
+    maxPossibleScore: number;
+    completionPercentage: number;
+  };
+};
+
+function sumScores(items: RadarCategoryItem[]) {
+  let total = 0;
+  for (const item of items) {
+    total += item.score || 0;
+  }
+  return total;
+}
+
+function buildRadarCategory(category: RadarCategory): RadarChartCategory {
+  const items = category.personalizedItems || [];
+  const totalScore = sumScores(items);
+  const avgScore = items.length > 0 ? totalScore / items.length : 0;
+
+  return {
+    name: category.name,
+    score: Math.round(avgScore * 100) / 100,
+    maxScore: 5,
+    itemCount: items.length,
+    totalScore,
+  };
+}
+
+function buildRadarForm(form: RadarFormSource): RadarForm {
+  const categoryData = form.personalizedCategories.map(buildRadarCategory);
+  const totalItems = form.personalizedCategories.reduce((sum, category) => sum + (category.personalizedItems?.length || 0), 0);
+  const totalScore = form.personalizedCategories.reduce((sum, category) => sum + sumScores(category.personalizedItems || []), 0);
+  const avgScore = totalItems > 0 ? totalScore / totalItems : 0;
+
+  return {
+    id: form.id,
+    name: form.name,
+    module: form.baseForm.module.name,
+    isCompleted: form.isCompleted,
+    completedAt: form.completedAt,
+    categoryData,
+    stats: {
+      totalItems,
+      totalScore,
+      avgScore: Math.round(avgScore * 100) / 100,
+      maxPossibleScore: totalItems * 5,
+      completionPercentage: totalItems > 0 ? Math.round((avgScore / 5) * 100) : 0,
+    },
+  };
+}
+
 function drawWrappedText(
   page: import("pdf-lib").PDFPage,
   text: string,
   x: number,
   y: number,
   maxWidth: number,
-  lineHeight: number,
-  size: number,
-  color = rgb(0, 0, 0)
+  options: { lineHeight: number; size: number; color?: import("pdf-lib").RGB }
 ) {
+  const { lineHeight, size, color = rgb(0, 0, 0) } = options;
   const words = text.split(" ");
   let line = "";
   let cursorY = y;
@@ -47,7 +128,7 @@ export async function GET(
 ) {
   try {
     const { reportId } = await context.params;
-    const reportIdInt = parseInt(reportId, 10);
+    const reportIdInt = Number.parseInt(reportId, 10);
 
     if (Number.isNaN(reportIdInt)) {
       return NextResponse.json({ error: "Invalid report ID" }, { status: 400 });
@@ -65,7 +146,7 @@ export async function GET(
       return NextResponse.json({ error: "Organization access required" }, { status: 403 });
     }
 
-    let userId = parseInt(session.user.id, 10);
+    let userId = Number.parseInt(session.user.id, 10);
     if (isConsultant) {
       const organizationId = request.nextUrl.searchParams.get("organizationId");
       const scopedUser = await resolveScopedUserForDiagnostics(session.user.id, organizationId);
@@ -135,57 +216,20 @@ export async function GET(
     });
 
     // group latest forms by module+baseForm
-    const latestFormsByModule = new Map();
+    const latestFormsByModule = new Map<string, RadarFormSource>();
     personalizedForms.forEach((form) => {
       const moduleId = form.baseForm.module.id;
       const baseFormId = form.baseFormId;
       const key = `${moduleId}-${baseFormId}`;
-      if (!latestFormsByModule.has(key) || new Date(form.updatedAt) > new Date(latestFormsByModule.get(key).updatedAt)) {
-        latestFormsByModule.set(key, form);
+      const existing = latestFormsByModule.get(key);
+      if (!existing || new Date(form.updatedAt) > new Date(existing.updatedAt)) {
+        latestFormsByModule.set(key, form as RadarFormSource);
       }
     });
 
     const latestForms = Array.from(latestFormsByModule.values());
 
-    const processFormsForRadar = (forms: any[]) => {
-      return forms.map((form) => {
-        const categoryData = form.personalizedCategories.map((category: any) => {
-          const items: any[] = category.personalizedItems || [];
-          const totalScore = items.reduce((s: number, it: any) => s + (it.score || 0), 0);
-          const avgScore = items.length > 0 ? totalScore / items.length : 0;
-          return {
-            name: category.name,
-            score: Math.round(avgScore * 100) / 100,
-            maxScore: 5,
-            itemCount: items.length,
-            totalScore,
-          };
-        });
-
-        const totalItems = form.personalizedCategories.reduce((s: number, c: any) => s + (c.personalizedItems?.length || 0), 0);
-        const totalScore = form.personalizedCategories.reduce(
-          (s: number, c: any) => s + (c.personalizedItems?.reduce((ss: number, it: any) => ss + (it.score || 0), 0) || 0),
-          0
-        );
-        const avgScore = totalItems > 0 ? totalScore / totalItems : 0;
-
-        return {
-          id: form.id,
-          name: form.name,
-          module: form.baseForm.module.name,
-          isCompleted: form.isCompleted,
-          completedAt: form.completedAt,
-          categoryData,
-          stats: {
-            totalItems,
-            totalScore,
-            avgScore: Math.round(avgScore * 100) / 100,
-            maxPossibleScore: totalItems * 5,
-            completionPercentage: totalItems > 0 ? Math.round((avgScore / 5) * 100) : 0,
-          },
-        };
-      });
-    };
+    const processFormsForRadar = (forms: RadarFormSource[]): RadarForm[] => forms.map(buildRadarForm);
 
     const zoomInForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom in"));
     const zoomOutForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom out"));
@@ -212,14 +256,97 @@ export async function GET(
     );
 
     const pdf = await PDFDocument.create();
-    const page = pdf.addPage([595, 842]);
+    const firstPage = pdf.addPage([595, 842]);
     const titleColor = rgb(0.18, 0.39, 0.28);
     const dark = rgb(0.12, 0.12, 0.12);
+    const white = rgb(1, 1, 1);
 
     const font = await pdf.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
+    let currentPage = firstPage;
     let y = 800;
+
+    const newPage = () => {
+      currentPage = pdf.addPage([595, 842]);
+      y = 800;
+      return currentPage;
+    };
+
+    const ensureSpace = (needed: number) => {
+      if (y - needed < 70) {
+        newPage();
+      }
+      return currentPage;
+    };
+
+    const drawHeader = (title: string, subtitle?: string) => {
+      ensureSpace(52);
+      currentPage.drawText(title, { x: 40, y, size: 16, font: fontBold, color: titleColor });
+      y -= 18;
+      if (subtitle) {
+        y = drawWrappedText(currentPage, subtitle, 40, y, 500, { lineHeight: 13, size: 10, color: dark }) - 4;
+      }
+    };
+
+    const drawStatCard = (x: number, label: string, value: string | number, accent = titleColor) => {
+      const cardTop = y - 46;
+      currentPage.drawRectangle({ x, y: cardTop, width: 165, height: 40, color: white, borderColor: accent, borderWidth: 1 });
+      currentPage.drawText(label, { x: x + 10, y: cardTop + 24, size: 9, font, color: dark });
+      currentPage.drawText(String(value), { x: x + 10, y: cardTop + 10, size: 16, font: fontBold, color: accent });
+    };
+
+    const drawSeparatedList = (items: string[]) => {
+      if (!items.length) {
+        ensureSpace(20);
+        y = drawWrappedText(currentPage, "Sin elementos para mostrar.", 44, y, 500, { lineHeight: 13, size: 10, color: dark }) - 2;
+        return;
+      }
+
+      for (const item of items) {
+        ensureSpace(18);
+        y = drawWrappedText(currentPage, `• ${item}`, 44, y, 500, { lineHeight: 13, size: 10, color: dark }) - 2;
+      }
+    };
+
+    const drawChartSection = async (title: string, subtitle: string, forms: RadarForm[]) => {
+      if (!forms.length) return;
+
+      drawHeader(title, subtitle);
+
+      for (const form of forms) {
+        const labels = form.categoryData.map((category) => category.name);
+        const values = form.categoryData.map((category) => category.score);
+        const chartHeight = 252;
+        ensureSpace(chartHeight + 28);
+
+        currentPage.drawRectangle({ x: 36, y: y - chartHeight, width: 523, height: chartHeight, color: white, borderColor: rgb(0.85, 0.9, 0.86), borderWidth: 1 });
+        currentPage.drawText(`${form.module} - ${form.name}`, { x: 46, y: y - 20, size: 11, font: fontBold, color: dark });
+        currentPage.drawText(`Puntaje prom: ${form.stats.avgScore}/5.0`, { x: 46, y: y - 34, size: 9, font, color: dark });
+
+        try {
+          const imgBuffer = await renderRadarChart(labels, values, 520, 240);
+          const pngImage = await pdf.embedPng(imgBuffer);
+          currentPage.drawImage(pngImage, { x: 48, y: y - 230, width: 490, height: 220 });
+        } catch (err) {
+          console.error("Error rendering chart for form:", form.name, { labelsCount: labels.length, valuesCount: values.length, labels, valuesSample: values.slice(0,5), err });
+
+          // Fallback: try rendering a minimal placeholder chart to ensure PDF contains an image
+          try {
+            const safeLabels = labels && labels.length ? labels : ["Sin datos"];
+            const safeValues = values && values.length ? values : [0];
+            const fallbackBuf = await renderRadarChart(safeLabels, safeValues, 520, 240);
+            const fallbackPng = await pdf.embedPng(fallbackBuf);
+            currentPage.drawImage(fallbackPng, { x: 48, y: y - 230, width: 490, height: 220 });
+          } catch (fallbackErr) {
+            console.error("Fallback render failed for form:", form.name, fallbackErr);
+            currentPage.drawText("No se pudo renderizar la gráfica.", { x: 48, y: y - 100, size: 10, font, color: dark });
+          }
+        }
+
+        y -= chartHeight + 10;
+      }
+    };
 
     // Try to embed logo at top-right if provided
     if (config.logoUrl) {
@@ -229,188 +356,82 @@ export async function GET(
         if (logoResp.ok) {
           const contentType = logoResp.headers.get("content-type") || "image/png";
           const logoBuffer = await logoResp.arrayBuffer();
-          let logoImage: import("pdf-lib").PDFFont | any = null;
+          let logoImage: import("pdf-lib").PDFImage | null = null;
           if (contentType.includes("png")) {
-            logoImage = await pdf.embedPng(logoBuffer as any);
+            logoImage = await pdf.embedPng(logoBuffer);
           } else if (contentType.includes("jpeg") || contentType.includes("jpg")) {
-            logoImage = await pdf.embedJpg(logoBuffer as any);
+            logoImage = await pdf.embedJpg(logoBuffer);
           }
 
           if (logoImage) {
             const logoWidth = 96;
             const ratio = (logoImage.height || 32) / (logoImage.width || 96);
             const logoHeight = Math.round(logoWidth * ratio);
-            const logoX = 595 - 40 - logoWidth; // right margin
-            const logoY = y - logoHeight;
-            page.drawImage(logoImage, { x: logoX, y: logoY, width: logoWidth, height: logoHeight });
+            currentPage.drawImage(logoImage, { x: 595 - 40 - logoWidth, y: 800 - logoHeight, width: logoWidth, height: logoHeight });
           }
-        } else {
-          console.warn("Logo fetch failed with status", logoResp.status, logoSource);
         }
       } catch (err) {
         console.error("Error fetching or embedding logo:", err, config.logoUrl);
       }
     }
 
-    page.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
-    y -= 24;
-
+    currentPage.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
+    y -= 22;
     if (config.headerSubtitle) {
-      page.drawText(config.headerSubtitle, { x: 40, y, size: 11, font, color: dark });
-      y -= 22;
+      y = drawWrappedText(currentPage, config.headerSubtitle, 40, y, 500, { lineHeight: 13, size: 11, color: dark }) - 2;
     }
-
-    page.drawText(`Reporte: ${report.name} (v${report.version})`, { x: 40, y, size: 11, font, color: dark });
-    y -= 16;
-    page.drawText(`Organización: ${report.user.name} - ${report.user.email}`, { x: 40, y, size: 11, font, color: dark });
-    y -= 16;
-    page.drawText(`Fecha: ${new Date(report.createdAt).toLocaleString("es-CO")}`, { x: 40, y, size: 11, font, color: dark });
-    y -= 28;
+    currentPage.drawText(`Reporte: ${report.name} (v${report.version})`, { x: 40, y, size: 10, font, color: dark });
+    y -= 14;
+    currentPage.drawText(`Organización: ${report.user.name} - ${report.user.email}`, { x: 40, y, size: 10, font, color: dark });
+    y -= 14;
+    currentPage.drawText(`Fecha: ${new Date(report.createdAt).toLocaleString("es-CO")}`, { x: 40, y, size: 10, font, color: dark });
+    y -= 20;
 
     if (config.showExecutiveSummary) {
-      page.drawText("Resumen Ejecutivo", { x: 40, y, size: 14, font: fontBold, color: titleColor });
-      y -= 18;
-      y = drawWrappedText(
-        page,
-        "Este informe consolida los resultados del diagnóstico digital, incluyendo categorización de hallazgos y priorización de acciones.",
-        40,
-        y,
-        500,
-        14,
-        10
-      );
-      y -= 8;
+      drawHeader("Resumen Ejecutivo", "Este informe consolida el estado del diagnóstico digital con resultados por módulo, categorización, priorización y plan de acción.");
+      drawSeparatedList([
+        `Zoom In: ${zoomInData.length} formularios`,
+        `Zoom Out: ${zoomOutData.length} formularios`,
+        `Categorización: ${categorization.length} elementos`,
+        `Priorización: ${high.length + medium.length + medium2.length + low.length} elementos`,
+      ]);
+      y -= 10;
     }
-    // Insert radar chart image if requested
-        if (config.showRadar && y > 150) {
-      try {
-        const labels = ["Alta","Media(Impacto)","Media(Urgencia)","Baja","Oportunidades"];
-        const values = [high.length, medium.length, medium2.length, low.length, categorization.length];
-        const imgBuffer = await renderRadarChart(labels, values, 520, 240);
-        const pngImage = await pdf.embedPng(imgBuffer);
-        const imgWidth = 480;
-        const imgHeight = (240 / 520) * imgWidth;
-        const imgTopY = y - imgHeight;
-        page.drawImage(pngImage, { x: 56, y: imgTopY, width: imgWidth, height: imgHeight });
-        y = imgTopY - 8;
-      } catch (err) {
-        console.error("Error rendering radar chart (ChartJS failed), falling back to simple bars:", err);
-        // Fallback: draw simple horizontal bars representing values
-        const labels = ["Alta","Media(Impacto)","Media(Urgencia)","Baja","Oportunidades"];
-        const values = [high.length, medium.length, medium2.length, low.length, categorization.length];
-        const barX = 56;
-        let barY = y - 12;
-        const barWidth = 480;
-        const barHeight = 16;
-        const maxVal = Math.max(5, ...values);
-        for (let i = 0; i < labels.length; i++) {
-          const lv = values[i] ?? 0;
-          const w = (lv / maxVal) * barWidth;
-          page.drawText(labels[i], { x: barX, y: barY + 4, size: 10, font, color: dark });
-          page.drawRectangle({ x: barX + 120, y: barY, width: w, height: barHeight, color: rgb(0.18, 0.39, 0.28) });
-          page.drawText(String(lv), { x: barX + 120 + w + 6, y: barY + 4, size: 9, font, color: dark });
-          barY -= barHeight + 8;
-        }
-        y = barY - 8;
-      }
-    }
-    // Render individual zoom-in charts
-    const ensureSpace = (needed: number): any => {
-      if (y - needed < 60) {
-        const newPage = pdf.addPage([595, 842]);
-        y = 800;
-        return newPage;
-      }
-      return page;
-    };
+
+    drawHeader("Resumen General", "Métricas principales del reporte, equivalentes a las tarjetas que ves en la interfaz web.");
+    drawStatCard(40, "Formularios Zoom In", zoomInData.length, titleColor);
+    drawStatCard(220, "Formularios Zoom Out", zoomOutData.length, titleColor);
+    drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + categorization.length + high.length + medium.length + medium2.length + low.length, rgb(0.12, 0.45, 0.82));
+    y -= 60;
 
     if (config.showRadar) {
-      // Render zoom-in forms charts
-      if (zoomInData.length > 0) {
-        page.drawText("Gráficas Zoom In", { x: 40, y, size: 14, font: fontBold, color: titleColor });
-        y -= 20;
-        for (const form of zoomInData) {
-          const labels = form.categoryData.map((c: any) => c.name);
-          const values = form.categoryData.map((c: any) => c.score);
-          try {
-            const imgBuf = await renderRadarChart(labels, values, 520, 240);
-            const pngImage = await pdf.embedPng(imgBuf);
-            const imgWidth = 480;
-            const imgHeight = (240 / 520) * imgWidth;
-            if (y - imgHeight < 80) {
-              const newPg = pdf.addPage([595, 842]);
-              y = 800;
-              newPg.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
-              y -= 18;
-              newPg.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
-              y -= imgHeight + 12;
-            } else {
-              page.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
-              y -= 18;
-              page.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
-              y -= imgHeight + 12;
-            }
-          } catch (err) {
-            console.error("Error rendering zoom-in chart for form:", form.name, err);
-          }
-        }
-      }
-
-      // Render zoom-out forms charts
-      if (zoomOutData.length > 0) {
-        page.drawText("Gráficas Zoom Out", { x: 40, y, size: 14, font: fontBold, color: titleColor });
-        y -= 20;
-        for (const form of zoomOutData) {
-          const labels = form.categoryData.map((c: any) => c.name);
-          const values = form.categoryData.map((c: any) => c.score);
-          try {
-            const imgBuf = await renderRadarChart(labels, values, 520, 240);
-            const pngImage = await pdf.embedPng(imgBuf);
-            const imgWidth = 480;
-            const imgHeight = (240 / 520) * imgWidth;
-            if (y - imgHeight < 80) {
-              const newPg = pdf.addPage([595, 842]);
-              y = 800;
-              newPg.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
-              y -= 18;
-              newPg.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
-              y -= imgHeight + 12;
-            } else {
-              page.drawText(`${form.module} - ${form.name}`, { x: 40, y: y, size: 11, font: fontBold, color: dark });
-              y -= 18;
-              page.drawImage(pngImage, { x: 56, y: y - imgHeight, width: imgWidth, height: imgHeight });
-              y -= imgHeight + 12;
-            }
-          } catch (err) {
-            console.error("Error rendering zoom-out chart for form:", form.name, err);
-          }
-        }
-      }
+      await drawChartSection("Zoom In - Evaluación de Habilidades", "Las mismas gráficas del reporte web para los formularios Zoom In.", zoomInData);
+      await drawChartSection("Zoom Out - Evaluación de Capacidades", "Las mismas gráficas del reporte web para los formularios Zoom Out.", zoomOutData);
     }
 
     if (config.showCategorization) {
-      page.drawText("Categorización", { x: 40, y, size: 14, font: fontBold, color: titleColor });
-      y -= 16;
-      page.drawText(`Oportunidades: ${categorization.length}`, { x: 44, y, size: 10, font, color: dark });
-      y -= 16;
+      drawHeader("Categorización", "Resumen de oportunidades, necesidades y problemas del reporte web.");
+      drawSeparatedList(
+        categorization.length > 0
+          ? categorization.map((item) => item.name)
+          : ["Sin elementos guardados para este reporte."]
+      );
+      y -= 8;
     }
 
     if (config.showPrioritization) {
-      page.drawText("Priorización", { x: 40, y, size: 14, font: fontBold, color: titleColor });
-      y -= 16;
-      page.drawText(`Alta prioridad: ${high.length}`, { x: 44, y, size: 10, font, color: dark });
-      y -= 14;
-      page.drawText(`Media (alto impacto): ${medium.length}`, { x: 44, y, size: 10, font, color: dark });
-      y -= 14;
-      page.drawText(`Media (alta urgencia): ${medium2.length}`, { x: 44, y, size: 10, font, color: dark });
-      y -= 14;
-      page.drawText(`Baja prioridad: ${low.length}`, { x: 44, y, size: 10, font, color: dark });
-      y -= 18;
+      drawHeader("Priorización", "Distribución de elementos por nivel de impacto y urgencia.");
+      drawSeparatedList([
+        `Alta prioridad: ${high.length}`,
+        `Media (alto impacto): ${medium.length}`,
+        `Media (alta urgencia): ${medium2.length}`,
+        `Baja prioridad: ${low.length}`,
+      ]);
+      y -= 8;
     }
 
     if (config.showActionPlan) {
-      page.drawText("Plan de Acción", { x: 40, y, size: 14, font: fontBold, color: titleColor });
-      y -= 16;
+      drawHeader("Plan de acción recomendado", "Muestra la secuencia sugerida a partir del resumen de priorización.");
       const actions = [
         ...high.map((item) => ({ name: item.name, level: "Alta prioridad" })),
         ...medium.map((item) => ({ name: item.name, level: "Media (alto impacto)" })),
@@ -418,25 +439,18 @@ export async function GET(
         ...low.map((item) => ({ name: item.name, level: "Baja prioridad" })),
       ];
 
-      if (actions.length === 0) {
-        page.drawText("Sin acciones priorizadas para este reporte.", { x: 44, y, size: 10, font, color: dark });
-      } else {
-        for (let i = 0; i < actions.length && y > 80; i++) {
-          const item = actions[i];
-          y = drawWrappedText(page, `${i + 1}. ${item.name} (${item.level})`, 44, y, 500, 13, 10);
-        }
-      }
+      drawSeparatedList(
+        actions.length > 0
+          ? actions.map((item, index) => `${index + 1}. ${item.name} (${item.level})`)
+          : ["Sin acciones priorizadas para este reporte."]
+      );
+      y -= 8;
     }
 
-    if (config.showScaleLegend && y > 70) {
-      y -= 18;
-      page.drawText("Escala de referencia: 1 (muy bajo) a 5 (muy alto)", {
-        x: 40,
-        y,
-        size: 10,
-        font,
-        color: dark,
-      });
+    if (config.showScaleLegend) {
+      ensureSpace(20);
+      currentPage.drawText("Escala de referencia: 1 (muy bajo) a 5 (muy alto)", { x: 40, y, size: 10, font, color: dark });
+      y -= 16;
     }
 
     const bytes = await pdf.save();
