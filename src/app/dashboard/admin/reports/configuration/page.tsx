@@ -157,12 +157,54 @@ export default function AdminReportConfigurationPage() {
 
         <section className="green-interactive rounded-xl border border-emerald-200 p-6 space-y-3">
           <h2 className="text-xl font-semibold text-[#2E6347]">Formato institucional</h2>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={config.logoUrl ?? ""}
-            onChange={(e) => setConfig((prev) => ({ ...prev, logoUrl: e.target.value || null }))}
-            placeholder="URL de logotipo (https://...)"
-          />
+          <div>
+            <label className="block text-sm font-semibold">Logotipo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                setError(null);
+                if (!file || !organizationUserId) return;
+                if (!["image/png", "image/jpeg", "image/jpg", "image/svg+xml"].includes(file.type)) {
+                  setError("Formato no permitido. Usa PNG/JPEG/SVG");
+                  return;
+                }
+                if (file.size > 2 * 1024 * 1024) {
+                  setError("Archivo demasiado grande (máx 2MB)");
+                  return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async () => {
+                  const base64 = (reader.result as string).split(",")[1];
+                  try {
+                    const res = await fetch("/api/admin/report-config/upload", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ organizationUserId, fileName: file.name, contentType: file.type, base64 }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      setError(data?.error || "Error subiendo archivo");
+                      return;
+                    }
+                    setConfig((prev) => ({ ...prev, logoUrl: data.url }));
+                  } catch (err) {
+                    setError("Error subiendo archivo");
+                    console.error(err);
+                  }
+                };
+                reader.readAsDataURL(file);
+              }}
+              className="w-full"
+            />
+            {config.logoUrl && (
+              <div className="mt-2">
+                <img src={config.logoUrl} alt="Preview logo" className="h-16 object-contain" />
+              </div>
+            )}
+          </div>
           <input
             className="w-full border rounded-md px-3 py-2"
             value={config.headerTitle}
