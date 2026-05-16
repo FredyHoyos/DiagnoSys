@@ -261,9 +261,23 @@ export async function GET(
 
     const pdf = await PDFDocument.create();
     const firstPage = pdf.addPage([595, 842]);
-    const titleColor = rgb(0.18, 0.39, 0.28);
-    const dark = rgb(0.12, 0.12, 0.12);
     const white = rgb(1, 1, 1);
+
+    // Convert hex color like #RRGGBB to pdf-lib rgb
+    const hexToRgbNormalized = (hex: string) => {
+      try {
+        const cleaned = hex.replace('#', '').trim();
+        const r = parseInt(cleaned.substring(0, 2), 16);
+        const g = parseInt(cleaned.substring(2, 4), 16);
+        const b = parseInt(cleaned.substring(4, 6), 16);
+        return rgb(r / 255, g / 255, b / 255);
+      } catch (e) {
+        return rgb(0.18, 0.39, 0.28);
+      }
+    };
+
+    const titleColor = config.titleColor ? hexToRgbNormalized(config.titleColor) : rgb(0.18, 0.39, 0.28);
+    const dark = config.textColor ? hexToRgbNormalized(config.textColor) : rgb(0.12, 0.12, 0.12);
 
     const font = await pdf.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);

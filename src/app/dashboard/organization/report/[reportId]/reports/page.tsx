@@ -64,8 +64,8 @@ interface ApiResponse {
         showActionPlan: boolean;
         showScaleLegend: boolean;
         logoUrl: string | null;
-        primaryColor: string;
-        secondaryColor: string;
+        titleColor: string;
+        textColor: string;
         headerTitle: string;
         headerSubtitle: string | null;
     };
@@ -121,10 +121,10 @@ export default function ReportsPage() {
         showActionPlan: true,
         showScaleLegend: true,
         logoUrl: null,
-        primaryColor: "#2E6347",
-        secondaryColor: "#24533b",
         headerTitle: "Reporte de Evaluación Digital",
         headerSubtitle: "Resultados consolidados del diagnóstico",
+        titleColor: "#2E6347",
+        textColor: "#24533b",
     });
 
     const formatSavedAt = (date: string | null) => {
@@ -145,7 +145,7 @@ export default function ReportsPage() {
                     throw new Error('Failed to fetch personalized forms');
                 }
 
-                const data: ApiResponse = await response.json();
+                const data = await response.json();
                 setZoomInForms(data.zoomInForms || []);
                 setZoomOutForms(data.zoomOutForms || []);
                 setCategorizationSummary(data.categorizationSummary);
@@ -264,7 +264,7 @@ export default function ReportsPage() {
                 <div className="mb-8">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2" style={{ color: reportDisplayConfig.primaryColor }}>
+                            <h1 className="text-3xl font-bold mb-2">
                                 {reportDisplayConfig.headerTitle}
                             </h1>
                             <p className="text-black mt-5 text-lg">
@@ -276,11 +276,7 @@ export default function ReportsPage() {
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={reportDisplayConfig.logoUrl} alt="Logo institucional" className="h-12 w-auto rounded bg-white p-1" />
                             ) : null}
-                            <Button
-                                className="text-white"
-                                style={{ backgroundColor: reportDisplayConfig.secondaryColor }}
-                                onClick={handleDownloadPdf}
-                            >
+                            <Button className="text-white" onClick={handleDownloadPdf}>
                                 Descargar en PDF
                             </Button>
                         </div>
@@ -288,9 +284,9 @@ export default function ReportsPage() {
                 </div>
 
                 {reportDisplayConfig.showExecutiveSummary && (
-                    <Card className="green-interactive mb-8 border" style={{ borderColor: reportDisplayConfig.primaryColor }}>
+                    <Card className="green-interactive mb-8 border">
                         <CardContent className="p-5">
-                            <h2 className="text-xl font-semibold mb-2" style={{ color: reportDisplayConfig.primaryColor }}>
+                            <h2 className="text-xl font-semibold mb-2">
                                 Resumen Ejecutivo
                             </h2>
                             <p className="text-sm text-gray-700">

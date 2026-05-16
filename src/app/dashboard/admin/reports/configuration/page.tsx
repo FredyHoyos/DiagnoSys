@@ -222,24 +222,24 @@ export default function AdminReportConfigurationPage() {
               <div>Color primario</div>
               <input
                 type="color"
-                value={config.primaryColor}
-                onChange={(e) => setConfig((prev) => ({ ...prev, primaryColor: e.target.value }))}
+                value={(config as any).titleColor}
+                onChange={(e) => setConfig((prev) => ({ ...prev, titleColor: e.target.value }))}
                 className="h-10 w-10 p-0 border rounded"
-                title="Color primario"
+                title="Color para títulos"
               />
-              <div className="h-6 w-24 rounded" style={{ background: config.primaryColor, border: "1px solid rgba(0,0,0,0.06)" }} />
+              <div className="h-6 w-24 rounded" style={{ background: (config as any).titleColor, border: "1px solid rgba(0,0,0,0.06)" }} />
             </label>
 
             <label className="text-sm text-gray-700 flex items-center gap-3">
               <div>Color secundario</div>
               <input
                 type="color"
-                value={config.secondaryColor}
-                onChange={(e) => setConfig((prev) => ({ ...prev, secondaryColor: e.target.value }))}
+                value={(config as any).textColor}
+                onChange={(e) => setConfig((prev) => ({ ...prev, textColor: e.target.value }))}
                 className="h-10 w-10 p-0 border rounded"
-                title="Color secundario"
+                title="Color para texto"
               />
-              <div className="h-6 w-24 rounded" style={{ background: config.secondaryColor, border: "1px solid rgba(0,0,0,0.06)" }} />
+              <div className="h-6 w-24 rounded" style={{ background: (config as any).textColor, border: "1px solid rgba(0,0,0,0.06)" }} />
             </label>
           </div>
         </section>
