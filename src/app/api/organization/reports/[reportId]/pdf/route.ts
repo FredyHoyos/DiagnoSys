@@ -434,7 +434,7 @@ export async function GET(
     drawHeader("Resumen General", "Métricas principales del reporte, equivalentes a las tarjetas que ves en la interfaz web.");
     drawStatCard(40, "Formularios Zoom In", zoomInData.length, titleColor);
     drawStatCard(220, "Formularios Zoom Out", zoomOutData.length, titleColor);
-    drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + opportunities.length + needs.length + problems.length + high.length + medium.length + medium2.length + low.length, rgb(0.12, 0.45, 0.82));
+    drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + opportunities.length + needs.length + problems.length + high.length + medium.length + medium2.length + low.length, titleColor);
     y -= 60;
 
     if (config.showRadar) {
