@@ -170,8 +170,10 @@ export async function GET(
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    const [categorization, high, medium, low, medium2, configRaw] = await Promise.all([
+    const [opportunities, needs, problems, high, medium, low, medium2, configRaw] = await Promise.all([
       prisma.opportunity.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.need.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.problem.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
       prisma.highPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
       prisma.mediumPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
       prisma.lowPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
@@ -423,7 +425,7 @@ export async function GET(
       drawSeparatedList([
         `Zoom In: ${zoomInData.length} formularios`,
         `Zoom Out: ${zoomOutData.length} formularios`,
-        `Categorización: ${categorization.length} elementos`,
+        `Categorización: ${opportunities.length + needs.length + problems.length} elementos`,
         `Priorización: ${high.length + medium.length + medium2.length + low.length} elementos`,
       ]);
       y -= 10;
@@ -432,7 +434,7 @@ export async function GET(
     drawHeader("Resumen General", "Métricas principales del reporte, equivalentes a las tarjetas que ves en la interfaz web.");
     drawStatCard(40, "Formularios Zoom In", zoomInData.length, titleColor);
     drawStatCard(220, "Formularios Zoom Out", zoomOutData.length, titleColor);
-    drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + categorization.length + high.length + medium.length + medium2.length + low.length, rgb(0.12, 0.45, 0.82));
+    drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + opportunities.length + needs.length + problems.length + high.length + medium.length + medium2.length + low.length, rgb(0.12, 0.45, 0.82));
     y -= 60;
 
     if (config.showRadar) {
@@ -442,10 +444,37 @@ export async function GET(
 
     if (config.showCategorization) {
       drawHeader("Categorización", "Resumen de oportunidades, necesidades y problemas del reporte web.");
+      
+      // Oportunidades
+      ensureSpace(20);
+      currentPage.drawText("Oportunidades", { x: 44, y, size: 12, font: fontBold, color: titleColor });
+      y -= 14;
       drawSeparatedList(
-        categorization.length > 0
-          ? categorization.map((item) => item.name)
-          : ["Sin elementos guardados para este reporte."]
+        opportunities.length > 0
+          ? opportunities.map((item) => item.name)
+          : ["Sin oportunidades registradas."]
+      );
+      y -= 6;
+      
+      // Necesidades
+      ensureSpace(20);
+      currentPage.drawText("Necesidades", { x: 44, y, size: 12, font: fontBold, color: titleColor });
+      y -= 14;
+      drawSeparatedList(
+        needs.length > 0
+          ? needs.map((item) => item.name)
+          : ["Sin necesidades registradas."]
+      );
+      y -= 6;
+      
+      // Problemas
+      ensureSpace(20);
+      currentPage.drawText("Problemas", { x: 44, y, size: 12, font: fontBold, color: titleColor });
+      y -= 14;
+      drawSeparatedList(
+        problems.length > 0
+          ? problems.map((item) => item.name)
+          : ["Sin problemas registrados."]
       );
       y -= 8;
     }
