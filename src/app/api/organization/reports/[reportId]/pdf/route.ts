@@ -428,22 +428,22 @@ export async function GET(
         `Categorización: ${opportunities.length + needs.length + problems.length} elementos`,
         `Priorización: ${high.length + medium.length + medium2.length + low.length} elementos`,
       ]);
-      y -= 10;
+      y -= 20;
     }
 
-    drawHeader("Resumen General", "Métricas principales del reporte, equivalentes a las tarjetas que ves en la interfaz web.");
+    drawHeader("Resumen General");
     drawStatCard(40, "Formularios Zoom In", zoomInData.length, titleColor);
     drawStatCard(220, "Formularios Zoom Out", zoomOutData.length, titleColor);
     drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + opportunities.length + needs.length + problems.length + high.length + medium.length + medium2.length + low.length, titleColor);
-    y -= 60;
+    y -= 80;
 
     if (config.showRadar) {
-      await drawChartSection("Zoom In - Evaluación de Habilidades", "Las mismas gráficas del reporte web para los formularios Zoom In.", zoomInData);
-      await drawChartSection("Zoom Out - Evaluación de Capacidades", "Las mismas gráficas del reporte web para los formularios Zoom Out.", zoomOutData);
+      await drawChartSection("Zoom In - Evaluación de Habilidades", "", zoomInData);
+      await drawChartSection("Zoom Out - Evaluación de Capacidades", "", zoomOutData);
     }
 
     if (config.showCategorization) {
-      drawHeader("Categorización", "Resumen de oportunidades, necesidades y problemas del reporte web.");
+      drawHeader("Categorización");
       
       // Oportunidades
       ensureSpace(20);
@@ -480,7 +480,7 @@ export async function GET(
     }
 
     if (config.showPrioritization) {
-      drawHeader("Priorización", "Distribución de elementos por nivel de impacto y urgencia.");
+      drawHeader("Priorización");
       drawSeparatedList([
         `Alta prioridad: ${high.length}`,
         `Media (alto impacto): ${medium.length}`,
@@ -491,7 +491,7 @@ export async function GET(
     }
 
     if (config.showActionPlan) {
-      drawHeader("Plan de acción recomendado", "Muestra la secuencia sugerida a partir del resumen de priorización.");
+      drawHeader("Plan de acción recomendado");
       const actions = [
         ...high.map((item) => ({ name: item.name, level: "Alta prioridad" })),
         ...medium.map((item) => ({ name: item.name, level: "Media (alto impacto)" })),
@@ -505,12 +505,6 @@ export async function GET(
           : ["Sin acciones priorizadas para este reporte."]
       );
       y -= 8;
-    }
-
-    if (config.showScaleLegend) {
-      ensureSpace(20);
-      currentPage.drawText("Escala de referencia: 1 (muy bajo) a 5 (muy alto)", { x: 40, y, size: 10, font, color: dark });
-      y -= 16;
     }
 
     const bytes = await pdf.save();
