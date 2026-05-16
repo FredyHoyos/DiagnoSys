@@ -219,7 +219,7 @@ export default function AdminReportConfigurationPage() {
           />
           <div className="grid grid-cols-2 gap-3 items-end">
             <label className="text-sm text-gray-700 flex items-center gap-3">
-              <div>Color primario</div>
+              <div>Color títulos</div>
               <input
                 type="color"
                 value={(config as any).titleColor}
@@ -227,11 +227,10 @@ export default function AdminReportConfigurationPage() {
                 className="h-10 w-10 p-0 border rounded"
                 title="Color para títulos"
               />
-              <div className="h-6 w-24 rounded" style={{ background: (config as any).titleColor, border: "1px solid rgba(0,0,0,0.06)" }} />
             </label>
 
             <label className="text-sm text-gray-700 flex items-center gap-3">
-              <div>Color secundario</div>
+              <div>Color texto</div>
               <input
                 type="color"
                 value={(config as any).textColor}
@@ -239,7 +238,6 @@ export default function AdminReportConfigurationPage() {
                 className="h-10 w-10 p-0 border rounded"
                 title="Color para texto"
               />
-              <div className="h-6 w-24 rounded" style={{ background: (config as any).textColor, border: "1px solid rgba(0,0,0,0.06)" }} />
             </label>
           </div>
         </section>
