@@ -91,6 +91,7 @@ function ZoomOutCategorizationContent() {
 
   const [loading, setLoading] = useState(true);
   const scrollAreaClass = "max-h-[260px] overflow-y-auto overflow-x-visible [scrollbar-width:none] [-ms-overflow-style:none] [scrollbar-gutter:stable_both-edges] [&::-webkit-scrollbar]:hidden";
+  const dropZoneClass = "min-h-[150px] w-full px-2 py-2";
 
   const destinationKeys = ["opportunities", "needs", "problems"] as const;
 
@@ -314,6 +315,11 @@ function ZoomOutCategorizationContent() {
 
       setCategories(newCategories);
       setDestinations(newDestinations);
+      setSelectedNoteIds((prev) => {
+        const next = new Set(prev);
+        movingNotes.forEach((note) => next.delete(note.id));
+        return next;
+      });
       return;
     }
 
@@ -350,6 +356,11 @@ function ZoomOutCategorizationContent() {
 
     setCategories(newCategories);
     setDestinations(newDestinations);
+    setSelectedNoteIds((prev) => {
+      const next = new Set(prev);
+      movingNotes.forEach((note) => next.delete(note.id));
+      return next;
+    });
 
     if (!moveSelectedGroup) {
       setSelectedNoteIds(new Set([draggedNote.id]));
@@ -413,7 +424,7 @@ function ZoomOutCategorizationContent() {
 
                 <Droppable droppableId={`category-${category.id}`}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className={`flex flex-col gap-2 px-2 py-2 ${scrollAreaClass}`}>
+                    <div ref={provided.innerRef} {...provided.droppableProps} className={`flex flex-col gap-2 ${dropZoneClass} ${scrollAreaClass}`}>
                       {category.notes.map((note, index) => (
                         <Draggable key={note.id} draggableId={note.id} index={index}>
                           {(provided) => (
@@ -456,7 +467,7 @@ function ZoomOutCategorizationContent() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`min-h-[100px] green-interactive rounded-lg shadow-md p-5 flex flex-col gap-3 ${scrollAreaClass}`}
+                        className={`green-interactive rounded-lg shadow-md p-5 flex flex-col gap-3 ${dropZoneClass} ${scrollAreaClass}`}
                       >
                         {destinations[key].map((note, index) => (
                           <Draggable key={note.id} draggableId={note.id} index={index}>

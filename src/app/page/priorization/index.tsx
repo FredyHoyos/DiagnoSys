@@ -97,6 +97,7 @@ function PriorityQuadrantsContent() {
   const [loading, setLoading] = useState(true);
   const scrollAreaClass = "max-h-[260px] overflow-y-auto overflow-x-visible px-1 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [scrollbar-gutter:stable_both-edges] [&::-webkit-scrollbar]:hidden";
   const hiddenScrollbarClass = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
+  const quadrantDropZoneClass = "min-h-[160px] sm:min-h-[200px] w-full";
 
   const quadrantKeys = ["q1", "q2", "q3", "q4"] as const;
 
@@ -365,6 +366,11 @@ function PriorityQuadrantsContent() {
 
     setCategories(newCategories);
     setQuadrants(newQuadrants);
+    setSelectedNoteIds((prev) => {
+      const next = new Set(prev);
+      movingNotes.forEach((note) => next.delete(note.id));
+      return next;
+    });
 
     if (isQuadrantKey(destination.droppableId)) {
       setSelectedNoteIds((prev) => {
@@ -450,7 +456,7 @@ function PriorityQuadrantsContent() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex flex-col gap-2 ${scrollAreaClass}`}
+                    className={`flex flex-col gap-2 min-h-[150px] w-full ${scrollAreaClass}`}
                   >
                     {category.notes.map((note, index) => (
                       <Draggable
@@ -562,7 +568,7 @@ function PriorityQuadrantsContent() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`green-interactive border-2 sm:border-4 ${q.border} min-h-40 sm:min-h-[200px] flex flex-col p-2.5 sm:p-4 relative`}
+                    className={`green-interactive border-2 sm:border-4 ${q.border} ${quadrantDropZoneClass} flex flex-col p-2.5 sm:p-4 relative`}
                   >
                     <h3 className="text-xl sm:text-2xl font-semibold text-green-800 mb-2 sm:mb-3">
                       {q.title}
