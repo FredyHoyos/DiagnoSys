@@ -29,6 +29,7 @@ export async function renderRadarChart(
           beginAtZero: true,
           suggestedMin: 0,
           suggestedMax: Math.max(5, Math.max(...values)),
+          ticks: { display: false }, // ocultar números de escala (1-5)
         },
       },
       plugins: {

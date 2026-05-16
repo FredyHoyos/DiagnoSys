@@ -18,8 +18,9 @@ export const DEFAULT_REPORT_DISPLAY_CONFIG: ReportDisplayConfigPayload = {
   showCategorization: true,
   showPrioritization: true,
   showActionPlan: true,
-  showScaleLegend: true,
-  logoUrl: null,
+  showScaleLegend: false,
+  // Por defecto usar la imagen pública logoudea.svg (colócala en /public/logoudea.svg)
+  logoUrl: "/logoudea.svg",
   primaryColor: "#2E6347",
   secondaryColor: "#24533b",
   headerTitle: "Reporte de Evaluación Digital",

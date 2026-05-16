@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import fs from "fs";
+import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +15,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (!cfg || !cfg.logoData) {
+      // Try to serve a default image from public/logoudea.svg or .png
+      const candidates = ["logoudea.svg", "logoudea.png"];
+      for (const name of candidates) {
+        const fallbackPath = path.join(process.cwd(), "public", name);
+        if (fs.existsSync(fallbackPath)) {
+          const fileBuf = fs.readFileSync(fallbackPath);
+          const headers = new Headers();
+          const ext = path.extname(name).toLowerCase();
+          headers.set("Content-Type", ext === ".svg" ? "image/svg+xml" : "image/png");
+          headers.set("Cache-Control", "public, max-age=3600");
+          return new Response(fileBuf, { status: 200, headers });
+        }
+      }
+
       return NextResponse.json({ error: "Logo not found" }, { status: 404 });
     }
 

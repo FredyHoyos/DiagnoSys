@@ -152,7 +152,7 @@ export default function AdminReportConfigurationPage() {
           <ToggleRow label="Categorización (O/N/P)" enabled={config.showCategorization} onToggle={() => handleToggle("showCategorization")} />
           <ToggleRow label="Priorización" enabled={config.showPrioritization} onToggle={() => handleToggle("showPrioritization")} />
           <ToggleRow label="Plan de acción" enabled={config.showActionPlan} onToggle={() => handleToggle("showActionPlan")} />
-          <ToggleRow label="Escala visible (1-5)" enabled={config.showScaleLegend} onToggle={() => handleToggle("showScaleLegend")} />
+          {/* Escala visible eliminada por defecto */}
         </section>
 
         <section className="green-interactive rounded-xl border border-emerald-200 p-6 space-y-3">
@@ -217,24 +217,29 @@ export default function AdminReportConfigurationPage() {
             onChange={(e) => setConfig((prev) => ({ ...prev, headerSubtitle: e.target.value || null }))}
             placeholder="Subtítulo del encabezado"
           />
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm text-gray-700">
-              Color primario
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <label className="text-sm text-gray-700 flex items-center gap-3">
+              <div>Color primario</div>
               <input
-                className="w-full border rounded-md px-3 py-2 mt-1"
+                type="color"
                 value={config.primaryColor}
                 onChange={(e) => setConfig((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                placeholder="#2E6347"
+                className="h-10 w-10 p-0 border rounded"
+                title="Color primario"
               />
+              <div className="h-6 w-24 rounded" style={{ background: config.primaryColor, border: "1px solid rgba(0,0,0,0.06)" }} />
             </label>
-            <label className="text-sm text-gray-700">
-              Color secundario
+
+            <label className="text-sm text-gray-700 flex items-center gap-3">
+              <div>Color secundario</div>
               <input
-                className="w-full border rounded-md px-3 py-2 mt-1"
+                type="color"
                 value={config.secondaryColor}
                 onChange={(e) => setConfig((prev) => ({ ...prev, secondaryColor: e.target.value }))}
-                placeholder="#24533b"
+                className="h-10 w-10 p-0 border rounded"
+                title="Color secundario"
               />
+              <div className="h-6 w-24 rounded" style={{ background: config.secondaryColor, border: "1px solid rgba(0,0,0,0.06)" }} />
             </label>
           </div>
         </section>
