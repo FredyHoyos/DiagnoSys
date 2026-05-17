@@ -64,8 +64,8 @@ interface ApiResponse {
         showActionPlan: boolean;
         showScaleLegend: boolean;
         logoUrl: string | null;
-        primaryColor: string;
-        secondaryColor: string;
+        titleColor: string;
+        textColor: string;
         headerTitle: string;
         headerSubtitle: string | null;
     };
@@ -121,10 +121,10 @@ export default function ReportsPage() {
         showActionPlan: true,
         showScaleLegend: true,
         logoUrl: null,
-        primaryColor: "#2E6347",
-        secondaryColor: "#24533b",
         headerTitle: "Reporte de Evaluación Digital",
         headerSubtitle: "Resultados consolidados del diagnóstico",
+        titleColor: "#2E6347",
+        textColor: "#24533b",
     });
 
     const formatSavedAt = (date: string | null) => {
@@ -145,7 +145,7 @@ export default function ReportsPage() {
                     throw new Error('Failed to fetch personalized forms');
                 }
 
-                const data: ApiResponse = await response.json();
+                const data = await response.json();
                 setZoomInForms(data.zoomInForms || []);
                 setZoomOutForms(data.zoomOutForms || []);
                 setCategorizationSummary(data.categorizationSummary);
@@ -193,6 +193,7 @@ export default function ReportsPage() {
     const hasAnyChartData = zoomInForms.length > 0 || zoomOutForms.length > 0;
     const showZoomInCharts = chartFilter !== "zoom-out";
     const showZoomOutCharts = chartFilter !== "zoom-in";
+    const logoSrc = reportDisplayConfig.logoUrl ?? undefined;
     const totalFormularios =
         zoomInForms.length +
         zoomOutForms.length +
@@ -247,7 +248,7 @@ export default function ReportsPage() {
                     {items.map((item, index) => (
                         <div
                             key={`${item.name}-${index}`}
-                            className={`rounded-lg px-3 py-2 text-sm text-black ${chipClass}`}
+                            className={`rounded-lg px-3 py-2 text-sm text-[#2E6347] ${chipClass}`}
                         >
                             {item.name}
                         </div>
@@ -264,23 +265,19 @@ export default function ReportsPage() {
                 <div className="mb-8">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2" style={{ color: reportDisplayConfig.primaryColor }}>
+                            <h1 className="text-3xl font-bold mb-2 text-[#2E6347]">
                                 {reportDisplayConfig.headerTitle}
                             </h1>
-                            <p className="text-black mt-5 text-lg">
+                            <p className="mt-5 text-lg text-[#24533b]">
                                 {reportDisplayConfig.headerSubtitle || "Visualiza gráficas de radar y resúmenes ejecutivos"}
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            {reportDisplayConfig.logoUrl ? (
+                            {logoSrc ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={reportDisplayConfig.logoUrl} alt="Logo institucional" className="h-12 w-auto rounded bg-white p-1" />
+                                <img src={logoSrc} alt="Logo institucional" className="h-12 w-auto rounded bg-white p-1" />
                             ) : null}
-                            <Button
-                                className="text-white"
-                                style={{ backgroundColor: reportDisplayConfig.secondaryColor }}
-                                onClick={handleDownloadPdf}
-                            >
+                            <Button className="text-white" onClick={handleDownloadPdf}>
                                 Descargar en PDF
                             </Button>
                         </div>
@@ -288,12 +285,12 @@ export default function ReportsPage() {
                 </div>
 
                 {reportDisplayConfig.showExecutiveSummary && (
-                    <Card className="green-interactive mb-8 border" style={{ borderColor: reportDisplayConfig.primaryColor }}>
+                    <Card className="green-interactive mb-8 border">
                         <CardContent className="p-5">
-                            <h2 className="text-xl font-semibold mb-2" style={{ color: reportDisplayConfig.primaryColor }}>
+                            <h2 className="text-xl font-semibold mb-2 text-[#2E6347]">
                                 Resumen Ejecutivo
                             </h2>
-                            <p className="text-sm text-gray-700">
+                            <p className="text-sm text-[#24533b]">
                                 Este informe consolida el estado del diagnóstico digital con resultados por módulo,
                                 categorización, priorización y plan de acción recomendado.
                             </p>
@@ -309,7 +306,7 @@ export default function ReportsPage() {
                                 <BarChart3 className="h-9 w-9 text-emerald-800" />
                                 <div>
                                     <p className="text-2xl font-medium text-[#2E6347]">Formularios Zoom In</p>
-                                    <p className="text-2xl font-bold">{zoomInForms.length}</p>
+                                    <p className="text-2xl font-bold text-[#24533b]">{zoomInForms.length}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -321,7 +318,7 @@ export default function ReportsPage() {
                                 <BarChart3 className="h-9 w-9 text-emerald-800" />
                                 <div>
                                     <p className="text-2xl font-medium text-[#2E6347]">Formularios Zoom Out</p>
-                                    <p className="text-2xl font-bold">{zoomOutForms.length}</p>
+                                    <p className="text-2xl font-bold text-[#24533b]">{zoomOutForms.length}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -330,10 +327,10 @@ export default function ReportsPage() {
                     <Card className="green">
                         <CardContent className="pt-6">
                             <div className="flex items-center space-x-8">
-                                <TrendingUp className="h-9 w-9 text-blue-500" />
+                                <TrendingUp className="h-9 w-9 text-[#2E6347]" />
                                 <div>
                                     <p className="text-2xl font-medium text-[#2E6347]">Total Formularios</p>
-                                    <p className="text-2xl font-bold">
+                                    <p className="text-2xl font-bold text-[#24533b]">
                                         {totalFormularios}
                                     </p>
                                 </div>

@@ -4,9 +4,8 @@ export async function renderRadarChart(
   width = 600,
   height = 360
 ) {
-  // Import dynamically to avoid Next.js bundling issues on the server
-  const mod = await import("chartjs-node-canvas");
-  const ChartJSNodeCanvas = (mod as any).ChartJSNodeCanvas;
+  // Use eval(require) to hide from Next.js bundler detection during dev mode
+  const ChartJSNodeCanvas = (eval("require")("chartjs-node-canvas") as any).ChartJSNodeCanvas;
 
   const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: "white" });
 
@@ -30,6 +29,7 @@ export async function renderRadarChart(
           beginAtZero: true,
           suggestedMin: 0,
           suggestedMax: Math.max(5, Math.max(...values)),
+          ticks: { display: false }, // ocultar números de escala (1-5)
         },
       },
       plugins: {

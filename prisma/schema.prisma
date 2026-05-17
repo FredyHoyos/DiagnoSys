@@ -158,6 +158,8 @@ model ReportDisplayConfig {
   showScaleLegend Boolean @default(true)
 
   logoUrl String?
+  logoData Bytes?
+  logoContentType String?
   primaryColor String? @default("#2E6347")
   secondaryColor String? @default("#24533b")
   headerTitle String? @default("Reporte de Evaluación Digital")

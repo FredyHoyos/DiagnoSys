@@ -125,7 +125,13 @@ export async function PUT(request: NextRequest) {
 
     const normalized = normalizeReportDisplayConfigInput(body);
 
-    const saved = await prisma.reportDisplayConfig.upsert({
+    // Fetch existing config to preserve logoUrl if not provided in request
+    const existingConfigForPreservation = await prisma.reportDisplayConfig.findUnique({
+      where: { organizationUserId },
+      select: { logoUrl: true },
+    });
+
+    const savedConfig = await prisma.reportDisplayConfig.upsert({
       where: { organizationUserId },
       create: {
         organizationUserId,
@@ -135,6 +141,8 @@ export async function PUT(request: NextRequest) {
       update: {
         updatedByAdminId: parseInt(session.user.id, 10),
         ...normalized,
+        // Preserve logoUrl if not explicitly provided in the request
+        logoUrl: body.logoUrl !== undefined ? normalized.logoUrl : (existingConfigForPreservation?.logoUrl ?? normalized.logoUrl),
       },
       select: {
         organizationUserId: true,
@@ -154,23 +162,23 @@ export async function PUT(request: NextRequest) {
     });
 
     const normalizedSavedConfig = {
-      showExecutiveSummary: saved.showExecutiveSummary,
-      showRadar: saved.showRadar,
-      showCategorization: saved.showCategorization,
-      showPrioritization: saved.showPrioritization,
-      showActionPlan: saved.showActionPlan,
-      showScaleLegend: saved.showScaleLegend,
-      logoUrl: saved.logoUrl,
-      primaryColor: saved.primaryColor ?? undefined,
-      secondaryColor: saved.secondaryColor ?? undefined,
-      headerTitle: saved.headerTitle ?? undefined,
-      headerSubtitle: saved.headerSubtitle,
+      showExecutiveSummary: savedConfig.showExecutiveSummary,
+      showRadar: savedConfig.showRadar,
+      showCategorization: savedConfig.showCategorization,
+      showPrioritization: savedConfig.showPrioritization,
+      showActionPlan: savedConfig.showActionPlan,
+      showScaleLegend: savedConfig.showScaleLegend,
+      logoUrl: savedConfig.logoUrl,
+      primaryColor: savedConfig.primaryColor ?? undefined,
+      secondaryColor: savedConfig.secondaryColor ?? undefined,
+      headerTitle: savedConfig.headerTitle ?? undefined,
+      headerSubtitle: savedConfig.headerSubtitle,
     };
 
     return NextResponse.json({
       message: "Configuración del informe almacenada correctamente",
       config: withDefaultReportConfig(normalizedSavedConfig),
-      updatedAt: saved.updatedAt,
+      updatedAt: savedConfig.updatedAt,
     });
   } catch (error) {
     console.error("Error saving report config:", error);
