@@ -21,7 +21,7 @@ type UserInfoProps = {
   avatar?: string;
 };
 
-export default function UserInfo({ name, gmail, role, avatar }: UserInfoProps) {
+export default function UserInfo({ name, gmail, role, avatar }: Readonly<UserInfoProps>) {
   const roleLabel = roleLabels[role] ?? role;
 
   return (
@@ -32,7 +32,7 @@ export default function UserInfo({ name, gmail, role, avatar }: UserInfoProps) {
         <div className="flex flex-col">
           <TextLabel text={name} className="font-bold text-lg" />
           <TextLabel text={gmail} className="text-sm text-blue-500" />
-          <TextLabel text={roleLabel} className="text-sm text-gray-800" />
+          <TextLabel text={roleLabel} className="text-sm text-[#2E6347]" />
         </div>
       </div>
 
