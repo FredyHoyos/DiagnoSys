@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_REPORT_DISPLAY_CONFIG, type ReportDisplayConfigPayload } from "@/lib/report-config";
@@ -20,6 +20,7 @@ type ConfigResponse = {
 
 export default function AdminReportConfigurationPage() {
   const { status } = useSession();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([]);
@@ -66,7 +67,7 @@ export default function AdminReportConfigurationPage() {
   const handleToggle = (field: keyof ReportDisplayConfigPayload) => {
     setConfig((prev) => ({
       ...prev,
-      [field]: !prev[field as keyof ReportDisplayConfigPayload],
+      [field]: !prev[field],
     }));
   };
 
@@ -117,12 +118,13 @@ export default function AdminReportConfigurationPage() {
       </p>
 
       <div className="green-interactive rounded-xl border border-emerald-200 p-6 mb-6 space-y-4">
-        <label className="block text-sm font-semibold text-[#2E6347]">Organización</label>
+        <p className="block text-sm font-semibold text-[#2E6347]">Organización</p>
         <select
+          id="organization-select"
           className="w-full border rounded-md px-3 py-2"
           value={organizationUserId ?? ""}
           onChange={(e) => {
-            const next = parseInt(e.target.value, 10);
+            const next = Number.parseInt(e.target.value, 10);
             if (!Number.isNaN(next)) {
               setOrganizationUserId(next);
               fetchConfig(next);
@@ -157,66 +159,84 @@ export default function AdminReportConfigurationPage() {
 
         <section className="green-interactive rounded-xl border border-emerald-200 p-6 space-y-3">
           <h2 className="text-xl font-semibold text-[#2E6347]">Formato institucional</h2>
-          <div>
-            <label className="block text-sm font-semibold">Logotipo</label>
+          <div className="flex flex-col items-center text-center gap-3">
+            <p className="block text-sm font-semibold">Logotipo</p>
             <input
+              id="logo-upload"
+              ref={fileInputRef}
               type="file"
               accept="image/*"
+              className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 setError(null);
                 if (!file || !organizationUserId) return;
-                if (!["image/png", "image/jpeg", "image/jpg", "image/svg+xml"].includes(file.type)) {
-                  setError("Formato no permitido. Usa PNG/JPEG/SVG");
+                if (!['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'].includes(file.type)) {
+                  setError('Formato no permitido. Usa PNG/JPEG/SVG');
                   return;
                 }
                 if (file.size > 2 * 1024 * 1024) {
-                  setError("Archivo demasiado grande (máx 2MB)");
+                  setError('Archivo demasiado grande (máx 2MB)');
                   return;
                 }
 
                 const reader = new FileReader();
                 reader.onload = async () => {
-                  const base64 = (reader.result as string).split(",")[1];
+                  const base64 = (reader.result as string).split(',')[1];
                   try {
-                    const res = await fetch("/api/admin/report-config/upload", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                    const res = await fetch('/api/admin/report-config/upload', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ organizationUserId, fileName: file.name, contentType: file.type, base64 }),
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                      setError(data?.error || "Error subiendo archivo");
+                      setError(data?.error || 'Error subiendo archivo');
                       return;
                     }
                     setConfig((prev) => ({ ...prev, logoUrl: data.url }));
                   } catch (err) {
-                    setError("Error subiendo archivo");
+                    setError('Error subiendo archivo');
                     console.error(err);
                   }
                 };
                 reader.readAsDataURL(file);
               }}
-              className="w-full"
             />
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[#2E6347] text-[#2E6347] hover:bg-[#2E6347] hover:text-white"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Subir imagen
+            </Button>
             {config.logoUrl && (
-              <div className="mt-2">
+              <div className="mt-2 flex justify-center w-full">
                 <img src={config.logoUrl} alt="Preview logo" className="h-16 object-contain" />
               </div>
             )}
           </div>
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={config.headerTitle}
-            onChange={(e) => setConfig((prev) => ({ ...prev, headerTitle: e.target.value }))}
-            placeholder="Título del encabezado"
-          />
-          <input
-            className="w-full border rounded-md px-3 py-2"
-            value={config.headerSubtitle ?? ""}
-            onChange={(e) => setConfig((prev) => ({ ...prev, headerSubtitle: e.target.value || null }))}
-            placeholder="Subtítulo del encabezado"
-          />
+          <div className="space-y-2">
+            <p className="block text-sm font-semibold text-[#2E6347]">Título para el PDF</p>
+            <input
+              id="pdf-title"
+              className="w-full border rounded-md px-3 py-2"
+              value={config.headerTitle}
+              onChange={(e) => setConfig((prev) => ({ ...prev, headerTitle: e.target.value }))}
+              placeholder="Título para el PDF"
+            />
+          </div>
+          <div className="space-y-2">
+            <p className="block text-sm font-semibold text-[#2E6347]">Título Página Reporte</p>
+            <input
+              id="report-page-title"
+              className="w-full border rounded-md px-3 py-2"
+              value={config.headerSubtitle ?? ""}
+              onChange={(e) => setConfig((prev) => ({ ...prev, headerSubtitle: e.target.value || null }))}
+              placeholder="Título Página Reporte"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3 items-end">
             <label className="text-sm text-gray-700 flex items-center gap-3">
               <div>Color títulos</div>
@@ -259,7 +279,7 @@ export default function AdminReportConfigurationPage() {
   );
 }
 
-function ToggleRow({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
+function ToggleRow({ label, enabled, onToggle }: Readonly<{ label: string; enabled: boolean; onToggle: () => void }>) {
   return (
     <label className="flex items-center justify-between border rounded-md px-3 py-2 cursor-pointer">
       <span className="text-sm text-gray-800">{label}</span>
