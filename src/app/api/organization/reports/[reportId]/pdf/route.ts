@@ -288,7 +288,7 @@ export async function GET(
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
     let logoImage: import("pdf-lib").PDFImage | null = null;
-    let logoWidth = 96;
+    let logoWidth = 72;
     let logoHeight = 0;
 
     const logoBytes = configRaw?.logoData ? Buffer.from(configRaw.logoData as Uint8Array) : null;
@@ -328,7 +328,7 @@ export async function GET(
     }
 
     if (logoImage) {
-      const ratio = (logoImage.height || 32) / (logoImage.width || 96);
+      const ratio = (logoImage.height || 32) / (logoImage.width || 72);
       logoHeight = Math.round(logoWidth * ratio);
     }
 
