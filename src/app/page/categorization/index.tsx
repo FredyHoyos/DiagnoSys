@@ -358,6 +358,9 @@ function ZoomOutCategorizationContent() {
 
   if (loading) return <p className="text-center mt-10 text-gray-500">Cargando datos...</p>;
 
+  const visibleCategories =
+  categories.length > 0 ? categories : defaultCategories;
+
   // Calcular si ya están todos los papelitos clasificados
   const allNotes = categories.flatMap((c) => c.notes);
   const allDestNotes = [
@@ -407,7 +410,7 @@ function ZoomOutCategorizationContent() {
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {categories.map((category) => (
+            {visibleCategories.map((category) => (
               <div key={category.id} className={`${category.color} rounded-xl p-4 shadow-md flex flex-col`}>
                 <h2 className="font-semibold text-green-800 mb-2 text-lg">{category.title}</h2>
 
@@ -524,8 +527,37 @@ function ZoomOutCategorizationContent() {
     </div>
   );
 }
+const defaultCategories: Category[] = [
+  {
+    id: "macro",
+    title: "Fuerzas Macroeconómicas",
+    color: "green-interactive border border-3 border-teal-200",
+    notes: [],
+  },
+  {
+    id: "industry",
+    title: "Fuerzas de la Industria",
+    color: "green-interactive border border-3 border-orange-200",
+    notes: [],
+  },
+  {
+    id: "market",
+    title: "Fuerzas del Mercado",
+    color: "green-interactive border border-3 border-lime-200",
+    notes: [],
+  },
+  {
+    id: "trends",
+    title: "Tendencias Clave",
+    color: "green-interactive border border-3 border-red-200",
+    notes: [],
+  },
+];
+
+
 
 export default function ZoomOutCategorization() {
+
   return (
     <Suspense fallback={<p className="text-center mt-10 text-gray-500">Loading data...</p>}>
       <ZoomOutCategorizationContent />
