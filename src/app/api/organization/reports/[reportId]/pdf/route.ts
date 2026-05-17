@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { execFileSync } from "child_process";
-import path from "path";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { readFile } from "node:fs/promises";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
@@ -188,6 +189,8 @@ export async function GET(
           showActionPlan: true,
           showScaleLegend: true,
           logoUrl: true,
+          logoData: true,
+          logoContentType: true,
           primaryColor: true,
           secondaryColor: true,
           headerTitle: true,
@@ -251,6 +254,8 @@ export async function GET(
             showActionPlan: configRaw.showActionPlan,
             showScaleLegend: configRaw.showScaleLegend,
             logoUrl: configRaw.logoUrl,
+            logoData: configRaw.logoData,
+            logoContentType: configRaw.logoContentType,
             primaryColor: configRaw.primaryColor ?? undefined,
             secondaryColor: configRaw.secondaryColor ?? undefined,
             headerTitle: configRaw.headerTitle ?? undefined,
@@ -282,12 +287,68 @@ export async function GET(
     const font = await pdf.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
+    let logoImage: import("pdf-lib").PDFImage | null = null;
+    let logoWidth = 96;
+    let logoHeight = 0;
+
+    const logoBytes = configRaw?.logoData ? Buffer.from(configRaw.logoData as Uint8Array) : null;
+    const logoContentType = configRaw?.logoContentType || "";
+
+    if (logoBytes) {
+      if (logoContentType.includes("png")) {
+        logoImage = await pdf.embedPng(logoBytes);
+      } else if (logoContentType.includes("jpeg") || logoContentType.includes("jpg")) {
+        logoImage = await pdf.embedJpg(logoBytes);
+      }
+    } else if (config.logoUrl) {
+      try {
+        if (config.logoUrl.startsWith("/")) {
+          const logoPath = path.join(process.cwd(), "public", config.logoUrl.replace(/^\//, ""));
+          const fileBuffer = await readFile(logoPath);
+          if (config.logoUrl.toLowerCase().endsWith(".png")) {
+            logoImage = await pdf.embedPng(fileBuffer);
+          } else if (config.logoUrl.toLowerCase().endsWith(".jpg") || config.logoUrl.toLowerCase().endsWith(".jpeg")) {
+            logoImage = await pdf.embedJpg(fileBuffer);
+          }
+        } else {
+          const logoResp = await fetch(config.logoUrl);
+          if (logoResp.ok) {
+            const contentType = logoResp.headers.get("content-type") || "image/png";
+            const fileBuffer = await logoResp.arrayBuffer();
+            if (contentType.includes("png")) {
+              logoImage = await pdf.embedPng(fileBuffer);
+            } else if (contentType.includes("jpeg") || contentType.includes("jpg")) {
+              logoImage = await pdf.embedJpg(fileBuffer);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading logo for PDF:", error);
+      }
+    }
+
+    if (logoImage) {
+      const ratio = (logoImage.height || 32) / (logoImage.width || 96);
+      logoHeight = Math.round(logoWidth * ratio);
+    }
+
     let currentPage = firstPage;
     let y = 800;
+
+    const drawLogo = (page: import("pdf-lib").PDFPage) => {
+      if (!logoImage || !logoHeight) return;
+      page.drawImage(logoImage, {
+        x: 595 - 32 - logoWidth,
+        y: 842 - 32 - logoHeight,
+        width: logoWidth,
+        height: logoHeight,
+      });
+    };
 
     const newPage = () => {
       currentPage = pdf.addPage([595, 842]);
       y = 800;
+      drawLogo(currentPage);
       return currentPage;
     };
 
@@ -395,32 +456,7 @@ export async function GET(
       }
     };
 
-    // Try to embed logo at top-right if provided
-    if (config.logoUrl) {
-      try {
-        const logoSource = config.logoUrl.startsWith("/") ? `${request.nextUrl.origin}${config.logoUrl}` : config.logoUrl;
-        const logoResp = await fetch(logoSource);
-        if (logoResp.ok) {
-          const contentType = logoResp.headers.get("content-type") || "image/png";
-          const logoBuffer = await logoResp.arrayBuffer();
-          let logoImage: import("pdf-lib").PDFImage | null = null;
-          if (contentType.includes("png")) {
-            logoImage = await pdf.embedPng(logoBuffer);
-          } else if (contentType.includes("jpeg") || contentType.includes("jpg")) {
-            logoImage = await pdf.embedJpg(logoBuffer);
-          }
-
-          if (logoImage) {
-            const logoWidth = 96;
-            const ratio = (logoImage.height || 32) / (logoImage.width || 96);
-            const logoHeight = Math.round(logoWidth * ratio);
-            currentPage.drawImage(logoImage, { x: 595 - 40 - logoWidth, y: 800 - logoHeight, width: logoWidth, height: logoHeight });
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching or embedding logo:", err, config.logoUrl);
-      }
-    }
+    drawLogo(currentPage);
 
     currentPage.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
     y -= 22;
