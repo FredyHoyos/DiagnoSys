@@ -339,7 +339,7 @@ export async function GET(
       if (!logoImage || !logoHeight) return;
       page.drawImage(logoImage, {
         x: 595 - 32 - logoWidth,
-        y: 842 - 32 - logoHeight,
+        y: 28,
         width: logoWidth,
         height: logoHeight,
       });
@@ -358,6 +358,8 @@ export async function GET(
       }
       return currentPage;
     };
+
+    drawLogo(currentPage);
 
     const drawHeader = (title: string, subtitle?: string) => {
       ensureSpace(52);

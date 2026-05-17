@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 type AvatarProps = {
@@ -8,14 +9,25 @@ type AvatarProps = {
   size?: number;
 };
 
-export default function Avatar({ src, alt = "User avatar", size = 48 }: AvatarProps) {
+export default function Avatar({ src, alt = "User avatar", size = 48 }: Readonly<AvatarProps>) {
+  const [imageSrc, setImageSrc] = useState(src || "/logoudea.png");
+
+  useEffect(() => {
+    setImageSrc(src || "/logoudea.png");
+  }, [src]);
+
   return (
     <Image
-      src={src || "/user.svg"}
+      src={imageSrc}
       alt={alt}
       width={size}
       height={size}
       className="rounded-full border-2 border-[#2E6347] object-cover"
+      onError={() => {
+        if (imageSrc !== "/user.svg") {
+          setImageSrc("/user.svg");
+        }
+      }}
     />
   );
 }
