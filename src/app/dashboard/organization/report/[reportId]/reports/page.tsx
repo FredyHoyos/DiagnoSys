@@ -194,6 +194,7 @@ export default function ReportsPage() {
     const showZoomInCharts = chartFilter !== "zoom-out";
     const showZoomOutCharts = chartFilter !== "zoom-in";
     const logoSrc = reportDisplayConfig.logoUrl ?? undefined;
+    const fallbackLogoSrc = "/logoudea.png";
     const totalFormularios =
         zoomInForms.length +
         zoomOutForms.length +
@@ -275,7 +276,17 @@ export default function ReportsPage() {
                         <div className="flex items-center gap-3">
                             {logoSrc ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={logoSrc} alt="Logo institucional" className="h-12 w-auto rounded bg-white p-1" />
+                                <img
+                                    src={logoSrc}
+                                    alt="Logo institucional"
+                                    className="h-12 w-auto rounded bg-white p-1"
+                                    onError={(event) => {
+                                        const image = event.currentTarget;
+                                        if (image.dataset.fallbackApplied === "true") return;
+                                        image.dataset.fallbackApplied = "true";
+                                        image.src = fallbackLogoSrc;
+                                    }}
+                                />
                             ) : null}
                             <Button className="text-white" onClick={handleDownloadPdf}>
                                 Descargar en PDF
