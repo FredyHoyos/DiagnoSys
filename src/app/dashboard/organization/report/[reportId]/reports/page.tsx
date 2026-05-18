@@ -264,7 +264,7 @@ export default function ReportsPage() {
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pr-16">
                         <div>
                             <h1 className="text-3xl font-bold mb-2 text-[#2E6347]">
                                 {reportDisplayConfig.headerTitle}
