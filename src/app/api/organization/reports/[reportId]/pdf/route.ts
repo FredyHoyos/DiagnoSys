@@ -402,13 +402,20 @@ export async function GET(
       };
     };
 
-    const drawRadarLabels = (labels: string[], x: number, y: number, width: number, fontSize = 9) => {
+    const drawRadarLabels = (labels: string[], values: number[] | undefined, x: number, y: number, width: number, fontSize = 9) => {
       if (!labels.length) return y;
 
+      const formatValue = (v: number | undefined) => {
+        if (v === undefined || v === null) return "0";
+        return Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100);
+      };
+
       let cursorY = y;
-      for (const label of labels) {
+      for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
         if (!label) continue;
-        currentPage.drawText(`• ${label}`, { x, y: cursorY, size: fontSize, font, color: dark });
+        const val = values && values[i] !== undefined ? formatValue(values[i]) : "0";
+        currentPage.drawText(`• ${label} (${val})`, { x, y: cursorY, size: fontSize, font, color: dark });
         cursorY -= 12;
       }
 
@@ -448,12 +455,12 @@ export async function GET(
         currentPage.drawText(`Puntaje prom: ${form.stats.avgScore}/5.0`, { x: 46, y: metaY, size: 9, font, color: dark });
 
         if (hasRadarData) {
-          try {
+            try {
             const imgBuffer = await renderRadarChart(new Array(labels.length).fill(""), values, 320, 320);
             const pngImage = await pdf.embedPng(imgBuffer);
             const imgY = rectLowerY + 18;
             currentPage.drawImage(pngImage, { x: chartLeftX, y: imgY, width: chartWidth, height: chartHeight });
-            drawRadarLabels(rawLabels, labelsX, rectLowerY + chartAreaHeight - 24, labelColumnWidth, 9);
+            drawRadarLabels(rawLabels, rawValues, labelsX, rectLowerY + chartAreaHeight - 24, labelColumnWidth, 9);
           } catch (error) {
             console.error("Error rendering chart for form:", form.name, { labelsCount: labels.length, valuesCount: values.length, labels, valuesSample: values.slice(0, 5), error });
 
@@ -464,7 +471,7 @@ export async function GET(
               font,
               color: dark,
             });
-            drawRadarLabels(rawLabels, 46, rectLowerY + chartAreaHeight - 40, contentWidth - 80, 9);
+            drawRadarLabels(rawLabels, rawValues, 46, rectLowerY + chartAreaHeight - 40, contentWidth - 80, 9);
           }
         } else {
           currentPage.drawText("Sin categorías para graficar.", {

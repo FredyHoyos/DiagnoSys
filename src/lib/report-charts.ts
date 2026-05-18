@@ -47,12 +47,10 @@ export async function renderRadarChart(
   context.fillStyle = "white";
   context.fillRect(0, 0, width, height);
 
-  const labelsWithValues = labels.map((lab, i) => `${lab} (${values[i] ?? 0})`);
-
   const configuration: ChartConfiguration<"radar", number[], string> = {
     type: "radar",
     data: {
-      labels: labelsWithValues,
+      labels,
       datasets: [
         {
           label: "Puntaje",
