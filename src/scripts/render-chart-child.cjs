@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
+const { createCanvas } = require('canvas');
+const { Chart, registerables } = require('chart.js');
+
+Chart.register(...registerables);
 
 async function readStdin() {
   const chunks = [];
@@ -17,10 +20,13 @@ async function readStdin() {
     const opts = JSON.parse(raw);
     const labels = Array.isArray(opts.labels) ? opts.labels : [];
     const values = Array.isArray(opts.values) ? opts.values : [];
-    const width = typeof opts.width === 'number' ? opts.width : 600;
-    const height = typeof opts.height === 'number' ? opts.height : 360;
+    const width = typeof opts.width === 'number' ? opts.width : 320;
+    const height = typeof opts.height === 'number' ? opts.height : 320;
 
-    const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: 'white' });
+    const canvas = createCanvas(width, height);
+    const context = canvas.getContext('2d');
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, width, height);
 
     const configuration = {
       type: 'radar',
@@ -37,6 +43,10 @@ async function readStdin() {
         ],
       },
       options: {
+        aspectRatio: 1,
+        layout: {
+          padding: 12,
+        },
         scales: {
           r: {
             beginAtZero: true,
@@ -48,11 +58,14 @@ async function readStdin() {
       },
     };
 
-    const buffer = await chartJSNodeCanvas.renderToBuffer(configuration, 'image/png');
+    const chart = new Chart(context, configuration);
+
+    const buffer = canvas.toBuffer('image/png');
+    chart.destroy();
     // write base64 to stdout so parent can decode
     process.stdout.write(buffer.toString('base64'));
   } catch (err) {
-    console.error('Child renderer error:', err && err.stack ? err.stack : String(err));
+    console.error('Child renderer error:', err?.stack || String(err));
     process.exitCode = 2;
   }
 })();
