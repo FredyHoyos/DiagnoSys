@@ -460,7 +460,15 @@ export async function GET(
 
     drawLogo(currentPage);
 
-    currentPage.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
+    const headerTitleSize = 20;
+    const headerTitleWidth = fontBold.widthOfTextAtSize(config.headerTitle, headerTitleSize);
+    currentPage.drawText(config.headerTitle, {
+      x: Math.max(40, (595 - headerTitleWidth) / 2),
+      y,
+      size: headerTitleSize,
+      font: fontBold,
+      color: titleColor,
+    });
     y -= 22;
     if (config.headerSubtitle) {
       y = drawWrappedText(currentPage, config.headerSubtitle, 40, y, 500, { lineHeight: 13, size: 11, color: dark }) - 2;
