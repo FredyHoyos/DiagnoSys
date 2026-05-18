@@ -421,32 +421,32 @@ export async function GET(
         currentPage.drawText(`Puntaje prom: ${form.stats.avgScore}/5.0`, { x: 46, y: metaY, size: 9, font, color: dark });
 
         try {
-          const imgBuffer = await renderRadarChart(labels, values, 520, chartPlotHeight);
+          const imgBuffer = await renderRadarChart(labels, values, 320, 320);
           const pngImage = await pdf.embedPng(imgBuffer);
           // place the image inside the rectangle with padding
-          const imgY = rectLowerY + 8;
-          currentPage.drawImage(pngImage, { x: 48, y: imgY, width: 490, height: chartPlotHeight });
+          const imgY = rectLowerY + 18;
+          currentPage.drawImage(pngImage, { x: 135, y: imgY, width: 280, height: 180 });
         } catch (err) {
           console.error("Error rendering chart for form:", form.name, { labelsCount: labels.length, valuesCount: values.length, labels, valuesSample: values.slice(0,5), err });
 
           // Fallback: attempt child process renderer
           try {
             const scriptPath = path.join(process.cwd(), "src", "scripts", "render-chart-child.cjs");
-            const input = JSON.stringify({ labels, values, width: 520, height: chartPlotHeight });
+            const input = JSON.stringify({ labels, values, width: 320, height: 320 });
             const out = execFileSync(process.execPath, [scriptPath], { input, encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
             const pngBuf = Buffer.from(out, "base64");
             const pngImage = await pdf.embedPng(pngBuf);
-            const imgY = rectLowerY + 8;
-            currentPage.drawImage(pngImage, { x: 48, y: imgY, width: 490, height: chartPlotHeight });
+            const imgY = rectLowerY + 18;
+            currentPage.drawImage(pngImage, { x: 135, y: imgY, width: 280, height: 180 });
           } catch (fallbackErr) {
             console.error("Child fallback render failed for form:", form.name, fallbackErr);
             try {
               const safeLabels = labels && labels.length ? labels : ["Sin datos", "", ""];
               const safeValues = values && values.length ? values : [0, 0, 0];
-              const fallbackBuf = await renderRadarChart(safeLabels, safeValues, 520, chartPlotHeight);
+              const fallbackBuf = await renderRadarChart(safeLabels, safeValues, 320, 320);
               const fallbackPng = await pdf.embedPng(fallbackBuf);
-              const imgY = rectLowerY + 8;
-              currentPage.drawImage(fallbackPng, { x: 48, y: imgY, width: 490, height: chartPlotHeight });
+              const imgY = rectLowerY + 18;
+              currentPage.drawImage(fallbackPng, { x: 135, y: imgY, width: 280, height: 180 });
             } catch (fallbackErr2) {
               console.error("Fallback render failed for form:", form.name, fallbackErr2);
               currentPage.drawText("No se pudo renderizar la gráfica.", { x: 48, y: rectLowerY + (chartTotalHeight / 2), size: 10, font, color: dark });
@@ -460,7 +460,15 @@ export async function GET(
 
     drawLogo(currentPage);
 
-    currentPage.drawText(config.headerTitle, { x: 40, y, size: 20, font: fontBold, color: titleColor });
+    const headerTitleSize = 20;
+    const headerTitleWidth = fontBold.widthOfTextAtSize(config.headerTitle, headerTitleSize);
+    currentPage.drawText(config.headerTitle, {
+      x: Math.max(40, (595 - headerTitleWidth) / 2),
+      y,
+      size: headerTitleSize,
+      font: fontBold,
+      color: titleColor,
+    });
     y -= 22;
     if (config.headerSubtitle) {
       y = drawWrappedText(currentPage, config.headerSubtitle, 40, y, 500, { lineHeight: 13, size: 11, color: dark }) - 2;

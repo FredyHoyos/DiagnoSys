@@ -1,15 +1,21 @@
+import { createCanvas } from "canvas";
+import { Chart, registerables, type ChartConfiguration, type ChartItem } from "chart.js";
+
+Chart.register(...registerables);
+
 export async function renderRadarChart(
   labels: string[],
   values: number[],
-  width = 600,
-  height = 360
+  width = 320,
+  height = 320
 ) {
-  // Use eval(require) to hide from Next.js bundler detection during dev mode
-  const ChartJSNodeCanvas = (eval("require")("chartjs-node-canvas") as any).ChartJSNodeCanvas;
+  const canvas = createCanvas(width, height);
+  const context = canvas.getContext("2d");
 
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: "white" });
+  context.fillStyle = "white";
+  context.fillRect(0, 0, width, height);
 
-  const configuration = {
+  const configuration: ChartConfiguration<"radar", number[], string> = {
     type: "radar",
     data: {
       labels,
@@ -24,6 +30,10 @@ export async function renderRadarChart(
       ],
     },
     options: {
+      aspectRatio: 1,
+      layout: {
+        padding: 12,
+      },
       scales: {
         r: {
           beginAtZero: true,
@@ -36,8 +46,13 @@ export async function renderRadarChart(
         legend: { display: false },
       },
     },
-  } as any;
+  };
 
-  const image = await chartJSNodeCanvas.renderToBuffer(configuration, "image/png");
-  return image;
+  const chart = new Chart(canvas as unknown as ChartItem, configuration);
+
+  try {
+    return canvas.toBuffer("image/png");
+  } finally {
+    chart.destroy();
+  }
 }
