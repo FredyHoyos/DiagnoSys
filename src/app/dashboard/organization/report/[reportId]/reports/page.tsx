@@ -88,6 +88,7 @@ export default function ReportsPage() {
         ? `&organizationId=${organizationId}&organizationName=${encodeURIComponent(organizationName ?? "")}`
         : "";
     const [loading, setLoading] = useState(true);
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
     const [zoomInForms, setZoomInForms] = useState<FormData[]>([]);
     const [zoomOutForms, setZoomOutForms] = useState<FormData[]>([]);
     const [activeView, setActiveView] = useState<ContentView>("charts");
@@ -203,6 +204,7 @@ export default function ReportsPage() {
 
     const handleDownloadPdf = async () => {
         try {
+            setIsDownloadingPdf(true);
             const sep = contextQuery ? `?${contextQuery.slice(1)}` : "";
             const response = await fetch(`/api/organization/reports/${reportId}/pdf${sep}`);
             if (!response.ok) {
@@ -219,6 +221,8 @@ export default function ReportsPage() {
         } catch (downloadError) {
             console.error("Error downloading PDF", downloadError);
             alert("No se pudo descargar el informe en PDF");
+        } finally {
+            setIsDownloadingPdf(false);
         }
     };
 
@@ -288,8 +292,22 @@ export default function ReportsPage() {
                                     }}
                                 />
                             ) : null}
-                            <Button className="text-white" onClick={handleDownloadPdf}>
-                                Descargar en PDF
+                            <Button
+                                className="text-white"
+                                onClick={handleDownloadPdf}
+                                disabled={isDownloadingPdf}
+                            >
+                                {isDownloadingPdf ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Generando PDF...
+                                    </>
+                                ) : (
+                                    "Descargar en PDF"
+                                )}
                             </Button>
                         </div>
                     </div>
