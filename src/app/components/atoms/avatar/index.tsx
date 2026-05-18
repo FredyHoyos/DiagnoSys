@@ -22,7 +22,7 @@ export default function Avatar({ src, alt = "User avatar", size = 48 }: Readonly
       alt={alt}
       width={size}
       height={size}
-      className="rounded-full border-2 border-[#2E6347] object-cover"
+      className="rounded-full border-2 border-[#2E6347] bg-white p-1 object-contain"
       onError={() => {
         if (imageSrc !== "/user.svg") {
           setImageSrc("/user.svg");

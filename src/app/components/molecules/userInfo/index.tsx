@@ -28,7 +28,7 @@ export default function UserInfo({ name, gmail, role, avatar }: Readonly<UserInf
     <div className="flex flex-col space-y-2">
       {/* Información actual */}
       <div className="flex items-center justify-center gap-3 flex-wrap">
-        <Avatar src={avatar} size={56} />
+        <Avatar src={avatar} size={72} />
         <div className="flex flex-col">
           <TextLabel text={name} className="font-bold text-lg" />
           <TextLabel text={gmail} className="text-sm text-blue-500" />
