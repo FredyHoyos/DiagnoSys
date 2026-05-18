@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { authOptions } from "@/lib/auth-config";
@@ -390,29 +389,57 @@ export async function GET(
       }
     };
 
+    const normalizeRadarSeries = (form: RadarForm) => {
+      const rawLabels = form.categoryData.map((category) => category.name);
+      const rawValues = form.categoryData.map((category) => category.score);
+      const minPoints = 3;
+
+      return {
+        rawLabels,
+        rawValues,
+        labels: rawLabels.length >= minPoints ? rawLabels : [...rawLabels, ...new Array(minPoints - rawLabels.length).fill("")],
+        values: rawValues.length >= minPoints ? rawValues : [...rawValues, ...new Array(minPoints - rawValues.length).fill(0)],
+      };
+    };
+
+    const drawRadarLabels = (labels: string[], x: number, y: number, width: number, fontSize = 9) => {
+      if (!labels.length) return y;
+
+      let cursorY = y;
+      for (const label of labels) {
+        if (!label) continue;
+        currentPage.drawText(`• ${label}`, { x, y: cursorY, size: fontSize, font, color: dark });
+        cursorY -= 12;
+      }
+
+      return cursorY;
+    };
+
     const drawChartSection = async (title: string, subtitle: string, forms: RadarForm[]) => {
       if (!forms.length) return;
 
       drawHeader(title, subtitle);
 
       for (const form of forms) {
-        const rawLabels = form.categoryData.map((category) => category.name);
-        const rawValues = form.categoryData.map((category) => category.score);
+        const { rawLabels, rawValues, labels, values } = normalizeRadarSeries(form);
+        const hasRadarData = rawLabels.length > 0 && rawValues.length > 0;
 
-        // Ensure a minimum number of points so radar charts render properly
-        const minPoints = 3;
-        const labels = rawLabels.length >= minPoints ? rawLabels : [...rawLabels, ...Array(minPoints - rawLabels.length).fill('')];
-        const values = rawValues.length >= minPoints ? rawValues : [...rawValues, ...Array(minPoints - rawValues.length).fill(0)];
-
-        const chartPlotHeight = 200; // area for the chart image
-        const headerHeight = 48; // space for title + meta (increased to avoid overlap)
-        const chartTotalHeight = chartPlotHeight + headerHeight;
+        const chartPlotHeight = 200;
+        const headerHeight = 48;
+        const labelColumnWidth = 170;
+        const contentWidth = 523;
+        const chartWidth = 260;
+        const chartHeight = 180;
+        const chartLeftX = 46;
+        const labelsX = chartLeftX + chartWidth + 20;
+        const chartAreaHeight = hasRadarData ? chartPlotHeight : 84;
+        const chartTotalHeight = headerHeight + chartAreaHeight;
 
         ensureSpace(chartTotalHeight + 12);
 
         const rectLowerY = y - chartTotalHeight;
         // Draw the containing rectangle (includes header area)
-        currentPage.drawRectangle({ x: 36, y: rectLowerY, width: 523, height: chartTotalHeight, color: white, borderColor: rgb(0.85, 0.9, 0.86), borderWidth: 1 });
+        currentPage.drawRectangle({ x: 36, y: rectLowerY, width: contentWidth, height: chartTotalHeight, color: white, borderColor: rgb(0.85, 0.9, 0.86), borderWidth: 1 });
 
         // Draw title and meta inside the top area of the rectangle
         const titleY = rectLowerY + chartTotalHeight - 12;
@@ -420,38 +447,40 @@ export async function GET(
         currentPage.drawText(`${form.module} - ${form.name}`, { x: 46, y: titleY, size: 11, font: fontBold, color: dark });
         currentPage.drawText(`Puntaje prom: ${form.stats.avgScore}/5.0`, { x: 46, y: metaY, size: 9, font, color: dark });
 
-        try {
-          const imgBuffer = await renderRadarChart(labels, values, 320, 320);
-          const pngImage = await pdf.embedPng(imgBuffer);
-          // place the image inside the rectangle with padding
-          const imgY = rectLowerY + 18;
-          currentPage.drawImage(pngImage, { x: 135, y: imgY, width: 280, height: 180 });
-        } catch (err) {
-          console.error("Error rendering chart for form:", form.name, { labelsCount: labels.length, valuesCount: values.length, labels, valuesSample: values.slice(0,5), err });
-
-          // Fallback: attempt child process renderer
+        if (hasRadarData) {
           try {
-            const scriptPath = path.join(process.cwd(), "src", "scripts", "render-chart-child.cjs");
-            const input = JSON.stringify({ labels, values, width: 320, height: 320 });
-            const out = execFileSync(process.execPath, [scriptPath], { input, encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
-            const pngBuf = Buffer.from(out, "base64");
-            const pngImage = await pdf.embedPng(pngBuf);
+            const imgBuffer = await renderRadarChart(new Array(labels.length).fill(""), values, 320, 320);
+            const pngImage = await pdf.embedPng(imgBuffer);
             const imgY = rectLowerY + 18;
-            currentPage.drawImage(pngImage, { x: 135, y: imgY, width: 280, height: 180 });
-          } catch (fallbackErr) {
-            console.error("Child fallback render failed for form:", form.name, fallbackErr);
-            try {
-              const safeLabels = labels && labels.length ? labels : ["Sin datos", "", ""];
-              const safeValues = values && values.length ? values : [0, 0, 0];
-              const fallbackBuf = await renderRadarChart(safeLabels, safeValues, 320, 320);
-              const fallbackPng = await pdf.embedPng(fallbackBuf);
-              const imgY = rectLowerY + 18;
-              currentPage.drawImage(fallbackPng, { x: 135, y: imgY, width: 280, height: 180 });
-            } catch (fallbackErr2) {
-              console.error("Fallback render failed for form:", form.name, fallbackErr2);
-              currentPage.drawText("No se pudo renderizar la gráfica.", { x: 48, y: rectLowerY + (chartTotalHeight / 2), size: 10, font, color: dark });
-            }
+            currentPage.drawImage(pngImage, { x: chartLeftX, y: imgY, width: chartWidth, height: chartHeight });
+            drawRadarLabels(rawLabels, labelsX, rectLowerY + chartAreaHeight - 24, labelColumnWidth, 9);
+          } catch (error) {
+            console.error("Error rendering chart for form:", form.name, { labelsCount: labels.length, valuesCount: values.length, labels, valuesSample: values.slice(0, 5), error });
+
+            currentPage.drawText("No se pudo renderizar la gráfica.", {
+              x: 46,
+              y: rectLowerY + chartAreaHeight - 24,
+              size: 10,
+              font,
+              color: dark,
+            });
+            drawRadarLabels(rawLabels, 46, rectLowerY + chartAreaHeight - 40, contentWidth - 80, 9);
           }
+        } else {
+          currentPage.drawText("Sin categorías para graficar.", {
+            x: 46,
+            y: rectLowerY + chartAreaHeight - 24,
+            size: 10,
+            font,
+            color: dark,
+          });
+          currentPage.drawText("Completa datos en el formulario para ver el radar.", {
+            x: 46,
+            y: rectLowerY + chartAreaHeight - 40,
+            size: 9,
+            font,
+            color: dark,
+          });
         }
 
         y = rectLowerY - 18;

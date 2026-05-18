@@ -74,12 +74,6 @@ export async function renderRadarChart(
           beginAtZero: true,
           suggestedMin: 0,
           suggestedMax: Math.max(5, Math.max(...values)),
-          pointLabels: {
-            font: {
-              family: CHART_FONT_FAMILY,
-              size: 11,
-            },
-          },
           ticks: {
             display: false,
             font: {

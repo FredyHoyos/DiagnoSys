@@ -86,12 +86,6 @@ async function readStdin() {
             beginAtZero: true,
             suggestedMin: 0,
             suggestedMax: Math.max(5, ...(values.length ? values : [0])),
-            pointLabels: {
-              font: {
-                family: CHART_FONT_FAMILY,
-                size: 11,
-              },
-            },
             ticks: {
               display: false,
               font: {
