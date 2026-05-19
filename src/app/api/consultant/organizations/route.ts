@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 
 // GET: organizaciones gestionadas por el consultor
 export async function GET() {
@@ -57,9 +58,8 @@ export async function POST(request: NextRequest) {
         if (!session?.user) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
         if (session.user.role?.name !== 'consultant') return NextResponse.json({ error: "Consultant access required" }, { status: 403 });
 
-        const { name, email, password, sector, companySize } = await request.json();
-        if (!name || !email || !password) return NextResponse.json({ error: 'User name, email and password are required' }, { status: 400 });
-        if (typeof password !== 'string' || password.length < 8) return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+        const { name, email, sector, companySize } = await request.json();
+        if (!name || !email) return NextResponse.json({ error: 'User name and email are required' }, { status: 400 });
 
         const consultantId = parseInt(session.user.id);
 
@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
         const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
         if (existingUser) return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const generatedPassword = `${randomBytes(12).toString("base64url")}Aa1!`;
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
         const result = await prisma.$transaction(async (tx) => {
             const organizationUser = await tx.user.create({

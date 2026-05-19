@@ -37,7 +37,6 @@ export default function ConsultantOrganizationsPage() {
 
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [sector, setSector] = useState("");
   const [companySize, setCompanySize] = useState("");
 
@@ -82,7 +81,6 @@ export default function ConsultantOrganizationsPage() {
         body: JSON.stringify({
           name: userName,
           email,
-          password,
           sector: sector || undefined,
           companySize: companySize || undefined,
         }),
@@ -101,7 +99,6 @@ export default function ConsultantOrganizationsPage() {
 
       setUserName("");
       setEmail("");
-      setPassword("");
       setSector("");
       setCompanySize("");
 
@@ -220,16 +217,6 @@ export default function ConsultantOrganizationsPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="off"
-                required
-              />
-              <input
-                className="w-full border rounded-md px-3 py-2"
-                type="password"
-                placeholder="Contraseña de la organización (mín. 8 caracteres)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                minLength={8}
                 required
               />
               <select
