@@ -302,7 +302,7 @@ export default function ReportsPage() {
                                                             onClick={() => continueReport(organization, report.id)}
                                                         >
                                                             <ChevronRight className="h-4 w-4" />
-                                                            Continuar diagnóstico
+                                                            Ir al diagnóstico
                                                         </Button>
                                                     </div>
                                                 </div>

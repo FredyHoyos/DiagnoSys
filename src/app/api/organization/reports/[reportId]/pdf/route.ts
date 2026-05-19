@@ -363,9 +363,9 @@ export async function GET(
     const drawHeader = (title: string, subtitle?: string) => {
       ensureSpace(52);
       currentPage.drawText(title, { x: 40, y, size: 16, font: fontBold, color: titleColor });
-      y -= 18;
+      y -= 24;
       if (subtitle) {
-        y = drawWrappedText(currentPage, subtitle, 40, y, 500, { lineHeight: 13, size: 10, color: dark }) - 4;
+        y = drawWrappedText(currentPage, subtitle, 40, y, 500, { lineHeight: 13, size: 10, color: dark }) - 6;
       }
     };
 
@@ -379,13 +379,13 @@ export async function GET(
     const drawSeparatedList = (items: string[]) => {
       if (!items.length) {
         ensureSpace(20);
-        y = drawWrappedText(currentPage, "Sin elementos para mostrar.", 44, y, 500, { lineHeight: 13, size: 10, color: dark }) - 2;
+        y = drawWrappedText(currentPage, "Sin elementos para mostrar.", 44, y, 500, { lineHeight: 13, size: 10, color: dark }) - 6;
         return;
       }
 
       for (const item of items) {
         ensureSpace(18);
-        y = drawWrappedText(currentPage, `• ${item}`, 44, y, 500, { lineHeight: 13, size: 10, color: dark }) - 2;
+        y = drawWrappedText(currentPage, `• ${item}`, 44, y, 500, { lineHeight: 13, size: 10, color: dark }) - 6;
       }
     };
 
@@ -490,7 +490,7 @@ export async function GET(
           });
         }
 
-        y = rectLowerY - 18;
+        y = rectLowerY - 24;
       }
     };
 
@@ -507,14 +507,14 @@ export async function GET(
     });
     y -= 22;
     if (config.headerSubtitle) {
-      y = drawWrappedText(currentPage, config.headerSubtitle, 40, y, 500, { lineHeight: 13, size: 11, color: dark }) - 2;
+      y = drawWrappedText(currentPage, config.headerSubtitle, 40, y, 500, { lineHeight: 13, size: 11, color: dark }) - 6;
     }
     currentPage.drawText(`Reporte: ${report.name} (v${report.version})`, { x: 40, y, size: 10, font, color: dark });
-    y -= 14;
+    y -= 16;
     currentPage.drawText(`Organización: ${report.user.name} - ${report.user.email}`, { x: 40, y, size: 10, font, color: dark });
-    y -= 14;
+    y -= 16;
     currentPage.drawText(`Fecha: ${new Date(report.createdAt).toLocaleString("es-CO")}`, { x: 40, y, size: 10, font, color: dark });
-    y -= 20;
+    y -= 28;
 
     if (config.showExecutiveSummary) {
       drawHeader("Resumen Ejecutivo", "Este informe consolida el estado del diagnóstico digital con resultados por módulo, categorización, priorización y plan de acción.");
@@ -524,14 +524,14 @@ export async function GET(
         `Categorización: ${opportunities.length + needs.length + problems.length} elementos`,
         `Priorización: ${high.length + medium.length + medium2.length + low.length} elementos`,
       ]);
-      y -= 20;
+      y -= 28;
     }
 
     drawHeader("Resumen General");
     drawStatCard(40, "Formularios Zoom In", zoomInData.length, titleColor);
     drawStatCard(220, "Formularios Zoom Out", zoomOutData.length, titleColor);
     drawStatCard(400, "Total Formularios", zoomInData.length + zoomOutData.length + opportunities.length + needs.length + problems.length + high.length + medium.length + medium2.length + low.length, titleColor);
-    y -= 80;
+    y -= 90;
 
     if (config.showRadar) {
       await drawChartSection("Zoom In - Evaluación de Habilidades", "", zoomInData);
@@ -550,7 +550,7 @@ export async function GET(
           ? opportunities.map((item) => item.name)
           : ["Sin oportunidades registradas."]
       );
-      y -= 6;
+      y -= 14;
       
       // Necesidades
       ensureSpace(20);
@@ -561,7 +561,7 @@ export async function GET(
           ? needs.map((item) => item.name)
           : ["Sin necesidades registradas."]
       );
-      y -= 6;
+      y -= 14;
       
       // Problemas
       ensureSpace(20);
@@ -572,7 +572,7 @@ export async function GET(
           ? problems.map((item) => item.name)
           : ["Sin problemas registrados."]
       );
-      y -= 8;
+      y -= 14;
     }
 
     if (config.showPrioritization) {
@@ -583,7 +583,7 @@ export async function GET(
         `Media (alta urgencia): ${medium2.length}`,
         `Baja prioridad: ${low.length}`,
       ]);
-      y -= 8;
+      y -= 14;
     }
 
     if (config.showActionPlan) {
@@ -600,7 +600,7 @@ export async function GET(
           ? actions.map((item, index) => `${index + 1}. ${item.name} (${item.level})`)
           : ["Sin acciones priorizadas para este reporte."]
       );
-      y -= 8;
+      y -= 14;
     }
 
     const bytes = await pdf.save();

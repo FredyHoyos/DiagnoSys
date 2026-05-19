@@ -300,7 +300,7 @@ export default function ConsultantOrganizationsPage() {
           {organizations.map((org) => (
             <article
               key={org.id}
-              className=" green-interactive rounded-xl border border-primary/20 bg-white/70 p-5 shadow-sm hover:shadow-md transition"
+              className="bg-secondary rounded-xl border border-primary/20 bg-white/70 p-5 shadow-sm hover:shadow-md transition"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-1">
@@ -319,13 +319,13 @@ export default function ConsultantOrganizationsPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   onClick={() => startDiagnosis(org)}
-                  className="bg-[#2E6347] text-white px-3 py-2 rounded-md"
+                  className="bg-[#2E6347] text-white px-3 py-2 rounded-md  cursor-pointer"
                 >
                   Entrar al diagnóstico
                 </button>
                 <button
                   onClick={() => handleOpenEdit(org)}
-                  className="border border-[#2E6347] text-[#2E6347] px-3 py-2 rounded-md"
+                  className="border border-[#2E6347] text-[#2E6347] px-3 py-2 rounded-md cursor-pointer"
                 >
                   Editar
                 </button>
