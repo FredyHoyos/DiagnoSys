@@ -3,10 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/app/components/shadcn-charts/card";
-import { Calendar, ChevronRight, Eye, Loader2, TrendingUp, BarChart3 } from "lucide-react";
+import { Calendar, ChevronRight, Eye, TrendingUp, BarChart3 } from "lucide-react";
 
 interface ReportSummary {
     id: number;
@@ -26,9 +25,10 @@ interface ApiResponse {
     organizations: Array<{
         id: number;
         name: string;
-        description: string | null;
         userName: string;
         email: string;
+        sector: string | null;
+        companySize: string | null;
         stats: {
             reportsCount: number;
         };
@@ -99,18 +99,6 @@ export default function ReportsPage() {
         router.push(
             `/dashboard/organization/report/${reportId}/zoom-in?organizationId=${organization.id}&organizationName=${encodeURIComponent(organization.name)}`
         );
-    };
-
-    const getStatusBadge = (report: ReportSummary) => {
-        if (report.isCompleted) {
-            return <Badge className="bg-green-100 text-green-800 border-green-300 hover:bg-green-100">Completado</Badge>;
-        }
-
-        if (report.stats.completedForms > 0) {
-            return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">Pendiente</Badge>;
-        }
-
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-100">No iniciado</Badge>;
     };
 
     if (status === "loading" || loading) {
@@ -260,7 +248,9 @@ export default function ReportsPage() {
                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
                                         <div>
                                             <h2 className="text-2xl font-bold text-[#2E6347] mb-2">{organization.name}</h2>
-                                            <p className="text-gray-700">{organization.description || "Sin descripción"}</p>
+                                            <p className="text-gray-700">
+                                                Sector: {organization.sector || "No especificado"} | Tamaño: {organization.companySize || "No especificado"}
+                                            </p>
                                             <p className="text-sm text-gray-500 mt-1">
                                                 Usuario: {organization.userName} | Email: {organization.email}
                                             </p>
@@ -279,7 +269,7 @@ export default function ReportsPage() {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                             {organization.reports.map((report) => (
-                                                <div key={report.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition">
+                                                <div key={report.id} className="rounded-xl border border-gray-200 bg-secondary p-4 shadow-sm hover:shadow-md transition">
                                                     <div className="flex items-start gap-3">
                                                         <div>
                                                             <h3 className="text-lg font-semibold text-[#2E6347]">{report.name}</h3>
