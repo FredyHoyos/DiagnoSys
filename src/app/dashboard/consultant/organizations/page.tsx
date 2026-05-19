@@ -31,7 +31,6 @@ export default function ConsultantOrganizationsPage() {
   const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
   const [editUserName, setEditUserName] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [editPassword, setEditPassword] = useState("");
   const [editSector, setEditSector] = useState("");
   const [editCompanySize, setEditCompanySize] = useState("");
 
@@ -119,7 +118,6 @@ export default function ConsultantOrganizationsPage() {
     setEditingOrgId(org.id);
     setEditUserName(org.userName || "");
     setEditEmail(org.email || "");
-    setEditPassword("");
     setEditSector(org.sector || "");
     setEditCompanySize(org.companySize || "");
     setMessage(null);
@@ -130,7 +128,6 @@ export default function ConsultantOrganizationsPage() {
     setEditingOrgId(null);
     setEditUserName("");
     setEditEmail("");
-    setEditPassword("");
     setEditSector("");
     setEditCompanySize("");
   };
@@ -138,11 +135,6 @@ export default function ConsultantOrganizationsPage() {
   const handleSaveEdit = async (orgId: number) => {
     if (!editUserName.trim() || !editEmail.trim()) {
       setError("El nombre de usuario y email son requeridos");
-      return;
-    }
-
-    if (editPassword && editPassword.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres");
       return;
     }
 
@@ -158,7 +150,6 @@ export default function ConsultantOrganizationsPage() {
           orgId,
           name: editUserName,
           email: editEmail,
-          password: editPassword || undefined,
           sector: editSector || undefined,
           companySize: editCompanySize || undefined,
         }),
@@ -346,14 +337,6 @@ export default function ConsultantOrganizationsPage() {
                     className="w-full border rounded-md px-3 py-2"
                     value={editUserName}
                     onChange={(e) => setEditUserName(e.target.value)}
-                    placeholder="Nombre de la organización"
-                    autoComplete="off"
-                  />
-                  
-                  <input
-                    className="w-full border rounded-md px-3 py-2"
-                    value={editUserName}
-                    onChange={(e) => setEditUserName(e.target.value)}
                     placeholder="Nombre de usuario de la organización"
                     autoComplete="off"
                   />
@@ -364,14 +347,6 @@ export default function ConsultantOrganizationsPage() {
                     onChange={(e) => setEditEmail(e.target.value)}
                     placeholder="Correo electrónico de la organización"
                     autoComplete="off"
-                  />
-                  <input
-                    className="w-full border rounded-md px-3 py-2"
-                    type="password"
-                    value={editPassword}
-                    onChange={(e) => setEditPassword(e.target.value)}
-                    placeholder="Nueva contraseña (opcional)"
-                    autoComplete="new-password"
                   />
                   <select
                     className="w-full border rounded-md px-3 py-2"
