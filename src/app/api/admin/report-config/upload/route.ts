@@ -41,7 +41,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert report display config and save the logo bytes
-    const url = `/api/admin/report-config/logo?organizationUserId=${organizationUserId}`;
+    // Add timestamp to URL to bypass browser cache
+    const timestamp = Date.now();
+    const url = `/api/admin/report-config/logo?organizationUserId=${organizationUserId}&t=${timestamp}`;
     const saved = await prisma.reportDisplayConfig.upsert({
       where: { organizationUserId },
       create: {

@@ -73,6 +73,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Regenerate logoUrl with fresh timestamp to bypass browser cache
+    let logoUrl = existingConfig?.logoUrl ?? null;
+    if (logoUrl && logoUrl.includes("/api/admin/report-config/logo")) {
+      logoUrl = `/api/admin/report-config/logo?organizationUserId=${selectedOrganizationId}&t=${Date.now()}`;
+    }
+
     const normalizedExistingConfig = existingConfig
       ? {
           showExecutiveSummary: existingConfig.showExecutiveSummary,
@@ -81,7 +87,7 @@ export async function GET(request: NextRequest) {
           showPrioritization: existingConfig.showPrioritization,
           showActionPlan: existingConfig.showActionPlan,
           showScaleLegend: existingConfig.showScaleLegend,
-          logoUrl: existingConfig.logoUrl,
+          logoUrl: logoUrl,
           primaryColor: existingConfig.primaryColor ?? undefined,
           secondaryColor: existingConfig.secondaryColor ?? undefined,
           headerTitle: existingConfig.headerTitle ?? undefined,
@@ -125,12 +131,6 @@ export async function PUT(request: NextRequest) {
 
     const normalized = normalizeReportDisplayConfigInput(body);
 
-    // Fetch existing config to preserve logoUrl if not provided in request
-    const existingConfigForPreservation = await prisma.reportDisplayConfig.findUnique({
-      where: { organizationUserId },
-      select: { logoUrl: true },
-    });
-
     const savedConfig = await prisma.reportDisplayConfig.upsert({
       where: { organizationUserId },
       create: {
@@ -138,12 +138,7 @@ export async function PUT(request: NextRequest) {
         updatedByAdminId: parseInt(session.user.id, 10),
         ...normalized,
       },
-      update: {
-        updatedByAdminId: parseInt(session.user.id, 10),
-        ...normalized,
-        // Preserve logoUrl if not explicitly provided in the request
-        logoUrl: body.logoUrl !== undefined ? normalized.logoUrl : (existingConfigForPreservation?.logoUrl ?? normalized.logoUrl),
-      },
+      update: updateData,
       select: {
         organizationUserId: true,
         showExecutiveSummary: true,
@@ -168,7 +163,7 @@ export async function PUT(request: NextRequest) {
       showPrioritization: savedConfig.showPrioritization,
       showActionPlan: savedConfig.showActionPlan,
       showScaleLegend: savedConfig.showScaleLegend,
-      logoUrl: savedConfig.logoUrl,
+      logoUrl: savedConfig.logoUrl ? `/api/admin/report-config/logo?organizationUserId=${organizationUserId}&t=${Date.now()}` : null,
       primaryColor: savedConfig.primaryColor ?? undefined,
       secondaryColor: savedConfig.secondaryColor ?? undefined,
       headerTitle: savedConfig.headerTitle ?? undefined,

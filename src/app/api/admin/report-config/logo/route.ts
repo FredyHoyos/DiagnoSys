@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           const headers = new Headers();
           const ext = path.extname(name).toLowerCase();
           headers.set("Content-Type", ext === ".svg" ? "image/svg+xml" : "image/png");
-          headers.set("Cache-Control", "public, max-age=3600");
+          headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
           return new Response(fileBuf, { status: 200, headers });
         }
       }
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     const headers = new Headers();
     headers.set("Content-Type", cfg.logoContentType || "image/png");
-    headers.set("Cache-Control", "public, max-age=3600");
+    headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
     return new Response(Buffer.from(cfg.logoData as Uint8Array), { status: 200, headers });
   } catch (error) {
     console.error("Error serving logo:", error);

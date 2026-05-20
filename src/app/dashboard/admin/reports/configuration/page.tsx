@@ -64,6 +64,97 @@ export default function AdminReportConfigurationPage() {
     }
   }, [status]);
 
+  const handleImageUpload = async (file: File) => {
+    setError(null);
+    setMessage(null);
+
+    if (!organizationUserId) {
+      setError("Selecciona una organización primero");
+      return;
+    }
+
+    // Validar tipo de archivo
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'].includes(file.type)) {
+      setError('Formato no permitido. Usa PNG, JPEG o SVG');
+      return;
+    }
+
+    // Validar tamaño
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Archivo demasiado grande (máximo 2MB)');
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = (reader.result as string).split(',')[1];
+          console.log('Uploading image...', { organizationUserId, fileName: file.name, contentType: file.type });
+          
+          const res = await fetch('/api/admin/report-config/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              organizationUserId, 
+              fileName: file.name, 
+              contentType: file.type, 
+              base64 
+            }),
+          });
+
+          const data = await res.json();
+          console.log('Upload response:', { status: res.status, data });
+          
+          if (!res.ok) {
+            setError(data?.error || 'Error al subir la imagen');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+          }
+
+          console.log('Image saved successfully, URL:', data.url);
+          
+          // Actualizar estado local con la nueva URL
+          setConfig((prev) => ({ ...prev, logoUrl: data.url }));
+          setMessage('Imagen subida correctamente');
+          
+          // No hacer PUT automático - solo guardar cuando el usuario presione el botón
+          
+        } catch (err) {
+          setError('Error al procesar la imagen');
+          console.error(err);
+        } finally {
+          // Resetear el input file después de procesar
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        }
+      };
+
+      reader.onerror = () => {
+        setError('Error al leer el archivo');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setError('Error inesperado al subir la imagen');
+      console.error(err);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
   const handleToggle = (field: keyof ReportDisplayConfigPayload) => {
     setConfig((prev) => ({
       ...prev,
@@ -167,53 +258,28 @@ export default function AdminReportConfigurationPage() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                setError(null);
-                if (!file || !organizationUserId) return;
-                if (!['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'].includes(file.type)) {
-                  setError('Formato no permitido. Usa PNG/JPEG/SVG');
-                  return;
-                }
-                if (file.size > 2 * 1024 * 1024) {
-                  setError('Archivo demasiado grande (máx 2MB)');
-                  return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = async () => {
-                  const base64 = (reader.result as string).split(',')[1];
-                  try {
-                    const res = await fetch('/api/admin/report-config/upload', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ organizationUserId, fileName: file.name, contentType: file.type, base64 }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok) {
-                      setError(data?.error || 'Error subiendo archivo');
-                      return;
-                    }
-                    setConfig((prev) => ({ ...prev, logoUrl: data.url }));
-                  } catch (err) {
-                    setError('Error subiendo archivo');
-                    console.error(err);
-                  }
-                };
-                reader.readAsDataURL(file);
-              }}
+              onChange={handleFileInputChange}
             />
             <Button
               type="button"
               variant="outline"
               className="border-[#2E6347] text-[#2E6347] hover:bg-[#2E6347] hover:text-white"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                // Resetear el input ANTES de abrir el file picker
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                  fileInputRef.current.click();
+                }
+              }}
             >
-              Subir imagen
+              {config.logoUrl ? 'Cambiar imagen' : 'Subir imagen'}
             </Button>
             {config.logoUrl && (
-              <div className="mt-2 flex justify-center w-full">
-                <img src={config.logoUrl} alt="Preview logo" className="h-16 object-contain" />
+              <div className="mt-2 flex flex-col items-center gap-2 w-full">
+                <div className="p-2 border border-emerald-300 rounded-md bg-emerald-50">
+                  <img src={config.logoUrl} alt="Preview logo" className="h-16 object-contain" />
+                </div>
+                <p className="text-xs text-gray-600">Vista previa del logotipo</p>
               </div>
             )}
           </div>
