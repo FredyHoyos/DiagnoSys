@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     let selectedOrganizationId: number | null = null;
 
     if (orgIdParam) {
-      const parsed = parseInt(orgIdParam, 10);
+      const parsed = Number.parseInt(orgIdParam, 10);
       if (Number.isNaN(parsed)) {
         return NextResponse.json({ error: "Invalid organizationUserId" }, { status: 400 });
       }
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     // Regenerate logoUrl with fresh timestamp to bypass browser cache
     let logoUrl = existingConfig?.logoUrl ?? null;
-    if (logoUrl && logoUrl.includes("/api/admin/report-config/logo")) {
+    if (logoUrl?.includes("/api/admin/report-config/logo")) {
       logoUrl = `/api/admin/report-config/logo?organizationUserId=${selectedOrganizationId}&t=${Date.now()}`;
     }
 
@@ -112,9 +112,9 @@ export async function PUT(request: NextRequest) {
     const auth = await requireAdminSession();
     if (auth.error) return auth.error;
 
-    const session = auth.session!;
+    const session = auth.session;
     const body = await request.json();
-    const organizationUserId = parseInt(String(body.organizationUserId), 10);
+    const organizationUserId = Number.parseInt(String(body.organizationUserId), 10);
 
     if (Number.isNaN(organizationUserId)) {
       return NextResponse.json({ error: "organizationUserId is required" }, { status: 400 });
@@ -125,17 +125,32 @@ export async function PUT(request: NextRequest) {
       select: { id: true, role: { select: { name: true } } },
     });
 
-    if (!orgUser || orgUser.role.name !== "organization") {
+    if (orgUser?.role.name !== "organization") {
       return NextResponse.json({ error: "Organization user not found" }, { status: 404 });
     }
 
     const normalized = normalizeReportDisplayConfigInput(body);
 
+    const updateData: any = {
+      updatedByAdminId: Number.parseInt(session.user.id, 10),
+      showExecutiveSummary: normalized.showExecutiveSummary,
+      showRadar: normalized.showRadar,
+      showCategorization: normalized.showCategorization,
+      showPrioritization: normalized.showPrioritization,
+      showActionPlan: normalized.showActionPlan,
+      showScaleLegend: normalized.showScaleLegend,
+      headerTitle: normalized.headerTitle,
+      headerSubtitle: normalized.headerSubtitle,
+      primaryColor: normalized.primaryColor,
+      secondaryColor: normalized.secondaryColor,
+      ...(body.logoUrl !== undefined && { logoUrl: normalized.logoUrl }),
+    };
+
     const savedConfig = await prisma.reportDisplayConfig.upsert({
       where: { organizationUserId },
       create: {
         organizationUserId,
-        updatedByAdminId: parseInt(session.user.id, 10),
+        updatedByAdminId: Number.parseInt(session.user.id, 10),
         ...normalized,
       },
       update: updateData,

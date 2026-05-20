@@ -21,7 +21,8 @@ type ConfigResponse = {
 export default function AdminReportConfigurationPage() {
   const { status } = useSession();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [switchingOrganization, setSwitchingOrganization] = useState(false);
   const [saving, setSaving] = useState(false);
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([]);
   const [organizationUserId, setOrganizationUserId] = useState<number | null>(null);
@@ -34,8 +35,13 @@ export default function AdminReportConfigurationPage() {
     [organizations, organizationUserId]
   );
 
-  const fetchConfig = async (orgId?: number) => {
-    setLoading(true);
+  const fetchConfig = async (orgId?: number, options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (silent) {
+      setSwitchingOrganization(true);
+    } else {
+      setInitialLoading(true);
+    }
     setError(null);
     try {
       const query = orgId ? `?organizationUserId=${orgId}` : "";
@@ -54,7 +60,11 @@ export default function AdminReportConfigurationPage() {
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "Error cargando configuración");
     } finally {
-      setLoading(false);
+      if (silent) {
+        setSwitchingOrganization(false);
+      } else {
+        setInitialLoading(false);
+      }
     }
   };
 
@@ -193,7 +203,7 @@ export default function AdminReportConfigurationPage() {
     }
   };
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || initialLoading) {
     return <div className="p-6">Cargando configuración de informe...</div>;
   }
 
@@ -209,16 +219,22 @@ export default function AdminReportConfigurationPage() {
       </p>
 
       <div className="green-interactive rounded-xl border border-emerald-200 p-6 mb-6 space-y-4">
+        {switchingOrganization && (
+          <div className="text-sm text-[#2E6347] bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
+            Cambiando organización...
+          </div>
+        )}
         <p className="block text-sm font-semibold text-[#2E6347]">Organización</p>
         <select
           id="organization-select"
           className="w-full border rounded-md px-3 py-2"
           value={organizationUserId ?? ""}
+          disabled={switchingOrganization}
           onChange={(e) => {
             const next = Number.parseInt(e.target.value, 10);
             if (!Number.isNaN(next)) {
               setOrganizationUserId(next);
-              fetchConfig(next);
+              fetchConfig(next, { silent: true });
             }
           }}
         >
@@ -229,15 +245,9 @@ export default function AdminReportConfigurationPage() {
             </option>
           ))}
         </select>
-
-        {selectedOrg && (
-          <p className="text-sm text-gray-600">
-            Configurando informe para: <strong>{selectedOrg.name}</strong>
-          </p>
-        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 transition-opacity duration-200 ${switchingOrganization ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
         <section className="green-interactive rounded-xl border border-emerald-200 p-6 space-y-3">
           <h2 className="text-xl font-semibold text-[#2E6347]">Criterios de visualización</h2>
           <ToggleRow label="Resumen ejecutivo" enabled={config.showExecutiveSummary} onToggle={() => handleToggle("showExecutiveSummary")} />
