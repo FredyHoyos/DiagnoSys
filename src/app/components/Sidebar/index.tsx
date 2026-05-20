@@ -19,6 +19,7 @@ import {
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const router = useRouter();
   const pathname = usePathname(); //Detecta la ruta actual
   const searchParams = useSearchParams();
@@ -79,6 +80,38 @@ export default function Sidebar() {
       isMounted = false;
     };
   }, [selectedOrganizationId, selectedOrganizationName]);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadAvatar = async () => {
+      try {
+        const response = await fetch("/api/auth/users?me=true", { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const user = await response.json();
+
+        if (isMounted) {
+          setAvatarUrl(user.avatarUrl ?? undefined);
+        }
+      } catch {
+        // Ignore avatar loading failures.
+      }
+    };
+
+    void loadAvatar();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
 
   // Definir los enlaces comunes para todos los roles
   const links = [
@@ -229,7 +262,7 @@ export default function Sidebar() {
               : session?.user?.role?.displayName || session?.user?.role?.name || "Invitado"
           }
           gmail={session?.user?.email || ""}
-          avatar=""
+          avatar={avatarUrl}
         />
       </aside>
 

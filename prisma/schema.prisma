@@ -25,6 +25,7 @@ model User {
   name      String
   email     String       @unique
   password  String
+  avatarUrl String?
   sector    String?
   companySize String?
   roleId    Int

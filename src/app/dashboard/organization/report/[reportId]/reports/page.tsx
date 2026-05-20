@@ -195,7 +195,7 @@ export default function ReportsPage() {
     const showZoomInCharts = chartFilter !== "zoom-out";
     const showZoomOutCharts = chartFilter !== "zoom-in";
     const logoSrc = reportDisplayConfig.logoUrl ?? undefined;
-    const fallbackLogoSrc = "/logoudea.png";
+    const fallbackLogoSrc = "/logoudea.svg";
     const totalFormularios =
         zoomInForms.length +
         zoomOutForms.length +
