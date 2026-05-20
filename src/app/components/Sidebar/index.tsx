@@ -99,6 +99,7 @@ export default function Sidebar() {
       { href: "/dashboard", label: "Inicio", icon: <HomeIcon /> },
       { href: "/dashboard/consultant/organizations", label: "Organizaciones", icon: <LayoutIcon /> },
       { href: "/dashboard/consultant/reports", label: "Reportes", icon: <ZoomOutIcon /> },
+      { href: "/dashboard/consultant/reports/configuration", label: "Configurar reporte", icon: <TbReport /> },
     ],
     organization: [
       { href: "/dashboard/organization/report", label: "Reporte", icon: <TbReport /> },
@@ -225,7 +226,12 @@ export default function Sidebar() {
 
       {/* Fondo oscuro al abrir en móvil */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setIsOpen(false)} />
+        <button
+          type="button"
+          aria-label="Cerrar menú lateral"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
       )}
     </>
   );

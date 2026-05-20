@@ -8,15 +8,16 @@ import {
   withDefaultReportConfig,
 } from "@/lib/report-config";
 
-async function requireAdminSession() {
+async function requireReportConfigSession() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return { error: NextResponse.json({ error: "Authentication required" }, { status: 401 }) };
   }
 
-  if (session.user.role?.name !== "admin") {
-    return { error: NextResponse.json({ error: "Admin access required" }, { status: 403 }) };
+  const roleName = session.user.role?.name;
+  if (roleName !== "admin" && roleName !== "consultant") {
+    return { error: NextResponse.json({ error: "Admin or consultant access required" }, { status: 403 }) };
   }
 
   return { session };
@@ -24,15 +25,28 @@ async function requireAdminSession() {
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requireAdminSession();
+    const auth = await requireReportConfigSession();
     if (auth.error) return auth.error;
 
+    const session = auth.session;
+
     const orgIdParam = request.nextUrl.searchParams.get("organizationUserId");
-    const organizations = await prisma.user.findMany({
-      where: { role: { name: "organization" } },
-      select: { id: true, name: true, email: true },
-      orderBy: { name: "asc" },
-    });
+    const consultantId = Number.parseInt(session.user.id, 10);
+    const organizations =
+      session.user.role?.name === "consultant"
+        ? await prisma.user.findMany({
+            where: {
+              role: { name: "organization" },
+              organizationAudits: { some: { consultantId } },
+            },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: "asc" },
+          })
+        : await prisma.user.findMany({
+            where: { role: { name: "organization" } },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: "asc" },
+          });
 
     let selectedOrganizationId: number | null = null;
 
@@ -44,6 +58,10 @@ export async function GET(request: NextRequest) {
       selectedOrganizationId = parsed;
     } else if (organizations.length > 0) {
       selectedOrganizationId = organizations[0].id;
+    }
+
+    if (selectedOrganizationId && !organizations.some((organization) => organization.id === selectedOrganizationId)) {
+      return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
     }
 
     if (!selectedOrganizationId) {
@@ -109,7 +127,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const auth = await requireAdminSession();
+    const auth = await requireReportConfigSession();
     if (auth.error) return auth.error;
 
     const session = auth.session;
@@ -127,6 +145,22 @@ export async function PUT(request: NextRequest) {
 
     if (orgUser?.role.name !== "organization") {
       return NextResponse.json({ error: "Organization user not found" }, { status: 404 });
+    }
+
+    if (session.user.role?.name === "consultant") {
+      const consultantId = Number.parseInt(session.user.id, 10);
+      const accessibleOrganization = await prisma.user.findFirst({
+        where: {
+          id: organizationUserId,
+          role: { name: "organization" },
+          organizationAudits: { some: { consultantId } },
+        },
+        select: { id: true },
+      });
+
+      if (!accessibleOrganization) {
+        return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
+      }
     }
 
     const normalized = normalizeReportDisplayConfigInput(body);
