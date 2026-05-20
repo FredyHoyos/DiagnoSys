@@ -33,7 +33,7 @@ export default function Avatar({
   }, []);
 
   const openViewer = () => {
-    if (!editable) return;
+    if (!editable || uploading) return;
     setViewerOpen(true);
   };
 
@@ -99,7 +99,8 @@ export default function Avatar({
       <button
         type="button"
         onClick={openViewer}
-        className={`rounded-full border-2 border-[#2E6347] bg-white p-1 object-contain transition ${editable ? "cursor-pointer hover:scale-105" : "cursor-default"}`}
+        disabled={uploading}
+        className={`relative rounded-full border-2 border-[#2E6347] bg-white p-1 object-contain transition ${editable ? "cursor-pointer hover:scale-105" : "cursor-default"} ${uploading ? "opacity-70 cursor-not-allowed" : ""}`}
         aria-label="Ver avatar ampliado"
       >
         <Image
@@ -114,6 +115,9 @@ export default function Avatar({
             }
           }}
         />
+        {uploading && (
+          <span className="absolute -bottom-1 -right-1 bg-white text-xs px-2 py-0.5 rounded text-[#2E6347] border border-emerald-200">Subiendo...</span>
+        )}
       </button>
 
       {viewerOpen && mounted && createPortal(
