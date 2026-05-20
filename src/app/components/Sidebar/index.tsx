@@ -19,6 +19,7 @@ import {
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const router = useRouter();
   const pathname = usePathname(); //Detecta la ruta actual
@@ -210,15 +211,36 @@ export default function Sidebar() {
         {isOpen ? <Cross1Icon className="w-6 h-6" /> : <HamburgerMenuIcon className="w-6 h-6" />}
       </button>
 
+      {/* Botón para reabrir el menú en escritorio */}
+      {!isDesktopSidebarOpen && (
+        <button
+          type="button"
+          className="cursor-pointer hidden md:flex fixed top-4 left-4 z-50 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-[#24533b]"
+          onClick={() => setIsDesktopSidebarOpen(true)}
+        >
+          <HamburgerMenuIcon className="h-4 w-4" />
+          Mostrar menú
+        </button>
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`pb-20 md:pb-5 fixed top-0 left-0 h-screen w-64  shadow-lg p-4 z-40 pt-16 md:pt-3 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static flex flex-col`}
+        className={`pb-20 md:pb-5 fixed top-0 left-0 h-screen w-64 shadow-lg p-4 z-40 pt-16 md:pt-3 transform transition-all duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:static md:translate-x-0 md:overflow-hidden flex flex-col ${isDesktopSidebarOpen ? "md:w-64 md:p-4" : "md:w-0 md:p-0 md:border-0"}`}
       >
         <div className="absolute inset-0 green"></div>
-        <h2 className="text-2xl font-bold text-primary mb-6">Menu</h2>
+        <div className="relative z-10 flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-primary">Menu</h2>
+          <button
+            type="button"
+            className="cursor-pointer hidden md:inline-flex items-center rounded-md border border-primary/20 bg-white/80 px-2 py-1 text-xs font-medium text-primary hover:bg-white"
+            onClick={() => setIsDesktopSidebarOpen(false)}
+          >
+            Ocultar
+          </button>
+        </div>
 
         {userRole === "consultant" && isConsultantDiagnosticsMode ? (
-          <div className="mb-4 p-3 rounded-md green-interactive  border-2 border-white">
+          <div className="relative z-10 mb-4 rounded-md border-2 border-white green-interactive p-3">
             <p className="text-xs uppercase tracking-wide text-gray-900">Organización seleccionada</p>
             <p className="mt-1 font-bold text-primary truncate">
               {resolvedOrganizationName || `Organización #${selectedOrganizationId}`}
@@ -236,7 +258,7 @@ export default function Sidebar() {
           </div>
         ) : null}
 
-        <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">
+        <nav className="relative z-10 flex flex-col gap-4 flex-1 overflow-y-auto">
           {displayedLinks.map((link) => (
             <Link
               key={link.href}
@@ -254,16 +276,18 @@ export default function Sidebar() {
         </nav>
 
         {/* Card al final */}
-        <UserCard
-          name={session?.user?.name || "Invitado"}
-          role={
-            typeof session?.user?.role === "string"
-              ? session.user.role
-              : session?.user?.role?.displayName || session?.user?.role?.name || "Invitado"
-          }
-          gmail={session?.user?.email || ""}
-          avatar={avatarUrl}
-        />
+        <div className="relative z-10">
+          <UserCard
+            name={session?.user?.name || "Invitado"}
+            role={
+              typeof session?.user?.role === "string"
+                ? session.user.role
+                : session?.user?.role?.displayName || session?.user?.role?.name || "Invitado"
+            }
+            gmail={session?.user?.email || ""}
+            avatar={avatarUrl}
+          />
+        </div>
       </aside>
 
       {/* Fondo oscuro al abrir en móvil */}
