@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/app/components/shadcn-charts/card";
+import ConfirmationPopup from "@/app/components/ConfirmationPopup";
 import { Calendar, ChevronRight, Eye, TrendingUp, BarChart3 } from "lucide-react";
 
 interface ReportSummary {
@@ -37,11 +38,38 @@ interface ApiResponse {
     message: string;
 }
 
+function removeReportFromOrganizations(
+    organizations: ApiResponse["organizations"],
+    organizationId: number,
+    reportId: number
+) {
+    return organizations
+        .map((organization) => {
+            if (organization.id !== organizationId) {
+                return organization;
+            }
+
+            const nextReports = organization.reports.filter((report) => report.id !== reportId);
+
+            return {
+                ...organization,
+                reports: nextReports,
+                stats: {
+                    ...organization.stats,
+                    reportsCount: nextReports.length,
+                },
+            };
+        })
+        .filter((organization) => organization.reports.length > 0 || organization.stats.reportsCount > 0);
+}
+
 export default function ReportsPage() {
     const router = useRouter();
     const { status } = useSession();
     const [loading, setLoading] = useState(true);
     const [organizations, setOrganizations] = useState<ApiResponse["organizations"]>([]);
+    const [deletingReportId, setDeletingReportId] = useState<number | null>(null);
+    const [pendingRemoval, setPendingRemoval] = useState<{ organizationId: number; reportId: number } | null>(null);
 
     useEffect(() => {
         if (status === "authenticated") {
@@ -99,6 +127,38 @@ export default function ReportsPage() {
         router.push(
             `/dashboard/organization/report/${reportId}/zoom-in?organizationId=${organization.id}&organizationName=${encodeURIComponent(organization.name)}`
         );
+    };
+
+    const removeReport = async (organizationId: number, reportId: number) => {
+        setPendingRemoval({ organizationId, reportId });
+    };
+
+    const confirmRemoveReport = async () => {
+        if (!pendingRemoval) {
+            return;
+        }
+
+        const { organizationId, reportId } = pendingRemoval;
+
+        try {
+            setDeletingReportId(reportId);
+
+            const response = await fetch(`/api/consultant/reports/${reportId}`, {
+                method: "DELETE",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.error || "Error al eliminar el reporte");
+            }
+
+            setOrganizations((prev) => removeReportFromOrganizations(prev, organizationId, reportId));
+        } catch (error) {
+            console.error("Error deleting report:", error);
+        } finally {
+            setDeletingReportId(null);
+            setPendingRemoval(null);
+        }
     };
 
     if (status === "loading" || loading) {
@@ -304,6 +364,15 @@ export default function ReportsPage() {
                                                             <ChevronRight className="h-4 w-4" />
                                                             Ir al diagnóstico
                                                         </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                            onClick={() => removeReport(organization.id, report.id)}
+                                                            disabled={deletingReportId === report.id}
+                                                        >
+                                                            {deletingReportId === report.id ? "Eliminando..." : "Eliminar reporte"}
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             ))}
@@ -315,6 +384,17 @@ export default function ReportsPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmationPopup
+                open={pendingRemoval !== null}
+                title="Eliminar reporte"
+                message="¿Quieres eliminar este reporte de la lista?"
+                confirmLabel="Eliminar"
+                cancelLabel="Cancelar"
+                confirmTone="destructive"
+                onConfirm={confirmRemoveReport}
+                onCancel={() => setPendingRemoval(null)}
+            />
         </div>
     );
 }

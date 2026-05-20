@@ -10,6 +10,7 @@ import { Loader2, Plus, PlayCircle, Eye, Calendar, Hash, TrendingUp } from "luci
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ConfirmationPopup from "@/app/components/ConfirmationPopup";
 
 interface ReportStats {
     totalForms: number;
@@ -54,6 +55,8 @@ export default function OrganizationDashboardContent() {
     const [creating, setCreating] = useState(false);
     const [newReportName, setNewReportName] = useState("");
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [deletingReportId, setDeletingReportId] = useState<number | null>(null);
+    const [pendingRemoval, setPendingRemoval] = useState<number | null>(null);
 
     const fetchReports = useCallback(async () => {
         try {
@@ -102,6 +105,36 @@ export default function OrganizationDashboardContent() {
 
     const viewReport = (reportId: number) => {
         router.push(`/dashboard/organization/report/${reportId}/reports${contextQuery}`);
+    };
+
+    const requestDeleteReport = (reportId: number) => {
+        setPendingRemoval(reportId);
+    };
+
+    const confirmDeleteReport = async () => {
+        if (!pendingRemoval) {
+            return;
+        }
+
+        try {
+            setDeletingReportId(pendingRemoval);
+
+            const response = await fetch(`/api/organization/reports/${pendingRemoval}${contextQuery}`, {
+                method: "DELETE",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.error || "Failed to delete report");
+            }
+
+            setReports((prev) => prev.filter((report) => report.id !== pendingRemoval));
+        } catch (error) {
+            console.error("Error deleting report:", error);
+        } finally {
+            setDeletingReportId(null);
+            setPendingRemoval(null);
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -328,12 +361,32 @@ export default function OrganizationDashboardContent() {
                                             Ver
                                         </Button>
                                     )}
+                                    <Button
+                                        onClick={() => requestDeleteReport(report.id)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full sm:flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        disabled={deletingReportId === report.id}
+                                    >
+                                        {deletingReportId === report.id ? "Eliminando..." : "Eliminar"}
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
             )}
+
+            <ConfirmationPopup
+                open={pendingRemoval !== null}
+                title="Eliminar reporte"
+                message="¿Quieres eliminar este reporte de tu lista?"
+                confirmLabel="Eliminar"
+                cancelLabel="Cancelar"
+                confirmTone="destructive"
+                onConfirm={confirmDeleteReport}
+                onCancel={() => setPendingRemoval(null)}
+            />
         </div>
     );
 }

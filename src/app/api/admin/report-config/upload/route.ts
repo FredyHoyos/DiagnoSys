@@ -3,15 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 
-async function requireAdminSession() {
+async function requireReportConfigSession() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return { error: NextResponse.json({ error: "Authentication required" }, { status: 401 }) };
   }
 
-  if (session.user.role?.name !== "admin") {
-    return { error: NextResponse.json({ error: "Admin access required" }, { status: 403 }) };
+  const roleName = session.user.role?.name;
+  if (roleName !== "admin" && roleName !== "consultant" && roleName !== "organization") {
+    return { error: NextResponse.json({ error: "Admin, consultant or organization access required" }, { status: 403 }) };
   }
 
   return { session };
@@ -19,12 +20,14 @@ async function requireAdminSession() {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireAdminSession();
+    const auth = await requireReportConfigSession();
     if (auth.error) return auth.error;
+
+    const session = auth.session;
 
     const body = await request.json();
     const organizationUserId = Number(body.organizationUserId);
-    const { fileName, contentType, base64 } = body;
+    const { contentType, base64 } = body;
 
     if (!organizationUserId || !base64 || !contentType) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -40,8 +43,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Archivo demasiado grande" }, { status: 400 });
     }
 
+    if (session.user.role?.name === "consultant") {
+      const consultantId = Number.parseInt(session.user.id, 10);
+      const accessibleOrganization = await prisma.user.findFirst({
+        where: {
+          id: organizationUserId,
+          role: { name: "organization" },
+          organizationAudits: { some: { consultantId } },
+        },
+        select: { id: true },
+      });
+
+      if (!accessibleOrganization) {
+        return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
+      }
+    }
+
+    if (session.user.role?.name === "organization" && organizationUserId !== Number.parseInt(session.user.id, 10)) {
+      return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
+    }
+
     // Upsert report display config and save the logo bytes
-    const url = `/api/admin/report-config/logo?organizationUserId=${organizationUserId}`;
+    // Add timestamp to URL to bypass browser cache
+    const timestamp = Date.now();
+    const url = `/api/admin/report-config/logo?organizationUserId=${organizationUserId}&t=${timestamp}`;
     const saved = await prisma.reportDisplayConfig.upsert({
       where: { organizationUserId },
       create: {

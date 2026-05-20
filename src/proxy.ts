@@ -31,8 +31,18 @@ export default withAuth(
     }
 
     // Rutas protegidas por rol
+    const isReportConfigApi = pathname.startsWith("/api/admin/report-config");
+
     if (
-      (pathname.startsWith("/dashboard/admin") || pathname.startsWith("/api/admin")) &&
+      pathname.startsWith("/dashboard/admin") &&
+      roleName !== "admin"
+    ) {
+      return NextResponse.redirect(new URL("/auth/card", req.url));
+    }
+
+    if (
+      pathname.startsWith("/api/admin") &&
+      !isReportConfigApi &&
       roleName !== "admin"
     ) {
       return NextResponse.redirect(new URL("/auth/card", req.url));
@@ -62,9 +72,3 @@ export default withAuth(
     },
   }
 );
-
-export const config = {
-  matcher: [
-    "/((?!api/auth|auth|_next/static|_next/image|favicon.ico|.*\\.).*)",
-  ],
-};
