@@ -12,7 +12,7 @@ export async function GET() {
         if (!session?.user) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
         if (session.user.role?.name !== 'consultant') return NextResponse.json({ error: "Consultant access required" }, { status: 403 });
 
-        const consultantId = parseInt(session.user.id);
+        const consultantId = Number.parseInt(session.user.id, 10);
 
         const organizationUsers = await prisma.user.findMany({
             where: {
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         const { name, email, sector, companySize } = await request.json();
         if (!name || !email) return NextResponse.json({ error: 'User name and email are required' }, { status: 400 });
 
-        const consultantId = parseInt(session.user.id);
+        const consultantId = Number.parseInt(session.user.id, 10);
 
         const role = await prisma.role.findUnique({ where: { name: 'organization' }, select: { id: true } });
         if (!role) return NextResponse.json({ error: 'Organization role not found' }, { status: 500 });
@@ -127,10 +127,10 @@ export async function PUT(request: NextRequest) {
         if (!session?.user) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
         if (session.user.role?.name !== 'consultant') return NextResponse.json({ error: "Consultant access required" }, { status: 403 });
 
-        const consultantId = parseInt(session.user.id);
+        const consultantId = Number.parseInt(session.user.id, 10);
         const { orgId, name, email, password, sector, companySize } = await request.json();
-        const orgIdInt = parseInt(String(orgId));
-        if (isNaN(orgIdInt) || !name || typeof name !== 'string' || !email || typeof email !== 'string') return NextResponse.json({ error: 'Valid organization ID, user name and email are required' }, { status: 400 });
+        const orgIdInt = Number.parseInt(String(orgId), 10);
+        if (Number.isNaN(orgIdInt) || !name || typeof name !== 'string' || !email || typeof email !== 'string') return NextResponse.json({ error: 'Valid organization ID, user name and email are required' }, { status: 400 });
         if (password && (typeof password !== 'string' || password.length < 8)) return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
 
         const organizationUser = await prisma.user.findFirst({
@@ -155,6 +155,39 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ organization: { id: updatedOrganizationUser.id, sector: updatedOrganizationUser.sector, companySize: updatedOrganizationUser.companySize, userName: updatedOrganizationUser.name, email: updatedOrganizationUser.email, updatedAt: updatedOrganizationUser.updatedAt }, credentials: { userName: updatedOrganizationUser.name, email: updatedOrganizationUser.email }, message: 'Organization user updated successfully' });
     } catch (error) {
         console.error('Error updating organization:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
+// DELETE: quitar una organización de la lista del consultor eliminando su relación de auditoría
+export async function DELETE(request: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+        if (session.user.role?.name !== 'consultant') return NextResponse.json({ error: "Consultant access required" }, { status: 403 });
+
+        const consultantId = Number.parseInt(session.user.id, 10);
+        const { orgId } = await request.json();
+        const orgIdInt = Number.parseInt(String(orgId), 10);
+
+        if (Number.isNaN(orgIdInt)) {
+            return NextResponse.json({ error: 'Valid organization ID is required' }, { status: 400 });
+        }
+
+        const deleted = await prisma.audit.deleteMany({
+            where: {
+                consultantId,
+                organizationUserId: orgIdInt,
+            },
+        });
+
+        if (deleted.count === 0) {
+            return NextResponse.json({ error: 'Organization not found in your list' }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: 'Organization removed from your list' });
+    } catch (error) {
+        console.error('Error deleting organization from consultant list:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

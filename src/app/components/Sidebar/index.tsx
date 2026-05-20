@@ -155,6 +155,10 @@ export default function Sidebar() {
       return pathname === "/dashboard";
     }
 
+    if (linkPath.endsWith("/reports")) {
+      return pathname === linkPath;
+    }
+
     return pathname === linkPath || pathname.startsWith(`${linkPath}/`);
   };
 

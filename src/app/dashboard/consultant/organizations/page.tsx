@@ -24,6 +24,7 @@ export default function ConsultantOrganizationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatingOrg, setUpdatingOrg] = useState(false);
+  const [removingOrgId, setRemovingOrgId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +171,37 @@ export default function ConsultantOrganizationsPage() {
     }
   };
 
+  const handleRemoveOrganization = async (orgId: number) => {
+    const confirmed = globalThis.confirm("¿Quieres eliminar esta organización de tu lista?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setRemovingOrgId(orgId);
+      setError(null);
+      setMessage(null);
+
+      const res = await fetch("/api/consultant/organizations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Error al eliminar la organización de la lista");
+      }
+
+      setOrganizations((prev) => prev.filter((organization) => organization.id !== orgId));
+      setMessage(data.message || "Organización eliminada de tu lista");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al eliminar la organización de la lista");
+    } finally {
+      setRemovingOrgId(null);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex flex-col gap-4 mb-8">
@@ -300,7 +332,7 @@ export default function ConsultantOrganizationsPage() {
           {organizations.map((org) => (
             <article
               key={org.id}
-              className="bg-secondary rounded-xl border border-primary/20 bg-white/70 p-5 shadow-sm hover:shadow-md transition"
+              className="rounded-xl border border-primary/20 bg-white/70 p-5 shadow-sm hover:shadow-md transition"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-1">
@@ -328,6 +360,13 @@ export default function ConsultantOrganizationsPage() {
                   className="border border-[#2E6347] text-[#2E6347] px-3 py-2 rounded-md cursor-pointer"
                 >
                   Editar
+                </button>
+                <button
+                  onClick={() => handleRemoveOrganization(org.id)}
+                  disabled={removingOrgId === org.id}
+                  className="border border-red-400 text-red-600 px-3 py-2 rounded-md cursor-pointer disabled:opacity-60"
+                >
+                  {removingOrgId === org.id ? "Eliminando..." : "Eliminar"}
                 </button>
               </div>
 
