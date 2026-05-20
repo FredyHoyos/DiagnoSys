@@ -72,9 +72,3 @@ export default withAuth(
     },
   }
 );
-
-export const config = {
-  matcher: [
-    String.raw`/((?!api/auth|auth|_next/static|_next/image|favicon.ico|.*\.).*)`,
-  ],
-};
