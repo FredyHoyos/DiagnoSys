@@ -54,7 +54,6 @@ export default function Avatar({
     }
 
     try {
-      setViewerOpen(false);
       setUploading(true);
       const reader = new FileReader();
 
