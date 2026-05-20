@@ -29,6 +29,7 @@ export default function AdminReportConfigurationPage() {
   const [config, setConfig] = useState<ReportDisplayConfigPayload>(DEFAULT_REPORT_DISPLAY_CONFIG);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const currentRoleName = session?.user?.role?.name?.toLowerCase() ?? null;
   const isOrganizationMode = currentRoleName === "organization";
 
@@ -79,21 +80,25 @@ export default function AdminReportConfigurationPage() {
   const handleImageUpload = async (file: File) => {
     setError(null);
     setMessage(null);
+    setUploadingImage(true);
 
     if (!organizationUserId) {
       setError(isOrganizationMode ? "No se pudo identificar tu organización" : "Selecciona una organización primero");
+      setUploadingImage(false);
       return;
     }
 
     // Validar tipo de archivo
     if (!['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'].includes(file.type)) {
       setError('Formato no permitido. Usa PNG, JPEG o SVG');
+      setUploadingImage(false);
       return;
     }
 
     // Validar tamaño
     if (file.size > 2 * 1024 * 1024) {
       setError('Archivo demasiado grande (máximo 2MB)');
+      setUploadingImage(false);
       return;
     }
 
@@ -140,6 +145,7 @@ export default function AdminReportConfigurationPage() {
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
+          setUploadingImage(false);
         }
       };
 
@@ -148,6 +154,7 @@ export default function AdminReportConfigurationPage() {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        setUploadingImage(false);
       };
 
       reader.readAsDataURL(file);
@@ -157,6 +164,7 @@ export default function AdminReportConfigurationPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setUploadingImage(false);
     }
   };
 
@@ -293,6 +301,7 @@ export default function AdminReportConfigurationPage() {
             <Button
               type="button"
               variant="outline"
+              disabled={uploadingImage}
               className="border-[#2E6347] text-[#2E6347] hover:bg-[#2E6347] hover:text-white"
               onClick={() => {
                 // Resetear el input ANTES de abrir el file picker
@@ -302,8 +311,9 @@ export default function AdminReportConfigurationPage() {
                 }
               }}
             >
-              {config.logoUrl ? 'Cambiar imagen' : 'Subir imagen'}
+              {uploadingImage ? 'Subiendo...' : (config.logoUrl ? 'Cambiar imagen' : 'Subir imagen')}
             </Button>
+            {uploadingImage && <p className="text-sm text-gray-600">Subiendo imagen...</p>}
             {config.logoUrl && (
               <div className="mt-2 flex flex-col items-center gap-2 w-full">
                 <div className="p-2 border border-emerald-300 rounded-md bg-emerald-50">
