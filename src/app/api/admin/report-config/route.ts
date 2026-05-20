@@ -16,8 +16,8 @@ async function requireReportConfigSession() {
   }
 
   const roleName = session.user.role?.name;
-  if (roleName !== "admin" && roleName !== "consultant") {
-    return { error: NextResponse.json({ error: "Admin or consultant access required" }, { status: 403 }) };
+  if (roleName !== "admin" && roleName !== "consultant" && roleName !== "organization") {
+    return { error: NextResponse.json({ error: "Admin, consultant or organization access required" }, { status: 403 }) };
   }
 
   return { session };
@@ -32,21 +32,33 @@ export async function GET(request: NextRequest) {
 
     const orgIdParam = request.nextUrl.searchParams.get("organizationUserId");
     const consultantId = Number.parseInt(session.user.id, 10);
-    const organizations =
-      session.user.role?.name === "consultant"
-        ? await prisma.user.findMany({
-            where: {
-              role: { name: "organization" },
-              organizationAudits: { some: { consultantId } },
-            },
-            select: { id: true, name: true, email: true },
-            orderBy: { name: "asc" },
-          })
-        : await prisma.user.findMany({
-            where: { role: { name: "organization" } },
-            select: { id: true, name: true, email: true },
-            orderBy: { name: "asc" },
-          });
+    const roleName = session.user.role?.name;
+    let organizations: Array<{ id: number; name: string; email: string }>;
+
+    if (roleName === "consultant") {
+      organizations = await prisma.user.findMany({
+        where: {
+          role: { name: "organization" },
+          organizationAudits: { some: { consultantId } },
+        },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+      });
+    } else if (roleName === "organization") {
+      organizations = [
+        {
+          id: Number.parseInt(session.user.id, 10),
+          name: session.user.name || "Organización",
+          email: session.user.email || "",
+        },
+      ];
+    } else {
+      organizations = await prisma.user.findMany({
+        where: { role: { name: "organization" } },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+      });
+    }
 
     let selectedOrganizationId: number | null = null;
 
@@ -161,6 +173,10 @@ export async function PUT(request: NextRequest) {
       if (!accessibleOrganization) {
         return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
       }
+    }
+
+    if (session.user.role?.name === "organization" && organizationUserId !== Number.parseInt(session.user.id, 10)) {
+      return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
     }
 
     const normalized = normalizeReportDisplayConfigInput(body);

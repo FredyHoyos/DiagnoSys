@@ -182,10 +182,10 @@ export async function DELETE(request: NextRequest) {
         });
 
         if (deleted.count === 0) {
-            return NextResponse.json({ error: 'Organization not found in your list' }, { status: 404 });
+            return NextResponse.json({ error: 'No se pudo eliminar la organizacion' }, { status: 404 });
         }
 
-        return NextResponse.json({ message: 'Organization removed from your list' });
+        return NextResponse.json({ message: 'Organizacion eliminada exitosamente' });
     } catch (error) {
         console.error('Error deleting organization from consultant list:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

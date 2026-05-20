@@ -19,7 +19,7 @@ type ConfigResponse = {
 };
 
 export default function AdminReportConfigurationPage() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [switchingOrganization, setSwitchingOrganization] = useState(false);
@@ -29,6 +29,8 @@ export default function AdminReportConfigurationPage() {
   const [config, setConfig] = useState<ReportDisplayConfigPayload>(DEFAULT_REPORT_DISPLAY_CONFIG);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const currentRoleName = session?.user?.role?.name?.toLowerCase() ?? null;
+  const isOrganizationMode = currentRoleName === "organization";
 
   const selectedOrg = useMemo(
     () => organizations.find((org) => org.id === organizationUserId) ?? null,
@@ -79,7 +81,7 @@ export default function AdminReportConfigurationPage() {
     setMessage(null);
 
     if (!organizationUserId) {
-      setError("Selecciona una organización primero");
+      setError(isOrganizationMode ? "No se pudo identificar tu organización" : "Selecciona una organización primero");
       return;
     }
 
@@ -174,7 +176,7 @@ export default function AdminReportConfigurationPage() {
 
   const handleSave = async () => {
     if (!organizationUserId) {
-      setError("Selecciona una organización");
+      setError(isOrganizationMode ? "No se pudo identificar tu organización" : "Selecciona una organización");
       return;
     }
 
@@ -208,14 +210,18 @@ export default function AdminReportConfigurationPage() {
   }
 
   if (status !== "authenticated") {
-    return <div className="p-6">Debes iniciar sesión como administrador.</div>;
+    return <div className="p-6">Debes iniciar sesión para acceder a esta configuración.</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold text-[#2E6347] mb-2">Configuración de Informe Final</h1>
+      <h1 className="text-3xl font-bold text-[#2E6347] mb-2">
+        {isOrganizationMode ? "Configuración de mi reporte" : "Configuración de Informe Final"}
+      </h1>
       <p className="text-gray-700 mb-6">
-        Personaliza criterios de visualización y formato institucional para cada organización.
+        {isOrganizationMode
+          ? "Personaliza los criterios de visualización y el formato institucional de tu organización."
+          : "Personaliza criterios de visualización y formato institucional para cada organización."}
       </p>
 
       <div className="green-interactive rounded-xl border border-emerald-200 p-6 mb-6 space-y-4">
@@ -224,27 +230,41 @@ export default function AdminReportConfigurationPage() {
             Cambiando organización...
           </div>
         )}
-        <p className="block text-sm font-semibold text-[#2E6347]">Organización</p>
-        <select
-          id="organization-select"
-          className="w-full border rounded-md px-3 py-2"
-          value={organizationUserId ?? ""}
-          disabled={switchingOrganization}
-          onChange={(e) => {
-            const next = Number.parseInt(e.target.value, 10);
-            if (!Number.isNaN(next)) {
-              setOrganizationUserId(next);
-              fetchConfig(next, { silent: true });
-            }
-          }}
-        >
-          <option value="">Seleccionar organización</option>
-          {organizations.map((org) => (
-            <option key={org.id} value={org.id}>
-              {org.name} ({org.email})
-            </option>
-          ))}
-        </select>
+        {isOrganizationMode ? (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-[#2E6347]">
+            {selectedOrg ? (
+              <>
+                Configurando tu organización: <strong>{selectedOrg.name}</strong>
+              </>
+            ) : (
+              "Configurando tu organización"
+            )}
+          </div>
+        ) : (
+          <>
+            <p className="block text-sm font-semibold text-[#2E6347]">Organización</p>
+            <select
+              id="organization-select"
+              className="w-full border rounded-md px-3 py-2"
+              value={organizationUserId ?? ""}
+              disabled={switchingOrganization}
+              onChange={(e) => {
+                const next = Number.parseInt(e.target.value, 10);
+                if (!Number.isNaN(next)) {
+                  setOrganizationUserId(next);
+                  fetchConfig(next, { silent: true });
+                }
+              }}
+            >
+              <option value="">Seleccionar organización</option>
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name} ({org.email})
+                </option>
+              ))}
+            </select>
+          </>
+        )}
       </div>
 
       <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 transition-opacity duration-200 ${switchingOrganization ? "opacity-60 pointer-events-none" : "opacity-100"}`}>

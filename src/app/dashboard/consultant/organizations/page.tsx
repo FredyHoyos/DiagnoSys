@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import ConfirmationPopup from "@/app/components/ConfirmationPopup";
 
 type OrganizationSummary = {
   id: number;
@@ -25,6 +26,7 @@ export default function ConsultantOrganizationsPage() {
   const [saving, setSaving] = useState(false);
   const [updatingOrg, setUpdatingOrg] = useState(false);
   const [removingOrgId, setRemovingOrgId] = useState<number | null>(null);
+  const [pendingRemovalOrgId, setPendingRemovalOrgId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -172,10 +174,15 @@ export default function ConsultantOrganizationsPage() {
   };
 
   const handleRemoveOrganization = async (orgId: number) => {
-    const confirmed = globalThis.confirm("¿Quieres eliminar esta organización de tu lista?");
-    if (!confirmed) {
+    setPendingRemovalOrgId(orgId);
+  };
+
+  const confirmRemoveOrganization = async () => {
+    if (pendingRemovalOrgId === null) {
       return;
     }
+
+    const orgId = pendingRemovalOrgId;
 
     try {
       setRemovingOrgId(orgId);
@@ -199,6 +206,7 @@ export default function ConsultantOrganizationsPage() {
       setError(err instanceof Error ? err.message : "Error al eliminar la organización de la lista");
     } finally {
       setRemovingOrgId(null);
+      setPendingRemovalOrgId(null);
     }
   };
 
@@ -433,6 +441,17 @@ export default function ConsultantOrganizationsPage() {
           ))}
         </div>
       </section>
+
+      <ConfirmationPopup
+        open={pendingRemovalOrgId !== null}
+        title="Eliminar organización"
+        message="¿Quieres eliminar esta organización de tu lista?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        confirmTone="destructive"
+        onConfirm={confirmRemoveOrganization}
+        onCancel={() => setPendingRemovalOrgId(null)}
+      />
     </div>
   );
 }

@@ -11,8 +11,8 @@ async function requireReportConfigSession() {
   }
 
   const roleName = session.user.role?.name;
-  if (roleName !== "admin" && roleName !== "consultant") {
-    return { error: NextResponse.json({ error: "Admin or consultant access required" }, { status: 403 }) };
+  if (roleName !== "admin" && roleName !== "consultant" && roleName !== "organization") {
+    return { error: NextResponse.json({ error: "Admin, consultant or organization access required" }, { status: 403 }) };
   }
 
   return { session };
@@ -57,6 +57,10 @@ export async function POST(request: NextRequest) {
       if (!accessibleOrganization) {
         return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
       }
+    }
+
+    if (session.user.role?.name === "organization" && organizationUserId !== Number.parseInt(session.user.id, 10)) {
+      return NextResponse.json({ error: "Organization not accessible" }, { status: 403 });
     }
 
     // Upsert report display config and save the logo bytes

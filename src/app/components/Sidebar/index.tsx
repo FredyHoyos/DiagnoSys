@@ -103,6 +103,7 @@ export default function Sidebar() {
     ],
     organization: [
       { href: "/dashboard/organization/report", label: "Reporte", icon: <TbReport /> },
+      { href: "/dashboard/organization/report/configuration", label: "Configurar reporte", icon: <TbReport /> },
     ],
   };
 
@@ -153,6 +154,10 @@ export default function Sidebar() {
 
     if (linkPath === "/dashboard") {
       return pathname === "/dashboard";
+    }
+
+    if (linkPath === "/dashboard/organization/report") {
+      return pathname === linkPath || (pathname.startsWith(`${linkPath}/`) && !pathname.startsWith(`${linkPath}/configuration`));
     }
 
     if (linkPath.endsWith("/reports")) {

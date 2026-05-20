@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/app/components/shadcn-charts/card";
+import ConfirmationPopup from "@/app/components/ConfirmationPopup";
 import { Calendar, ChevronRight, Eye, TrendingUp, BarChart3 } from "lucide-react";
 
 interface ReportSummary {
@@ -68,6 +69,7 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true);
     const [organizations, setOrganizations] = useState<ApiResponse["organizations"]>([]);
     const [deletingReportId, setDeletingReportId] = useState<number | null>(null);
+    const [pendingRemoval, setPendingRemoval] = useState<{ organizationId: number; reportId: number } | null>(null);
 
     useEffect(() => {
         if (status === "authenticated") {
@@ -128,10 +130,15 @@ export default function ReportsPage() {
     };
 
     const removeReport = async (organizationId: number, reportId: number) => {
-        const confirmed = globalThis.confirm("¿Quieres eliminar este reporte de la lista?");
-        if (!confirmed) {
+        setPendingRemoval({ organizationId, reportId });
+    };
+
+    const confirmRemoveReport = async () => {
+        if (!pendingRemoval) {
             return;
         }
+
+        const { organizationId, reportId } = pendingRemoval;
 
         try {
             setDeletingReportId(reportId);
@@ -150,6 +157,7 @@ export default function ReportsPage() {
             console.error("Error deleting report:", error);
         } finally {
             setDeletingReportId(null);
+            setPendingRemoval(null);
         }
     };
 
@@ -376,6 +384,17 @@ export default function ReportsPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmationPopup
+                open={pendingRemoval !== null}
+                title="Eliminar reporte"
+                message="¿Quieres eliminar este reporte de la lista?"
+                confirmLabel="Eliminar"
+                cancelLabel="Cancelar"
+                confirmTone="destructive"
+                onConfirm={confirmRemoveReport}
+                onCancel={() => setPendingRemoval(null)}
+            />
         </div>
     );
 }
