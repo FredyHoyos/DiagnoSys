@@ -72,6 +72,26 @@ export default function ConsultantOrganizationsPage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 5000); // desaparece en 5 segundos
+
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000); // desaparece en 5 segundos
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -299,8 +319,6 @@ export default function ConsultantOrganizationsPage() {
                   </Button>
                 </DialogFooter>
               </form>
-
-              {message && <p className="text-green-700">{message}</p>}
               {error && <p className="text-red-600">{error}</p>}
             </DialogContent>
           </Dialog>
@@ -326,7 +344,7 @@ export default function ConsultantOrganizationsPage() {
         </div>
       </div>
 
-      {message && <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700">{message}</p>}
+      {message && <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">{message}</p>}
       {error && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{error}</p>}
 
       <section className="green-interactive rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition">
