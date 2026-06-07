@@ -22,6 +22,16 @@ type RadarFormSource = {
   personalizedCategories: RadarCategory[];
 };
 
+type RadarFormSummarySource = {
+  id: number;
+  name: string;
+  isCompleted: boolean;
+  completedAt: Date | null;
+  updatedAt: Date;
+  baseFormId: number;
+  baseForm: { module: { id: number; name: string } };
+};
+
 type RadarChartCategory = {
   name: string;
   score: number;
@@ -170,14 +180,7 @@ export async function GET(
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    const [opportunities, needs, problems, high, medium, low, medium2, configRaw] = await Promise.all([
-      prisma.opportunity.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
-      prisma.need.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
-      prisma.problem.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
-      prisma.highPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
-      prisma.mediumPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
-      prisma.lowPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
-      prisma.mediumPriority2.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+    const [configRaw, opportunities, needs, problems, high, medium, low, medium2] = await Promise.all([
       prisma.reportDisplayConfig.findUnique({
         where: { organizationUserId: userId },
         select: {
@@ -196,52 +199,14 @@ export async function GET(
           headerSubtitle: true,
         },
       }),
+      prisma.opportunity.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.need.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.problem.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.highPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.mediumPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.lowPriority.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
+      prisma.mediumPriority2.findMany({ where: { reportId: reportIdInt, userId }, select: { name: true }, orderBy: { id: "asc" } }),
     ]);
-
-    // Also fetch personalized forms to render zoom-in / zoom-out charts like radar-data route
-    const personalizedForms = await prisma.personalizedForm.findMany({
-      where: {
-        userId: userId,
-        auditId: null,
-        reportId: reportIdInt,
-      },
-      include: {
-        baseForm: {
-          select: {
-            id: true,
-            name: true,
-            tag: true,
-            module: { select: { id: true, name: true } },
-          },
-        },
-        personalizedCategories: {
-          include: { personalizedItems: { select: { id: true, name: true, score: true, isCustom: true } } },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-    });
-
-    // group latest forms by module+baseForm
-    const latestFormsByModule = new Map<string, RadarFormSource>();
-    personalizedForms.forEach((form) => {
-      const moduleId = form.baseForm.module.id;
-      const baseFormId = form.baseFormId;
-      const key = `${moduleId}-${baseFormId}`;
-      const existing = latestFormsByModule.get(key);
-      if (!existing || new Date(form.updatedAt) > new Date(existing.updatedAt)) {
-        latestFormsByModule.set(key, form as RadarFormSource);
-      }
-    });
-
-    const latestForms = Array.from(latestFormsByModule.values());
-
-    const processFormsForRadar = (forms: RadarFormSource[]): RadarForm[] => forms.map(buildRadarForm);
-
-    const zoomInForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom in"));
-    const zoomOutForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom out"));
-
-    const zoomInData = processFormsForRadar(zoomInForms);
-    const zoomOutData = processFormsForRadar(zoomOutForms);
 
     const config = withDefaultReportConfig(
       configRaw
@@ -263,6 +228,63 @@ export async function GET(
         : null
     );
 
+    const personalizedForms: RadarFormSummarySource[] = config.showRadar
+      ? await prisma.personalizedForm.findMany({
+          where: {
+            userId,
+            auditId: null,
+            reportId: reportIdInt,
+          },
+          include: {
+            baseForm: {
+              select: {
+                id: true,
+                name: true,
+                module: { select: { id: true, name: true } },
+              },
+            },
+            personalizedCategories: {
+              include: { personalizedItems: { select: { score: true } } },
+            },
+          },
+          orderBy: { updatedAt: "desc" },
+        })
+      : await prisma.personalizedForm.findMany({
+          where: {
+            userId,
+            auditId: null,
+            reportId: reportIdInt,
+          },
+          select: {
+            id: true,
+            name: true,
+            isCompleted: true,
+            completedAt: true,
+            updatedAt: true,
+            baseFormId: true,
+            baseForm: { select: { id: true, name: true, module: { select: { id: true, name: true } } } },
+          },
+          orderBy: { updatedAt: "desc" },
+        });
+
+    const latestFormsByModule = new Map<string, RadarFormSummarySource>();
+    personalizedForms.forEach((form) => {
+      const moduleId = form.baseForm.module.id;
+      const baseFormId = form.baseFormId;
+      const key = `${moduleId}-${baseFormId}`;
+      const existing = latestFormsByModule.get(key);
+      if (!existing || new Date(form.updatedAt) > new Date(existing.updatedAt)) {
+        latestFormsByModule.set(key, form);
+      }
+    });
+
+    const latestForms = Array.from(latestFormsByModule.values());
+    const zoomInForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom in"));
+    const zoomOutForms = latestForms.filter((f) => f.baseForm.module.name.toLowerCase().includes("zoom out"));
+    const processFormsForRadar = (forms: RadarFormSource[]): RadarForm[] => forms.map(buildRadarForm);
+    const zoomInData = config.showRadar ? processFormsForRadar(zoomInForms as RadarFormSource[]) : [];
+    const zoomOutData = config.showRadar ? processFormsForRadar(zoomOutForms as RadarFormSource[]) : [];
+
     const pdf = await PDFDocument.create();
     const firstPage = pdf.addPage([595, 842]);
     const white = rgb(1, 1, 1);
@@ -275,7 +297,7 @@ export async function GET(
         const g = parseInt(cleaned.substring(2, 4), 16);
         const b = parseInt(cleaned.substring(4, 6), 16);
         return rgb(r / 255, g / 255, b / 255);
-      } catch (e) {
+      } catch {
         return rgb(0.18, 0.39, 0.28);
       }
     };
