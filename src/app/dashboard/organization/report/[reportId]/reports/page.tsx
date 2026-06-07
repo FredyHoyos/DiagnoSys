@@ -7,6 +7,7 @@ import { TrendingUp, BarChart3, Radar, Layers3, ListFilter, ListChecks, Sparkles
 import { FormRadarChart } from "@/app/components/shadcn-charts/radar-chart/form-radar-chart";
 import { Card, CardContent, CardHeader } from "@/app/components/shadcn-charts/card";
 import { Button } from "@/components/ui/button";
+import { buildReportPdfFilename, extractFilenameFromContentDisposition } from "@/lib/report-config";
 
 interface CategoryData {
     name: string;
@@ -196,6 +197,7 @@ export default function ReportsPage() {
     const showZoomOutCharts = chartFilter !== "zoom-in";
     const logoSrc = reportDisplayConfig.logoUrl ?? undefined;
     const fallbackLogoSrc = "/logoudea.svg";
+    const reportPageTitle = reportDisplayConfig.headerSubtitle?.trim() || "Visualiza gráficas de radar y resúmenes ejecutivos";
     const totalFormularios =
         zoomInForms.length +
         zoomOutForms.length +
@@ -215,7 +217,7 @@ export default function ReportsPage() {
             const blobUrl = URL.createObjectURL(blob);
             const anchor = document.createElement("a");
             anchor.href = blobUrl;
-            anchor.download = `reporte-${reportId}.pdf`;
+            anchor.download = extractFilenameFromContentDisposition(response.headers.get("content-disposition")) ?? buildReportPdfFilename(reportDisplayConfig.headerTitle, Number.parseInt(reportId ?? "0", 10));
             anchor.click();
             URL.revokeObjectURL(blobUrl);
         } catch (downloadError) {
@@ -271,10 +273,10 @@ export default function ReportsPage() {
                     <div className="flex flex-wrap items-center justify-between gap-3 pr-16">
                         <div>
                             <h1 className="text-3xl font-bold mb-2 text-[#2E6347]">
-                                {reportDisplayConfig.headerTitle}
+                                {reportPageTitle}
                             </h1>
                             <p className="mt-5 text-lg text-[#24533b]">
-                                {reportDisplayConfig.headerSubtitle || "Visualiza gráficas de radar y resúmenes ejecutivos"}
+                                Visualiza gráficas de radar y resúmenes ejecutivos, y descarga el informe en PDF con la configuración institucional seleccionada.
                             </p>
                         </div>
                         <div className="flex items-center gap-3">

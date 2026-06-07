@@ -8,11 +8,12 @@ import ConfirmationPopup from "@/app/components/ConfirmationPopup";
 
 type OrganizationSummary = {
   id: number;
+  name: string;
   userName: string;
   email: string;
   sector?: string | null;
   companySize?: string | null;
-  primaryAuditId: number | null;
+  linkedUserId?: number | null;
   stats: {
     reportsCount: number;
   };
@@ -94,7 +95,7 @@ export default function ConsultantOrganizationsPage() {
       }
 
       setMessage(
-        `Organización creada. Credenciales: ${data.credentials?.email} (${data.credentials?.role})`
+        data.message || "Organización agregada a tu lista"
       );
 
       setCreateDialogOpen(false);
@@ -113,13 +114,15 @@ export default function ConsultantOrganizationsPage() {
   };
 
   const startDiagnosis = (org: OrganizationSummary) => {
-    const nextUrl = `/dashboard/organization/report?organizationId=${org.id}&organizationName=${encodeURIComponent(org.userName)}`;
+    const nextUrl = org.linkedUserId
+      ? `/dashboard/organization/report?organizationId=${org.linkedUserId}&organizationName=${encodeURIComponent(org.name)}`
+      : `/dashboard/consultant/diagnostics?organizationId=${org.id}&organizationName=${encodeURIComponent(org.name)}`;
     router.push(nextUrl);
   };
 
   const handleOpenEdit = (org: OrganizationSummary) => {
     setEditingOrgId(org.id);
-    setEditUserName(org.userName || "");
+    setEditUserName(org.name || "");
     setEditEmail(org.email || "");
     setEditSector(org.sector || "");
     setEditCompanySize(org.companySize || "");
@@ -344,9 +347,12 @@ export default function ConsultantOrganizationsPage() {
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg text-[#2E6347]">{org.userName}</h3>
+                  <h3 className="font-semibold text-lg text-[#2E6347]">{org.name}</h3>
                   <p className="text-sm text-gray-600">
-                    Usuario: {org.userName} | Email: {org.email}
+                    Usuario: {org.name} | Email: {org.email}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {org.linkedUserId ? "Vinculada a una cuenta real" : "Aún no vinculada a una cuenta"}
                   </p>
                 </div>
 

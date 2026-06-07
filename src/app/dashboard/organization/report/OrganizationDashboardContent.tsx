@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/shadcn-charts/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, PlayCircle, Eye, Calendar, Hash, TrendingUp } from "lucide-react";
+import { Loader2, Plus, PlayCircle, Eye, Calendar, Hash, TrendingUp, Trash2} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -341,34 +341,35 @@ export default function OrganizationDashboardContent() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-2">
+                                <div className="flex flex-col gap-2">
                                     <Button
                                         onClick={() => startReport(report.id)}
-                                        className="w-full sm:flex-1"
+                                        className="w-full justify-center px-3"
                                         size="sm"
                                     >
-                                        <PlayCircle className="h-4 w-4 mr-2" />
-                                        Iniciar Reporte
+                                        <PlayCircle className="h-4 w-4 mr-2 shrink-0" />
+                                        <span className="whitespace-nowrap">Iniciar</span>
                                     </Button>
                                     {report.stats.completedForms > 0 && (
                                         <Button
                                             onClick={() => viewReport(report.id)}
                                             variant="outline"
                                             size="sm"
-                                            className="w-full sm:flex-1 hover:bg-green-50 hover:text-green-800 border-gray-400 hover:border-green-800 transition-colors"
+                                            className="w-full justify-center px-3 hover:bg-green-100 hover:text-green-900 border-gray-400 hover:border-green-900 transition-colors"
                                         >
-                                            <Eye className="h-4 w-4 mr-2" />
-                                            Ver
+                                            <Eye className="h-4 w-4 mr-2 shrink-0" />
+                                            <span className="whitespace-nowrap">Ver</span>
                                         </Button>
                                     )}
                                     <Button
                                         onClick={() => requestDeleteReport(report.id)}
                                         variant="outline"
                                         size="sm"
-                                        className="w-full sm:flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        className="w-full justify-center px-3 border-red-700 text-red-700 hover:bg-red-200 hover:text-red-700"
                                         disabled={deletingReportId === report.id}
                                     >
-                                        {deletingReportId === report.id ? "Eliminando..." : "Eliminar"}
+                                        <Trash2 className="h-4 w-4 mr-2 shrink-0" />
+                                        <span className="whitespace-nowrap">{deletingReportId === report.id ? "Eliminando..." : "Eliminar"}</span>
                                     </Button>
                                 </div>
                             </CardContent>

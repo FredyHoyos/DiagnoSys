@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_REPORT_DISPLAY_CONFIG, type ReportDisplayConfigPayload } from "@/lib/report-config";
 
@@ -317,7 +318,14 @@ export default function AdminReportConfigurationPage() {
             {config.logoUrl && (
               <div className="mt-2 flex flex-col items-center gap-2 w-full">
                 <div className="p-2 border border-emerald-300 rounded-md bg-emerald-50">
-                  <img src={config.logoUrl} alt="Preview logo" className="h-16 object-contain" />
+                  <Image
+                    src={config.logoUrl}
+                    alt="Preview logo"
+                    width={160}
+                    height={64}
+                    className="h-16 w-auto object-contain"
+                    unoptimized
+                  />
                 </div>
                 <p className="text-xs text-gray-600">Vista previa del logotipo</p>
               </div>
@@ -348,7 +356,7 @@ export default function AdminReportConfigurationPage() {
               <div>Color títulos</div>
               <input
                 type="color"
-                value={(config as any).titleColor}
+                value={(config.titleColor as string) ?? '#000000'}
                 onChange={(e) => setConfig((prev) => ({ ...prev, titleColor: e.target.value }))}
                 className="h-10 w-10 p-0 border rounded"
                 title="Color para títulos"
@@ -359,7 +367,7 @@ export default function AdminReportConfigurationPage() {
               <div>Color texto</div>
               <input
                 type="color"
-                value={(config as any).textColor}
+                value={(config.textColor as string) ?? '#000000'}
                 onChange={(e) => setConfig((prev) => ({ ...prev, textColor: e.target.value }))}
                 className="h-10 w-10 p-0 border rounded"
                 title="Color para texto"
