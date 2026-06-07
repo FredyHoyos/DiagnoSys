@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
 import { resolveScopedUserForDiagnostics, ScopedUserError } from "@/lib/consultant-scope";
-import { withDefaultReportConfig } from "@/lib/report-config";
+import { buildReportPdfFilename, withDefaultReportConfig } from "@/lib/report-config";
 import { renderRadarChart } from "@/lib/report-charts";
 
 type RadarCategoryItem = { score: number };
@@ -287,7 +287,7 @@ export async function GET(
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
     let logoImage: import("pdf-lib").PDFImage | null = null;
-    let logoWidth = 72;
+    const logoWidth = 72;
     let logoHeight = 0;
 
     const logoBytes = configRaw?.logoData ? Buffer.from(configRaw.logoData as Uint8Array) : null;
@@ -604,12 +604,13 @@ export async function GET(
     }
 
     const bytes = await pdf.save();
+    const downloadFilename = buildReportPdfFilename(config.headerTitle, report.id);
 
     return new NextResponse(Buffer.from(bytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="reporte-${report.id}.pdf"`,
+        "Content-Disposition": `attachment; filename="${downloadFilename}"; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`,
       },
     });
   } catch (error) {

@@ -6,10 +6,11 @@ export type ReportDisplayConfigPayload = {
   showActionPlan: boolean;
   showScaleLegend: boolean;
   logoUrl: string | null;
-  // Nuevo nombres para UI: afectan solo al PDF
+  // Título que se usa en el PDF y como base del nombre del archivo descargado.
   titleColor: string; // color para títulos
   textColor: string; // color para texto
   headerTitle: string;
+  // Título que se muestra en la página de reportes.
   headerSubtitle: string | null;
 };
 
@@ -37,6 +38,37 @@ export function normalizeOptionalText(value: unknown, maxLength: number): string
   const cleaned = value.trim();
   if (!cleaned) return null;
   return cleaned.slice(0, maxLength);
+}
+
+export function sanitizeFilenamePart(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/\u0000/g, "")
+    .slice(0, 120)
+    .trim();
+}
+
+export function buildReportPdfFilename(title: string | null | undefined, reportId: number): string {
+  const baseName = typeof title === "string" ? sanitizeFilenamePart(title) : "";
+  return `${baseName || `reporte-${reportId}`}.pdf`;
+}
+
+export function extractFilenameFromContentDisposition(contentDisposition: string | null): string | null {
+  if (!contentDisposition) return null;
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      return utf8Match[1];
+    }
+  }
+
+  const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  return filenameMatch?.[1] ?? null;
 }
 
 // Normaliza la entrada y devuelve la forma adecuada para guardar en la BD
@@ -76,23 +108,24 @@ export function withDefaultReportConfig<T extends Partial<Record<string, unknown
   if (!config) return { ...DEFAULT_REPORT_DISPLAY_CONFIG };
 
   // extraer colores del shape DB o UI
-  const primaryColor = (config as any).primaryColor as string | undefined;
-  const secondaryColor = (config as any).secondaryColor as string | undefined;
-  const titleColor = (config as any).titleColor as string | undefined;
-  const textColor = (config as any).textColor as string | undefined;
+  const getProperty = (key: string): unknown => (config as Record<string, unknown>)[key];
+  const primaryColor = typeof getProperty('primaryColor') === 'string' ? getProperty('primaryColor') as string : undefined;
+  const secondaryColor = typeof getProperty('secondaryColor') === 'string' ? getProperty('secondaryColor') as string : undefined;
+  const titleColor = typeof getProperty('titleColor') === 'string' ? getProperty('titleColor') as string : undefined;
+  const textColor = typeof getProperty('textColor') === 'string' ? getProperty('textColor') as string : undefined;
 
   return {
     ...DEFAULT_REPORT_DISPLAY_CONFIG,
-    showExecutiveSummary: Boolean((config as any).showExecutiveSummary ?? DEFAULT_REPORT_DISPLAY_CONFIG.showExecutiveSummary),
-    showRadar: Boolean((config as any).showRadar ?? DEFAULT_REPORT_DISPLAY_CONFIG.showRadar),
-    showCategorization: Boolean((config as any).showCategorization ?? DEFAULT_REPORT_DISPLAY_CONFIG.showCategorization),
-    showPrioritization: Boolean((config as any).showPrioritization ?? DEFAULT_REPORT_DISPLAY_CONFIG.showPrioritization),
-    showActionPlan: Boolean((config as any).showActionPlan ?? DEFAULT_REPORT_DISPLAY_CONFIG.showActionPlan),
-    showScaleLegend: Boolean((config as any).showScaleLegend ?? DEFAULT_REPORT_DISPLAY_CONFIG.showScaleLegend),
-    logoUrl: (config as any).logoUrl ?? DEFAULT_REPORT_DISPLAY_CONFIG.logoUrl,
+    showExecutiveSummary: Boolean(getProperty('showExecutiveSummary') ?? DEFAULT_REPORT_DISPLAY_CONFIG.showExecutiveSummary),
+    showRadar: Boolean(getProperty('showRadar') ?? DEFAULT_REPORT_DISPLAY_CONFIG.showRadar),
+    showCategorization: Boolean(getProperty('showCategorization') ?? DEFAULT_REPORT_DISPLAY_CONFIG.showCategorization),
+    showPrioritization: Boolean(getProperty('showPrioritization') ?? DEFAULT_REPORT_DISPLAY_CONFIG.showPrioritization),
+    showActionPlan: Boolean(getProperty('showActionPlan') ?? DEFAULT_REPORT_DISPLAY_CONFIG.showActionPlan),
+    showScaleLegend: Boolean(getProperty('showScaleLegend') ?? DEFAULT_REPORT_DISPLAY_CONFIG.showScaleLegend),
+    logoUrl: typeof getProperty('logoUrl') === 'string' ? getProperty('logoUrl') as string : DEFAULT_REPORT_DISPLAY_CONFIG.logoUrl,
     titleColor: titleColor ?? primaryColor ?? DEFAULT_REPORT_DISPLAY_CONFIG.titleColor,
     textColor: textColor ?? secondaryColor ?? DEFAULT_REPORT_DISPLAY_CONFIG.textColor,
-    headerTitle: (config as any).headerTitle ?? DEFAULT_REPORT_DISPLAY_CONFIG.headerTitle,
-    headerSubtitle: (config as any).headerSubtitle ?? DEFAULT_REPORT_DISPLAY_CONFIG.headerSubtitle,
+    headerTitle: typeof getProperty('headerTitle') === 'string' ? getProperty('headerTitle') as string : DEFAULT_REPORT_DISPLAY_CONFIG.headerTitle,
+    headerSubtitle: typeof getProperty('headerSubtitle') === 'string' ? getProperty('headerSubtitle') as string : DEFAULT_REPORT_DISPLAY_CONFIG.headerSubtitle,
   };
 }

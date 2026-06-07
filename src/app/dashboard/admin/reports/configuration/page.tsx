@@ -348,7 +348,7 @@ export default function AdminReportConfigurationPage() {
               <div>Color títulos</div>
               <input
                 type="color"
-                value={(config as any).titleColor}
+                value={(config.titleColor as string) ?? '#000000'}
                 onChange={(e) => setConfig((prev) => ({ ...prev, titleColor: e.target.value }))}
                 className="h-10 w-10 p-0 border rounded"
                 title="Color para títulos"
@@ -359,7 +359,7 @@ export default function AdminReportConfigurationPage() {
               <div>Color texto</div>
               <input
                 type="color"
-                value={(config as any).textColor}
+                value={(config.textColor as string) ?? '#000000'}
                 onChange={(e) => setConfig((prev) => ({ ...prev, textColor: e.target.value }))}
                 className="h-10 w-10 p-0 border rounded"
                 title="Color para texto"
