@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { randomBytes } from "node:crypto";
 
-// GET: organizaciones gestionadas por el consultor
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
@@ -14,34 +11,34 @@ export async function GET() {
 
         const consultantId = Number.parseInt(session.user.id, 10);
 
-        const organizationUsers = await prisma.user.findMany({
+        const organizations = await prisma.consultantOrganization.findMany({
             where: {
-                role: { name: 'organization' },
-                organizationAudits: { some: { consultantId } }
+                consultantId,
             },
             include: {
-                _count: { select: { organizationAudits: { where: { consultantId } } } },
-                organizationAudits: {
-                    where: { consultantId },
-                    select: { id: true, name: true, description: true, createdAt: true, updatedAt: true, _count: { select: { personalizedForms: true } } },
-                    orderBy: { createdAt: 'desc' }
+                linkedUser: {
+                    select: {
+                        id: true,
+                        reports: {
+                            select: { id: true },
+                        },
+                    },
                 },
-                reports: { select: { id: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
 
-        const processed = organizationUsers.map(user => ({
-            id: user.id,
-            sector: user.sector,
-            companySize: user.companySize,
-            userName: user.name,
-            email: user.email,
-            stats: { reportsCount: user.reports.length },
-            primaryAuditId: user.organizationAudits[0]?.id ?? null,
-            recentAudits: user.organizationAudits.slice(0, 3),
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
+        const processed = organizations.map((organization) => ({
+            id: organization.id,
+            name: organization.name,
+            userName: organization.name,
+            sector: organization.sector,
+            companySize: organization.companySize,
+            email: organization.email,
+            linkedUserId: organization.linkedUserId,
+            stats: { reportsCount: organization.linkedUser?.reports.length ?? 0 },
+            createdAt: organization.createdAt,
+            updatedAt: organization.updatedAt,
         }));
 
         return NextResponse.json({ organizations: processed });
@@ -51,7 +48,6 @@ export async function GET() {
     }
 }
 
-// POST: crear una nueva organización (como usuario `organization`) y crear auditoría inicial
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -59,68 +55,78 @@ export async function POST(request: NextRequest) {
         if (session.user.role?.name !== 'consultant') return NextResponse.json({ error: "Consultant access required" }, { status: 403 });
 
         const { name, email, sector, companySize } = await request.json();
-        if (!name || !email) return NextResponse.json({ error: 'User name and email are required' }, { status: 400 });
+        const normalizedName = typeof name === "string" ? name.trim() : "";
+        const normalizedEmail = typeof email === "string" ? email.trim() : "";
+
+        if (!normalizedName || !normalizedEmail) return NextResponse.json({ error: 'User name and email are required' }, { status: 400 });
 
         const consultantId = Number.parseInt(session.user.id, 10);
 
-        const role = await prisma.role.findUnique({ where: { name: 'organization' }, select: { id: true } });
-        if (!role) return NextResponse.json({ error: 'Organization role not found' }, { status: 500 });
-
-        const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-        if (existingUser) return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
-
-        const generatedPassword = `${randomBytes(12).toString("base64url")}Aa1!`;
-        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
-        const result = await prisma.$transaction(async (tx) => {
-            const organizationUser = await tx.user.create({
-                data: {
-                    name,
-                    email,
-                    password: hashedPassword,
-                    roleId: role.id,
-                    sector: sector || null,
-                    companySize: companySize || null,
-                },
-                select: { id: true, name: true, email: true, sector: true, companySize: true, createdAt: true, updatedAt: true }
-            });
-
-            const audit = await tx.audit.create({
-                data: {
-                    name: `Initial Audit - ${name}`,
-                    description: 'Auto-created when organization was registered by consultant',
+        const existingOrganization = await prisma.consultantOrganization.findUnique({
+            where: {
+                consultantId_email: {
                     consultantId,
-                    organizationUserId: organizationUser.id
+                    email: normalizedEmail,
                 },
-                select: { id: true, name: true, createdAt: true }
-            });
+            },
+            select: { id: true },
+        });
 
-            return { organizationUser, audit };
+        if (existingOrganization) {
+            return NextResponse.json({ error: 'Organization already exists in your list' }, { status: 409 });
+        }
+
+        const linkedUser = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
+            select: { id: true, reports: { select: { id: true } } },
+        });
+
+        const organization = await prisma.consultantOrganization.create({
+            data: {
+                consultantId,
+                name: normalizedName,
+                email: normalizedEmail,
+                sector: typeof sector === "string" && sector.trim() ? sector.trim() : null,
+                companySize: typeof companySize === "string" && companySize.trim() ? companySize.trim() : null,
+                linkedUserId: linkedUser?.id ?? null,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                sector: true,
+                companySize: true,
+                linkedUserId: true,
+                createdAt: true,
+                updatedAt: true,
+            },
         });
 
         return NextResponse.json({
             organization: {
-                id: result.organizationUser.id,
-                sector: result.organizationUser.sector,
-                companySize: result.organizationUser.companySize,
-                stats: { reportsCount: 0 },
-                primaryAuditId: result.audit.id,
-                recentAudits: [result.audit],
-                createdAt: result.organizationUser.createdAt,
-                updatedAt: result.organizationUser.updatedAt
+                id: organization.id,
+                name: organization.name,
+                userName: organization.name,
+                sector: organization.sector,
+                companySize: organization.companySize,
+                email: organization.email,
+                linkedUserId: organization.linkedUserId,
+                stats: { reportsCount: linkedUser?.reports.length ?? 0 },
+                createdAt: organization.createdAt,
+                updatedAt: organization.updatedAt,
             },
-            credentials: { userName: result.organizationUser.name, email: result.organizationUser.email, role: 'organization' },
-            message: 'Organization user created successfully'
+            message: 'Organization added to your consultant list successfully',
         }, { status: 201 });
 
     } catch (error) {
         console.error('Error creating organization:', error);
-        if ((error as any)?.code === 'P2002') return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
+        if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+            return NextResponse.json({ error: 'Email already registered in this consultant list' }, { status: 409 });
+        }
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
-// PUT: actualizar datos del usuario organización (solo consultor con relación)
 export async function PUT(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -128,38 +134,73 @@ export async function PUT(request: NextRequest) {
         if (session.user.role?.name !== 'consultant') return NextResponse.json({ error: "Consultant access required" }, { status: 403 });
 
         const consultantId = Number.parseInt(session.user.id, 10);
-        const { orgId, name, email, password, sector, companySize } = await request.json();
+        const { orgId, name, email, sector, companySize } = await request.json();
         const orgIdInt = Number.parseInt(String(orgId), 10);
-        if (Number.isNaN(orgIdInt) || !name || typeof name !== 'string' || !email || typeof email !== 'string') return NextResponse.json({ error: 'Valid organization ID, user name and email are required' }, { status: 400 });
-        if (password && (typeof password !== 'string' || password.length < 8)) return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+        const normalizedName = typeof name === "string" ? name.trim() : "";
+        const normalizedEmail = typeof email === "string" ? email.trim() : "";
 
-        const organizationUser = await prisma.user.findFirst({
-            where: { id: orgIdInt, role: { name: 'organization' }, organizationAudits: { some: { consultantId } } },
-            select: { id: true, email: true }
+        if (Number.isNaN(orgIdInt) || !normalizedName || !normalizedEmail) return NextResponse.json({ error: 'Valid organization ID, user name and email are required' }, { status: 400 });
+
+        const organization = await prisma.consultantOrganization.findFirst({
+            where: { id: orgIdInt, consultantId },
+            select: { id: true, email: true },
         });
-        if (!organizationUser) return NextResponse.json({ error: 'Organization user not found' }, { status: 404 });
+        if (!organization) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
 
-        if (organizationUser.email !== email.trim()) {
-            const existingUser = await prisma.user.findUnique({ where: { email: email.trim() }, select: { id: true } });
-            if (existingUser) return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
-        }
+        const duplicateOrganization = await prisma.consultantOrganization.findFirst({
+            where: {
+                consultantId,
+                email: normalizedEmail,
+                NOT: { id: orgIdInt },
+            },
+            select: { id: true },
+        });
+        if (duplicateOrganization) return NextResponse.json({ error: 'Email already registered in this consultant list' }, { status: 409 });
 
-        const passwordData = password ? { password: await bcrypt.hash(password, 10) } : {};
-
-        const updatedOrganizationUser = await prisma.user.update({
-            where: { id: organizationUser.id },
-            data: { name: name.trim(), email: email.trim(), sector: sector || null, companySize: companySize || null, ...passwordData },
-            select: { id: true, name: true, email: true, sector: true, companySize: true, updatedAt: true }
+        const linkedUser = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
+            select: { id: true },
         });
 
-        return NextResponse.json({ organization: { id: updatedOrganizationUser.id, sector: updatedOrganizationUser.sector, companySize: updatedOrganizationUser.companySize, userName: updatedOrganizationUser.name, email: updatedOrganizationUser.email, updatedAt: updatedOrganizationUser.updatedAt }, credentials: { userName: updatedOrganizationUser.name, email: updatedOrganizationUser.email }, message: 'Organization user updated successfully' });
+        const updatedOrganization = await prisma.consultantOrganization.update({
+            where: { id: organization.id },
+            data: {
+                name: normalizedName,
+                email: normalizedEmail,
+                sector: typeof sector === "string" && sector.trim() ? sector.trim() : null,
+                companySize: typeof companySize === "string" && companySize.trim() ? companySize.trim() : null,
+                linkedUserId: linkedUser?.id ?? null,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                sector: true,
+                companySize: true,
+                linkedUserId: true,
+                updatedAt: true,
+            },
+        });
+
+        return NextResponse.json({
+            organization: {
+                id: updatedOrganization.id,
+                name: updatedOrganization.name,
+                userName: updatedOrganization.name,
+                email: updatedOrganization.email,
+                sector: updatedOrganization.sector,
+                companySize: updatedOrganization.companySize,
+                linkedUserId: updatedOrganization.linkedUserId,
+                updatedAt: updatedOrganization.updatedAt,
+            },
+            message: 'Organization updated successfully',
+        });
     } catch (error) {
         console.error('Error updating organization:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
-// DELETE: quitar una organización de la lista del consultor eliminando su relación de auditoría
 export async function DELETE(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -174,10 +215,10 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Valid organization ID is required' }, { status: 400 });
         }
 
-        const deleted = await prisma.audit.deleteMany({
+        const deleted = await prisma.consultantOrganization.deleteMany({
             where: {
+                id: orgIdInt,
                 consultantId,
-                organizationUserId: orgIdInt,
             },
         });
 
